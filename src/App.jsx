@@ -7,7 +7,9 @@ import {
   Headphones,
   X,
   Menu,
-  ChevronDown
+  ChevronDown,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 import EarthGlobe from './components/EarthGlobe.jsx';
@@ -26,6 +28,41 @@ import {
 } from './data/nasaDatasets.js';
 
 export default function App() {
+  // Theme State ('dark' | 'light')
+  const [theme, setTheme] = useState(() => {
+    try {
+      const saved = localStorage.getItem('terrasonus_theme');
+      if (saved === 'light' || saved === 'dark') return saved;
+    } catch {}
+    return 'dark';
+  });
+  const isLight = theme === 'light';
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('terrasonus_theme', theme);
+    } catch {}
+    if (theme === 'light') {
+      document.documentElement.classList.add('light');
+      document.documentElement.classList.remove('dark');
+      document.body.classList.add('light');
+      document.body.classList.remove('dark');
+    } else {
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
+      document.body.classList.add('dark');
+      document.body.classList.remove('light');
+    }
+  }, [theme]);
+
+  const toggleTheme = useCallback(() => {
+    setTheme(prev => {
+      const next = prev === 'dark' ? 'light' : 'dark';
+      setScreenReaderAnnouncement(`Switched to ${next} theme mode.`);
+      return next;
+    });
+  }, []);
+
   // Playback & Audio States
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioLevel, setAudioLevel] = useState(0.0);
@@ -60,13 +97,16 @@ export default function App() {
   }, []);
 
   // Headphones Recommendation States
-  // Centered entrance announcement (persists dismissal in session to prevent annoying repetitive popups)
-  const [showHeadphonesEntranceModal, setShowHeadphonesEntranceModal] = useState(() => {
+  // Centered entrance announcement modal (displays on entering)
+  const [showHeadphonesEntranceModal, setShowHeadphonesEntranceModal] = useState(true);
+
+  // Clear any persistent suppression and announce on entering
+  useEffect(() => {
     if (typeof window !== 'undefined') {
-      return !sessionStorage.getItem('terrasonus_headphones_seen');
+      sessionStorage.removeItem('terrasonus_headphones_seen');
     }
-    return false;
-  });
+    setScreenReaderAnnouncement('Notice: Wearing headphones is strongly recommended for full spatial clarity and planetary sonification.');
+  }, []);
   // Quick status pill/toast when listening begins
   const [showHeadphonesBanner, setShowHeadphonesBanner] = useState(false);
   const headphonesTimerRef = useRef(null);
@@ -301,6 +341,14 @@ export default function App() {
     const handleKeyDown = (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
+      if (showHeadphonesEntranceModal) {
+        if (e.key === 'Enter' || e.key === 'Escape') {
+          e.preventDefault();
+          setShowHeadphonesEntranceModal(false);
+          return;
+        }
+      }
+
       if (e.code === 'Space') {
         e.preventDefault();
         togglePlay();
@@ -324,18 +372,32 @@ export default function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [togglePlay, handleSelectRegion, toggleAccessibilityMode]);
+  }, [togglePlay, handleSelectRegion, toggleAccessibilityMode, showHeadphonesEntranceModal]);
 
   return (
-    <div className={`min-h-screen bg-black text-white font-inter relative overflow-x-hidden ${isAccessibilityMode ? 'contrast-125' : ''}`}>
+    <div className={`min-h-screen font-inter relative overflow-x-hidden transition-colors duration-300 ${
+      isLight ? 'bg-slate-50 text-slate-900 selection:bg-[#ef233c] selection:text-white' : 'bg-black text-white selection:bg-[#ef233c] selection:text-white'
+    } ${isAccessibilityMode ? 'contrast-125' : ''}`}>
       
       {/* Global Background */}
       <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#1a0505] to-black"></div>
-        <div className="absolute top-0 left-0 w-[1px] h-[1px] bg-transparent stars-1 animate-[animStar_50s_linear_infinite]"></div>
-        <div className="absolute top-0 left-0 w-[2px] h-[2px] bg-transparent stars-2 animate-[animStar_80s_linear_infinite]"></div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-red-600/5 rounded-full blur-[120px]"></div>
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(circle_at_center,black_40%,transparent_80%)]"></div>
+        <div className={`absolute inset-0 transition-colors duration-500 ${
+          isLight ? 'bg-gradient-to-b from-sky-50/70 via-slate-50 to-slate-100' : 'bg-gradient-to-b from-[#1a0505] to-black'
+        }`}></div>
+        {!isLight && (
+          <>
+            <div className="absolute top-0 left-0 w-[1px] h-[1px] bg-transparent stars-1 animate-[animStar_50s_linear_infinite]"></div>
+            <div className="absolute top-0 left-0 w-[2px] h-[2px] bg-transparent stars-2 animate-[animStar_80s_linear_infinite]"></div>
+          </>
+        )}
+        <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full blur-[120px] transition-all ${
+          isLight ? 'w-[600px] h-[600px] bg-sky-200/30' : 'w-[800px] h-[800px] bg-red-600/5'
+        }`}></div>
+        <div className={`absolute inset-0 bg-[size:40px_40px] [mask-image:radial-gradient(circle_at_center,black_40%,transparent_80%)] ${
+          isLight 
+            ? 'bg-[linear-gradient(rgba(0,0,0,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.03)_1px,transparent_1px)]' 
+            : 'bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)]'
+        }`}></div>
       </div>
 
       {/* Top Blur Header */}
@@ -352,7 +414,11 @@ export default function App() {
 
       {/* Navbar */}
       <header className="fixed top-0 left-0 w-full z-50 pt-5 sm:pt-6 px-4">
-        <nav className="max-w-6xl xl:max-w-7xl mx-auto flex items-center justify-between bg-black/70 backdrop-blur-xl border border-white/10 rounded-full px-5 sm:px-6 py-2.5 sm:py-3 shadow-2xl transition-all">
+        <nav className={`max-w-6xl xl:max-w-7xl mx-auto flex items-center justify-between rounded-full px-5 sm:px-6 py-2.5 sm:py-3 transition-all ${
+          isLight 
+            ? 'bg-white/85 backdrop-blur-xl border border-slate-200/90 shadow-xl shadow-slate-200/60' 
+            : 'bg-black/70 backdrop-blur-xl border border-white/10 shadow-2xl'
+        }`}>
           {/* Brand Logo */}
           <div className="flex items-center gap-2.5 shrink-0">
             <img 
@@ -360,8 +426,14 @@ export default function App() {
               alt="TerraSonus" 
               className="w-7 h-7 sm:w-8 sm:h-8 object-contain shrink-0 drop-shadow-[0_0_10px_rgba(56,189,248,0.5)]" 
             />
-            <span className="text-base sm:text-lg font-bold font-manrope tracking-tight text-white">TerraSonus</span>
-            <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-mono tracking-widest text-zinc-400 uppercase">
+            <span className={`text-base sm:text-lg font-bold font-manrope tracking-tight ${
+              isLight ? 'text-slate-900' : 'text-white'
+            }`}>
+              TerraSonus
+            </span>
+            <span className={`hidden sm:inline-block px-2.5 py-0.5 rounded-full text-[10px] font-mono tracking-widest uppercase border ${
+              isLight ? 'bg-slate-100 border-slate-200 text-slate-600' : 'bg-white/5 border-white/10 text-zinc-400'
+            }`}>
               NASA EIC
             </span>
           </div>
@@ -371,21 +443,27 @@ export default function App() {
             <button 
               id="nav-sound-guide-link"
               onClick={() => setShowSoundGuideModal(true)} 
-              className="text-xs xl:text-sm font-medium text-zinc-400 hover:text-white transition-colors cursor-pointer whitespace-nowrap"
+              className={`text-xs xl:text-sm font-medium transition-colors cursor-pointer whitespace-nowrap ${
+                isLight ? 'text-slate-600 hover:text-slate-900' : 'text-zinc-400 hover:text-white'
+              }`}
             >
               Sound Guide
             </button>
             <button 
               id="nav-product-link"
               onClick={() => setShowScienceModal(true)} 
-              className="text-xs xl:text-sm font-medium text-zinc-400 hover:text-white transition-colors cursor-pointer whitespace-nowrap"
+              className={`text-xs xl:text-sm font-medium transition-colors cursor-pointer whitespace-nowrap ${
+                isLight ? 'text-slate-600 hover:text-slate-900' : 'text-zinc-400 hover:text-white'
+              }`}
             >
               Science & Math
             </button>
             <button 
               id="nav-solutions-link"
               onClick={() => setShowCreditsModal(true)} 
-              className="text-xs xl:text-sm font-medium text-zinc-400 hover:text-white transition-colors cursor-pointer whitespace-nowrap"
+              className={`text-xs xl:text-sm font-medium transition-colors cursor-pointer whitespace-nowrap ${
+                isLight ? 'text-slate-600 hover:text-slate-900' : 'text-zinc-400 hover:text-white'
+              }`}
             >
               NASA Open Data
             </button>
@@ -394,14 +472,18 @@ export default function App() {
               href="https://science.nasa.gov/earth/earth-information-center/" 
               target="_blank" 
               rel="noopener noreferrer" 
-              className="text-xs xl:text-sm font-medium text-zinc-400 hover:text-white transition-colors whitespace-nowrap"
+              className={`text-xs xl:text-sm font-medium transition-colors whitespace-nowrap ${
+                isLight ? 'text-slate-600 hover:text-slate-900' : 'text-zinc-400 hover:text-white'
+              }`}
             >
               Earth Info Center
             </a>
             <a 
               id="nav-timeline-link"
               href="#timeline-section" 
-              className="text-xs xl:text-sm font-medium text-zinc-400 hover:text-white transition-colors whitespace-nowrap"
+              className={`text-xs xl:text-sm font-medium transition-colors whitespace-nowrap ${
+                isLight ? 'text-slate-600 hover:text-slate-900' : 'text-zinc-400 hover:text-white'
+              }`}
             >
               Time Machine
             </a>
@@ -409,44 +491,60 @@ export default function App() {
 
           {/* Right Action & Utility Cluster */}
           <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
-            {/* Headphones Mode / Recommendation */}
+            {/* Theme Toggle Button (Light/Dark Mode) replacing old Headset icon on header */}
             <button
-              onClick={() => setShowHeadphonesEntranceModal(true)}
-              title="Headphones Recommended for Spatial Audio"
-              className={`p-2 rounded-full border transition-all cursor-pointer ${showHeadphonesEntranceModal ? 'bg-[#ef233c]/20 border-[#ef233c] text-[#ef233c]' : 'bg-white/5 border-white/10 text-zinc-400 hover:text-white hover:border-[#ef233c]'}`}
-              aria-label="Headphones Audio Recommendation"
+              id="theme-toggle-btn"
+              onClick={toggleTheme}
+              title={isLight ? 'Switch to Dark Theme' : 'Switch to White Theme'}
+              className={`p-2 rounded-full border transition-all cursor-pointer ${
+                isLight 
+                  ? 'bg-amber-500/10 border-amber-300 text-amber-600 hover:bg-amber-500/20 shadow-xs' 
+                  : 'bg-white/5 border-white/10 text-amber-300 hover:text-white hover:border-amber-400/50'
+              }`}
+              aria-label={isLight ? 'Switch to Dark Theme' : 'Switch to White Theme'}
             >
-              <Headphones className="w-4 h-4" />
+              {isLight ? <Moon className="w-4 h-4 text-slate-800" /> : <Sun className="w-4 h-4 text-amber-400" />}
             </button>
 
             {/* Accessibility Speech Narration Toggle */}
             <button
               onClick={toggleAccessibilityMode}
               title={isAccessibilityMode ? 'Disable Blind & Low-Vision Access' : 'Enable Blind & Low-Vision Access'}
-              className={`p-2 rounded-full border transition-all cursor-pointer ${isAccessibilityMode ? 'bg-[#ef233c]/20 border-[#ef233c] text-white shadow-[0_0_10px_rgba(239,35,60,0.4)]' : 'bg-white/5 border-white/10 text-zinc-400 hover:text-white hover:border-white/20'}`}
+              className={`p-2 rounded-full border transition-all cursor-pointer ${
+                isAccessibilityMode 
+                  ? 'bg-[#ef233c]/20 border-[#ef233c] text-[#ef233c] shadow-[0_0_10px_rgba(239,35,60,0.4)]' 
+                  : isLight
+                    ? 'bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300'
+                    : 'bg-white/5 border-white/10 text-zinc-400 hover:text-white hover:border-white/20'
+              }`}
               aria-label={isAccessibilityMode ? 'Disable Blind and Low-Vision Access' : 'Enable Blind and Low-Vision Access'}
             >
               <Eye className="w-4 h-4" />
             </button>
 
             {/* Subtle Divider */}
-            <div className="hidden sm:block h-4 w-[1px] bg-white/10 mx-0.5"></div>
+            <div className={`hidden sm:block h-4 w-[1px] mx-0.5 ${isLight ? 'bg-slate-200' : 'bg-white/10'}`}></div>
 
             {/* Primary Action Button (Listen/Pause) */}
             <button 
               id="nav-get-access-btn" 
               onClick={togglePlay}
-              className="group relative inline-flex items-center justify-center overflow-hidden rounded-full bg-white/5 px-4 sm:px-5 py-2 transition-transform active:scale-95 cursor-pointer whitespace-nowrap"
+              className={`group relative inline-flex items-center justify-center overflow-hidden rounded-full px-4 sm:px-5 py-2 transition-transform active:scale-95 cursor-pointer whitespace-nowrap shadow-sm ${
+                isLight ? 'bg-slate-900 text-white' : 'bg-white/5'
+              }`}
             >
-              <span className="absolute inset-0 border border-white/10 rounded-full"></span>
-              <span className="absolute inset-[-100%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,transparent_0%,transparent_75%,#ef233c_100%)] opacity-0 group-hover:opacity-100 transition-opacity"></span>
-              <span className="absolute inset-[1px] rounded-full bg-black"></span>
+              {!isLight && (
+                <>
+                  <span className="absolute inset-0 border border-white/10 rounded-full"></span>
+                  <span className="absolute inset-[-100%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,transparent_0%,transparent_75%,#ef233c_100%)] opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                  <span className="absolute inset-[1px] rounded-full bg-black"></span>
+                </>
+              )}
               <span className="relative z-10 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-white">
                 {isPlaying ? (
                   <>
                     <Pause className="w-3.5 h-3.5 fill-[#ef233c] text-[#ef233c]" />
                     <span>Pause</span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#ef233c] animate-ping" />
                   </>
                 ) : (
                   <>
@@ -460,7 +558,11 @@ export default function App() {
             {/* Mobile / Tablet Menu Button (< lg) */}
             <button
               onClick={() => setMobileMenuOpen(prev => !prev)}
-              className="lg:hidden p-2 rounded-full border border-white/10 bg-white/5 text-zinc-300 hover:text-white hover:border-white/20 transition-all cursor-pointer"
+              className={`lg:hidden p-2 rounded-full border transition-all cursor-pointer ${
+                isLight 
+                  ? 'border-slate-200 bg-white text-slate-700 hover:text-slate-900 shadow-xs' 
+                  : 'border-white/10 bg-white/5 text-zinc-300 hover:text-white hover:border-white/20'
+              }`}
               aria-label="Toggle navigation menu"
             >
               {mobileMenuOpen ? <X className="w-4 h-4 text-[#ef233c]" /> : <Menu className="w-4 h-4" />}
@@ -470,56 +572,88 @@ export default function App() {
 
         {/* Mobile / Tablet Dropdown Menu */}
         {mobileMenuOpen && (
-          <div className="lg:hidden max-w-6xl mx-auto mt-2 p-4 bg-black/90 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl animate-fade-up">
+          <div className={`lg:hidden max-w-6xl mx-auto mt-2 p-4 rounded-2xl shadow-2xl animate-fade-up ${
+            isLight 
+              ? 'bg-white/95 backdrop-blur-2xl border border-slate-200 text-slate-800' 
+              : 'bg-black/90 backdrop-blur-2xl border border-white/10 text-white'
+          }`}>
             <div className="flex flex-col gap-1 font-inter">
               <button 
                 onClick={() => { setShowSoundGuideModal(true); setMobileMenuOpen(false); }} 
-                className="flex items-center justify-between p-2.5 rounded-xl hover:bg-white/5 text-left text-sm font-medium text-white transition-colors cursor-pointer"
+                className={`flex items-center justify-between p-2.5 rounded-xl text-left text-sm font-medium transition-colors cursor-pointer ${
+                  isLight ? 'hover:bg-slate-100 text-slate-800' : 'hover:bg-white/5 text-white'
+                }`}
               >
                 <span>Sound Guide</span>
-                <ChevronRight className="w-4 h-4 text-zinc-500" />
+                <ChevronRight className="w-4 h-4 text-zinc-400" />
               </button>
               <button 
                 onClick={() => { setShowScienceModal(true); setMobileMenuOpen(false); }} 
-                className="flex items-center justify-between p-2.5 rounded-xl hover:bg-white/5 text-left text-sm font-medium text-zinc-300 hover:text-white transition-colors cursor-pointer"
+                className={`flex items-center justify-between p-2.5 rounded-xl text-left text-sm font-medium transition-colors cursor-pointer ${
+                  isLight ? 'hover:bg-slate-100 text-slate-700 hover:text-slate-900' : 'hover:bg-white/5 text-zinc-300 hover:text-white'
+                }`}
               >
                 <span>Science & Math</span>
-                <ChevronRight className="w-4 h-4 text-zinc-500" />
+                <ChevronRight className="w-4 h-4 text-zinc-400" />
               </button>
               <button 
                 onClick={() => { setShowCreditsModal(true); setMobileMenuOpen(false); }} 
-                className="flex items-center justify-between p-2.5 rounded-xl hover:bg-white/5 text-left text-sm font-medium text-zinc-300 hover:text-white transition-colors cursor-pointer"
+                className={`flex items-center justify-between p-2.5 rounded-xl text-left text-sm font-medium transition-colors cursor-pointer ${
+                  isLight ? 'hover:bg-slate-100 text-slate-700 hover:text-slate-900' : 'hover:bg-white/5 text-zinc-300 hover:text-white'
+                }`}
               >
                 <span>NASA Open Data</span>
-                <ChevronRight className="w-4 h-4 text-zinc-500" />
+                <ChevronRight className="w-4 h-4 text-zinc-400" />
               </button>
               <a 
                 href="https://science.nasa.gov/earth/earth-information-center/" 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between p-2.5 rounded-xl hover:bg-white/5 text-left text-sm font-medium text-zinc-300 hover:text-white transition-colors"
+                className={`flex items-center justify-between p-2.5 rounded-xl text-left text-sm font-medium transition-colors ${
+                  isLight ? 'hover:bg-slate-100 text-slate-700 hover:text-slate-900' : 'hover:bg-white/5 text-zinc-300 hover:text-white'
+                }`}
               >
                 <span>Earth Info Center</span>
-                <ChevronRight className="w-4 h-4 text-zinc-500" />
+                <ChevronRight className="w-4 h-4 text-zinc-400" />
               </a>
               <a 
                 href="#timeline-section" 
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between p-2.5 rounded-xl hover:bg-white/5 text-left text-sm font-medium text-zinc-300 hover:text-white transition-colors"
+                className={`flex items-center justify-between p-2.5 rounded-xl text-left text-sm font-medium transition-colors ${
+                  isLight ? 'hover:bg-slate-100 text-slate-700 hover:text-slate-900' : 'hover:bg-white/5 text-zinc-300 hover:text-white'
+                }`}
               >
                 <span>Time Machine</span>
-                <ChevronRight className="w-4 h-4 text-zinc-500" />
+                <ChevronRight className="w-4 h-4 text-zinc-400" />
               </a>
               <button 
+                onClick={() => { toggleTheme(); setMobileMenuOpen(false); }} 
+                className={`flex items-center justify-between p-2.5 rounded-xl text-left text-sm font-medium transition-colors cursor-pointer ${
+                  isLight ? 'hover:bg-slate-100 text-slate-700 hover:text-slate-900' : 'hover:bg-white/5 text-zinc-300 hover:text-white'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  {isLight ? <Moon className="w-4 h-4 text-slate-700" /> : <Sun className="w-4 h-4 text-amber-400" />}
+                  <span>Appearance</span>
+                </div>
+                <span className={`text-[10px] px-2 py-0.5 rounded font-mono font-bold uppercase ${
+                  isLight ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-white/10 text-zinc-300'
+                }`}>
+                  {isLight ? 'White Theme' : 'Dark Theme'}
+                </span>
+              </button>
+              <button 
                 onClick={() => { toggleAccessibilityMode(); setMobileMenuOpen(false); }} 
-                className="flex items-center justify-between p-2.5 rounded-xl hover:bg-white/5 text-left text-sm font-medium text-zinc-300 hover:text-white transition-colors cursor-pointer"
+                className={`flex items-center justify-between p-2.5 rounded-xl text-left text-sm font-medium transition-colors cursor-pointer ${
+                  isLight ? 'hover:bg-slate-100 text-slate-700 hover:text-slate-900' : 'hover:bg-white/5 text-zinc-300 hover:text-white'
+                }`}
               >
                 <div className="flex items-center gap-2">
                   <Eye className="w-4 h-4 text-[#ef233c]" />
                   <span>Blind & Low-Vision Access</span>
                 </div>
-                <span className={`text-[10px] px-2 py-0.5 rounded font-mono ${isAccessibilityMode ? 'bg-[#ef233c]/20 text-[#ef233c] border border-[#ef233c]/40' : 'bg-white/5 text-zinc-400'}`}>
+                <span className={`text-[10px] px-2 py-0.5 rounded font-mono ${isAccessibilityMode ? 'bg-[#ef233c]/20 text-[#ef233c] border border-[#ef233c]/40' : (isLight ? 'bg-slate-100 text-slate-600' : 'bg-white/5 text-zinc-400')}`}>
                   {isAccessibilityMode ? 'ON' : 'OFF'}
                 </span>
               </button>
@@ -532,19 +666,29 @@ export default function App() {
         {/* Hero Section */}
         <section className="min-h-screen flex flex-col items-center justify-center pt-32 pb-20 px-6">
           <div className="text-center max-w-5xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-8 animate-fade-up" style={{ animationDelay: '0.1s' }}>
+            <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full border backdrop-blur-md mb-8 animate-fade-up ${
+              isLight ? 'bg-white/80 border-slate-200 text-slate-800 shadow-xs' : 'bg-white/5 border-white/10 text-red-100/90'
+            }`} style={{ animationDelay: '0.1s' }}>
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-[#ef233c]"></span>
               </span>
-              <span className="text-xs font-medium text-red-100/90 tracking-wide font-manrope">
+              <span className={`text-xs font-medium tracking-wide font-manrope ${
+                isLight ? 'text-slate-700' : 'text-red-100/90'
+              }`}>
                 TerraSonus 2.0 &bull; NASA Earth Information Center Live
               </span>
             </div>
 
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight font-manrope leading-[1.15] mb-6 animate-fade-up" style={{ animationDelay: '0.2s' }}>
-              <span className="block text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-white/50">Earth Intelligence</span>
-              <span className="block text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-white/50">
+              <span className={`block text-transparent bg-clip-text ${
+                isLight ? 'bg-gradient-to-b from-slate-950 via-slate-900 to-slate-700' : 'bg-gradient-to-b from-white via-white to-white/50'
+              }`}>
+                Earth Intelligence
+              </span>
+              <span className={`block text-transparent bg-clip-text ${
+                isLight ? 'bg-gradient-to-b from-slate-950 via-slate-900 to-slate-700' : 'bg-gradient-to-b from-white via-white to-white/50'
+              }`}>
                 for the <span className="text-[#ef233c] inline-block relative">
                   Future
                   <svg className="absolute w-full h-3 -bottom-2 left-0 text-[#ef233c] opacity-60" viewBox="0 0 100 10" preserveAspectRatio="none">
@@ -554,7 +698,9 @@ export default function App() {
               </span>
             </h1>
 
-            <p className="text-base sm:text-lg text-zinc-400 max-w-xl mx-auto mb-10 leading-relaxed animate-fade-up" style={{ animationDelay: '0.3s' }}>
+            <p className={`text-base sm:text-lg max-w-xl mx-auto mb-10 leading-relaxed animate-fade-up ${
+              isLight ? 'text-slate-600' : 'text-zinc-400'
+            }`} style={{ animationDelay: '0.3s' }}>
               TerraSonus translates multi-spectral NASA Earth Observation telemetry into real-time harmonic soundscapes for science, exploration, and accessibility.
             </p>
 
@@ -568,7 +714,11 @@ export default function App() {
               <button 
                 id="hero-sound-guide-btn" 
                 onClick={() => setShowSoundGuideModal(true)} 
-                className="group px-5 py-3 rounded-full bg-white/5 border border-white/10 text-zinc-200 text-sm font-medium hover:text-white hover:bg-white/10 hover:border-[#ef233c]/40 transition-all flex items-center justify-center gap-2 cursor-pointer font-manrope w-full sm:w-auto shadow-lg"
+                className={`group px-5 py-3 rounded-full text-sm font-medium transition-all flex items-center justify-center gap-2 cursor-pointer font-manrope w-full sm:w-auto ${
+                  isLight 
+                    ? 'bg-white border border-slate-200 hover:border-[#ef233c]/60 text-slate-800 hover:text-slate-950 hover:bg-slate-50 shadow-md' 
+                    : 'bg-white/5 border border-white/10 text-zinc-200 hover:text-white hover:bg-white/10 hover:border-[#ef233c]/40 shadow-lg'
+                }`}
               >
                 <span>What Are These Sounds?</span>
               </button>
@@ -576,35 +726,46 @@ export default function App() {
               <button 
                 id="hero-github-btn" 
                 onClick={() => setShowScienceModal(true)} 
-                className="group px-5 py-3 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-300 text-sm font-medium hover:text-white hover:bg-zinc-800 transition-all flex items-center justify-center gap-2 cursor-pointer font-manrope w-full sm:w-auto"
+                className={`group px-5 py-3 rounded-full text-sm font-medium transition-all flex items-center justify-center gap-2 cursor-pointer font-manrope w-full sm:w-auto ${
+                  isLight 
+                    ? 'bg-slate-100 border border-slate-200 text-slate-700 hover:text-slate-950 hover:bg-slate-200' 
+                    : 'bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-800'
+                }`}
               >
                 <span>Scientific Math</span>
               </button>
             </div>
 
             {/* Direct Stage Navigation Chips for First-Time Explorers */}
-            <div className="mt-8 pt-6 border-t border-white/10 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3.5 animate-fade-up" style={{ animationDelay: '0.45s' }}>
-              <span className="text-[11px] font-mono tracking-wider uppercase text-zinc-400 flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#ef233c] animate-ping" />
-                <span>Explore Below:</span>
+            <div className={`mt-8 pt-6 border-t flex flex-wrap items-center justify-center gap-2.5 sm:gap-3.5 animate-fade-up ${
+              isLight ? 'border-slate-200' : 'border-white/10'
+            }`} style={{ animationDelay: '0.45s' }}>
+              <span className={`text-xs font-medium mr-1 ${isLight ? 'text-slate-500' : 'text-zinc-400'}`}>
+                Explore:
               </span>
 
               <button
                 onClick={scrollToVisualStage}
-                className="px-3.5 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#ef233c]/50 text-xs font-mono text-zinc-300 hover:text-white transition-all flex items-center gap-2 cursor-pointer"
+                className={`px-3.5 py-1.5 rounded-full border text-xs transition-all flex items-center gap-1.5 cursor-pointer ${
+                  isLight 
+                    ? 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700 hover:text-slate-900 shadow-xs' 
+                    : 'bg-white/5 hover:bg-white/10 border-white/10 hover:border-white/30 text-zinc-300 hover:text-white'
+                }`}
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-[#ef233c]" />
-                <span className="font-semibold">3D Earth Globe</span>
-                <span className="text-zinc-500 text-[10px]">&darr;</span>
+                <span>3D Earth Globe</span>
+                <span className={isLight ? 'text-slate-400 text-xs' : 'text-zinc-500 text-xs'}>&darr;</span>
               </button>
 
               <button
                 onClick={scrollToVisualStage}
-                className="px-3.5 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-blue-400/50 text-xs font-mono text-zinc-300 hover:text-white transition-all flex items-center gap-2 cursor-pointer"
+                className={`px-3.5 py-1.5 rounded-full border text-xs transition-all flex items-center gap-1.5 cursor-pointer ${
+                  isLight 
+                    ? 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700 hover:text-slate-900 shadow-xs' 
+                    : 'bg-white/5 hover:bg-white/10 border-white/10 hover:border-white/30 text-zinc-300 hover:text-white'
+                }`}
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-                <span className="font-semibold">Sensor Telemetry</span>
-                <span className="text-zinc-500 text-[10px]">&darr;</span>
+                <span>Sensor Telemetry</span>
+                <span className={isLight ? 'text-slate-400 text-xs' : 'text-zinc-500 text-xs'}>&darr;</span>
               </button>
 
               <button
@@ -616,25 +777,63 @@ export default function App() {
                     window.scrollTo({ top: Math.max(0, pos), behavior: 'smooth' });
                   }
                 }}
-                className="px-3.5 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-emerald-400/50 text-xs font-mono text-zinc-300 hover:text-white transition-all flex items-center gap-2 cursor-pointer"
+                className={`px-3.5 py-1.5 rounded-full border text-xs transition-all flex items-center gap-1.5 cursor-pointer ${
+                  isLight 
+                    ? 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700 hover:text-slate-900 shadow-xs' 
+                    : 'bg-white/5 hover:bg-white/10 border-white/10 hover:border-white/30 text-zinc-300 hover:text-white'
+                }`}
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                <span className="font-semibold">Climate Time Machine</span>
-                <span className="text-zinc-500 text-[10px]">&darr;</span>
+                <span>Climate Time Machine</span>
+                <span className={isLight ? 'text-slate-400 text-xs' : 'text-zinc-500 text-xs'}>&darr;</span>
               </button>
             </div>
           </div>
 
           {/* Logo Strip */}
-          <div className="w-full mt-20 border-y border-white/5 bg-white/[0.02] backdrop-blur-sm py-7 opacity-70 hover:opacity-100 transition-opacity">
+          <div className={`w-full mt-20 border-y py-7 transition-all ${
+            isLight 
+              ? 'border-slate-200 bg-white/80 backdrop-blur-sm shadow-xs' 
+              : 'border-white/5 bg-white/[0.02] backdrop-blur-sm opacity-70 hover:opacity-100'
+          }`}>
             <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center gap-6 md:gap-12">
-              <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase shrink-0 font-manrope">Open NASA Telemetry:</p>
-              <div className="flex flex-wrap justify-center gap-6 md:gap-10 items-center w-full text-zinc-300 text-xs sm:text-sm">
-                <div className="flex items-center gap-2 font-manrope font-semibold"><div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center text-[9px] text-white">GI</div>NASA GISS</div>
-                <div className="flex items-center gap-2 font-manrope font-semibold"><div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center text-[9px] text-white">MO</div>MODIS Terra/Aqua</div>
-                <div className="flex items-center gap-2 font-manrope font-semibold"><div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center text-[9px] text-white">VI</div>VIIRS Active Fire</div>
-                <div className="flex items-center gap-2 font-manrope font-semibold"><div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center text-[9px] text-white">PO</div>NASA POWER</div>
-                <div className="flex items-center gap-2 font-manrope font-semibold"><div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center text-[9px] text-white">EI</div>Earth Info Center</div>
+              <p className={`text-xs font-bold tracking-widest uppercase shrink-0 font-manrope ${
+                isLight ? 'text-slate-500' : 'text-zinc-500'
+              }`}>
+                Open NASA Telemetry:
+              </p>
+              <div className={`flex flex-wrap justify-center gap-6 md:gap-10 items-center w-full text-xs sm:text-sm ${
+                isLight ? 'text-slate-700' : 'text-zinc-300'
+              }`}>
+                <div className="flex items-center gap-2 font-manrope font-semibold">
+                  <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold ${
+                    isLight ? 'bg-slate-200 text-slate-800' : 'bg-white/20 text-white'
+                  }`}>GI</div>
+                  NASA GISS
+                </div>
+                <div className="flex items-center gap-2 font-manrope font-semibold">
+                  <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold ${
+                    isLight ? 'bg-slate-200 text-slate-800' : 'bg-white/20 text-white'
+                  }`}>MO</div>
+                  MODIS Terra/Aqua
+                </div>
+                <div className="flex items-center gap-2 font-manrope font-semibold">
+                  <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold ${
+                    isLight ? 'bg-slate-200 text-slate-800' : 'bg-white/20 text-white'
+                  }`}>VI</div>
+                  VIIRS Active Fire
+                </div>
+                <div className="flex items-center gap-2 font-manrope font-semibold">
+                  <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold ${
+                    isLight ? 'bg-slate-200 text-slate-800' : 'bg-white/20 text-white'
+                  }`}>PO</div>
+                  NASA POWER
+                </div>
+                <div className="flex items-center gap-2 font-manrope font-semibold">
+                  <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold ${
+                    isLight ? 'bg-slate-200 text-slate-800' : 'bg-white/20 text-white'
+                  }`}>EI</div>
+                  Earth Info Center
+                </div>
               </div>
             </div>
           </div>
@@ -643,22 +842,34 @@ export default function App() {
           <div className="w-full flex flex-col items-center justify-center pt-8 pb-4 animate-fade-up" style={{ animationDelay: '0.55s' }}>
             <button
               onClick={scrollToVisualStage}
-              className="group flex flex-col items-center gap-2 text-zinc-400 hover:text-white transition-all cursor-pointer focus:outline-none"
+              className={`group flex flex-col items-center gap-2 transition-all cursor-pointer focus:outline-none ${
+                isLight ? 'text-slate-600 hover:text-slate-900' : 'text-zinc-400 hover:text-white'
+              }`}
               aria-label="Scroll down to interactive 3D Globe and telemetry stage"
             >
-              <div className="flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/[0.04] border border-white/10 group-hover:border-[#ef233c]/50 group-hover:bg-[#ef233c]/10 transition-all backdrop-blur-md shadow-lg">
+              <div className={`flex items-center gap-2.5 px-4 py-1.5 rounded-full border transition-all backdrop-blur-md shadow-lg ${
+                isLight 
+                  ? 'bg-white/95 border-slate-200 group-hover:border-[#ef233c]/50 group-hover:bg-red-50/50 shadow-slate-200/50' 
+                  : 'bg-white/[0.04] border-white/10 group-hover:border-[#ef233c]/50 group-hover:bg-[#ef233c]/10'
+              }`}>
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-[#ef233c]"></span>
                 </span>
-                <span className="text-[11px] font-mono tracking-widest uppercase text-zinc-300 group-hover:text-white font-medium">
+                <span className={`text-[11px] font-mono tracking-widest uppercase font-medium ${
+                  isLight ? 'text-slate-700 group-hover:text-slate-900' : 'text-zinc-300 group-hover:text-white'
+                }`}>
                   Scroll To Explore 3D Globe & Soundscapes
                 </span>
                 <ChevronDown className="w-3.5 h-3.5 text-[#ef233c] group-hover:translate-y-1 transition-transform" />
               </div>
 
               {/* Animated Futuristic Mouse Wheel Indicator */}
-              <div className="w-5 h-8 rounded-full border border-white/20 group-hover:border-[#ef233c] flex items-start justify-center p-1 transition-colors shadow-[0_0_15px_rgba(239,35,60,0.15)] bg-black/40">
+              <div className={`w-5 h-8 rounded-full border flex items-start justify-center p-1 transition-colors shadow-sm ${
+                isLight 
+                  ? 'border-slate-300 group-hover:border-[#ef233c] bg-white' 
+                  : 'border-white/20 group-hover:border-[#ef233c] bg-black/40 shadow-[0_0_15px_rgba(239,35,60,0.15)]'
+              }`}>
                 <div className="w-1.5 h-2 rounded-full bg-[#ef233c] animate-scroll-wheel" />
               </div>
             </button>
@@ -669,10 +880,14 @@ export default function App() {
         <section id="interactive-stage" className="scroll-mt-24 py-24 px-6 relative">
           <div className="max-w-7xl mx-auto">
             <div className="mb-14 text-center max-w-2xl mx-auto animate-fade-up">
-              <h2 className="text-3xl sm:text-4xl font-semibold text-white tracking-tight font-manrope mb-3">
+              <h2 className={`text-3xl sm:text-4xl font-semibold tracking-tight font-manrope mb-3 ${
+                isLight ? 'text-slate-900' : 'text-white'
+              }`}>
                 Planetary Sonification <span className="text-[#ef233c]">Platform</span>
               </h2>
-              <p className="text-sm sm:text-base text-zinc-400 font-normal leading-relaxed">
+              <p className={`text-sm sm:text-base font-normal leading-relaxed ${
+                isLight ? 'text-slate-600' : 'text-zinc-400'
+              }`}>
                 Experience real-time interactive telemetry transformed into harmonically balanced acoustic soundscapes.
               </p>
             </div>
@@ -683,53 +898,73 @@ export default function App() {
               isPlaying={isPlaying}
               onOpenGuide={() => setShowSoundGuideModal(true)}
               harmonicEngine={harmonicEngine}
+              theme={theme}
             />
 
             <div id="bento-stage" className="scroll-mt-24 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 h-auto">
               {/* Main Feature Card: 3D Earth Globe */}
               <div className={`lg:col-span-2 lg:row-span-2 group relative overflow-hidden p-6 sm:p-7 border transition-all rounded-2xl flex flex-col min-h-[560px] ${
                 isPlaying 
-                  ? 'border-[#ef233c]/40 bg-gradient-to-b from-zinc-900/60 via-black to-black shadow-[0_0_50px_rgba(239,35,60,0.18)] ring-1 ring-[#ef233c]/30' 
-                  : 'border-white/10 bg-gradient-to-b from-zinc-900/50 to-black hover:border-white/20'
+                  ? isLight 
+                    ? 'border-[#ef233c]/40 bg-white shadow-xl shadow-red-500/10 ring-1 ring-[#ef233c]/30'
+                    : 'border-[#ef233c]/40 bg-gradient-to-b from-zinc-900/60 via-black to-black shadow-[0_0_50px_rgba(239,35,60,0.18)] ring-1 ring-[#ef233c]/30' 
+                  : isLight 
+                    ? 'border-slate-200 bg-white shadow-md hover:border-slate-300'
+                    : 'border-white/10 bg-gradient-to-b from-zinc-900/50 to-black hover:border-white/20'
               }`}>
                 <div className="relative z-10 h-full flex flex-col">
                   <div className="mb-4 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-[#ef233c]" />
-                      <span className="text-xs font-mono text-zinc-400 uppercase tracking-widest font-semibold">
-                        NAV // 3D TOPOLOGY
+                    <div>
+                      <span className={`text-xs font-semibold uppercase tracking-wider ${
+                        isLight ? 'text-slate-500' : 'text-zinc-400'
+                      }`}>
+                        Planetary 3D View
                       </span>
                     </div>
-                    <span className="text-xs font-mono text-[#ef233c] flex items-center gap-1.5 font-bold">
-                      {isPlaying && <span className="w-1.5 h-1.5 rounded-full bg-[#ef233c] animate-ping" />}
-                      {isPlaying ? 'AUDIO ACTIVE • SPHERICAL 3D' : 'SPHERICAL 3D'}
+                    <span className="text-xs font-mono text-[#ef233c] font-semibold">
+                      {isPlaying ? 'Audio Active' : 'Offline Topology'}
                     </span>
                   </div>
                   
-                  <h3 className="text-2xl font-semibold text-white font-manrope mb-2 tracking-tight">
+                  <h3 className={`text-2xl font-semibold font-manrope mb-2 tracking-tight ${
+                    isLight ? 'text-slate-900' : 'text-white'
+                  }`}>
                     Planetary Coordinate Navigator
                   </h3>
-                  <p className="text-zinc-400 text-sm leading-relaxed mb-4">
-                    High-contrast dark-mode procedural WebGL globe with offline continental topology, audio-reactive atmospheric pulse, and interactive telemetry hotspots.
+                  <p className={`text-sm leading-relaxed mb-4 ${
+                    isLight ? 'text-slate-600' : 'text-zinc-400'
+                  }`}>
+                    High-contrast procedural WebGL globe with offline continental topology, audio-reactive atmospheric pulse, and interactive telemetry hotspots.
                   </p>
 
-                  <div className="flex-1 w-full relative min-h-[340px] my-2 rounded-xl overflow-hidden border border-white/5">
+                  <div className={`flex-1 w-full relative min-h-[340px] my-2 rounded-xl overflow-hidden border ${
+                    isLight ? 'border-slate-200' : 'border-white/5'
+                  }`}>
                     <EarthGlobe
                       activeRegion={activeRegionId}
                       onSelectRegion={handleSelectRegion}
                       audioLevel={audioLevel}
                       autoRotateDefault={!isPlaying}
                       className="w-full h-full min-h-[340px]"
+                      theme={theme}
                     />
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-white/10 flex flex-wrap items-center justify-between gap-2">
+                  <div className={`mt-4 pt-3 border-t flex flex-wrap items-center justify-between gap-2 ${
+                    isLight ? 'border-slate-200' : 'border-white/10'
+                  }`}>
                     <div className="flex flex-wrap items-center gap-1.5">
                       {regionalHotspots.map((r, idx) => (
                         <button
                           key={r.id}
                           onClick={() => handleSelectRegion(r.id)}
-                          className={`px-3 py-1 rounded-full text-xs font-mono tracking-wider uppercase transition-all cursor-pointer ${activeRegionId === r.id ? 'bg-[#ef233c] text-white font-bold' : 'bg-white/5 border border-white/10 text-zinc-400 hover:text-white'}`}
+                          className={`px-3 py-1 rounded-full text-xs font-mono tracking-wider uppercase transition-all cursor-pointer ${
+                            activeRegionId === r.id 
+                              ? 'bg-[#ef233c] text-white font-bold' 
+                              : isLight 
+                                ? 'bg-slate-100 border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-200' 
+                                : 'bg-white/5 border border-white/10 text-zinc-400 hover:text-white'
+                          }`}
                         >
                           {idx + 1}. {r.name.split(' ')[0]}
                         </button>
@@ -747,86 +982,115 @@ export default function App() {
               {/* Feature 2: Telemetry Matrix */}
               <div className={`lg:col-span-2 group relative overflow-hidden p-6 sm:p-7 border transition-all rounded-xl flex flex-col justify-between ${
                 isPlaying 
-                  ? 'border-[#ef233c]/40 bg-gradient-to-b from-zinc-900/60 via-black to-black shadow-[0_0_50px_rgba(239,35,60,0.18)] ring-1 ring-[#ef233c]/30' 
-                  : 'border-white/10 bg-black hover:border-white/20'
+                  ? isLight 
+                    ? 'border-[#ef233c]/40 bg-white shadow-xl shadow-red-500/10 ring-1 ring-[#ef233c]/30'
+                    : 'border-[#ef233c]/40 bg-gradient-to-b from-zinc-900/60 via-black to-black shadow-[0_0_50px_rgba(239,35,60,0.18)] ring-1 ring-[#ef233c]/30' 
+                  : isLight 
+                    ? 'border-slate-200 bg-white shadow-md hover:border-slate-300'
+                    : 'border-white/10 bg-black hover:border-white/20'
               }`}>
                 <div className="relative z-10 flex flex-col h-full">
                   <div className="mb-4 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-blue-400" />
-                      <span className="text-xs font-mono text-zinc-400 uppercase tracking-widest font-semibold">
-                        SENSOR FEED // LIVE
+                    <div>
+                      <span className={`text-xs font-semibold uppercase tracking-wider ${
+                        isLight ? 'text-slate-500' : 'text-zinc-400'
+                      }`}>
+                        Active Sensor Feed
                       </span>
                     </div>
-                    <span className="text-xs font-mono text-zinc-500">
+                    <span className={`text-xs font-mono ${isLight ? 'text-slate-500' : 'text-zinc-500'}`}>
                       {activeRegion.coordinates[0].toFixed(2)}°N, {activeRegion.coordinates[1].toFixed(2)}°E
                     </span>
                   </div>
 
-                  <h3 className="text-xl sm:text-2xl font-semibold text-white font-manrope mb-1.5">
-                    {activeRegion.name} &bull; Sensor Telemetry
+                  <h3 className={`text-xl sm:text-2xl font-semibold font-manrope mb-1.5 ${
+                    isLight ? 'text-slate-900' : 'text-white'
+                  }`}>
+                    {activeRegion.name} &mdash; Sensor Telemetry
                   </h3>
-                  <p className="text-zinc-400 text-sm mb-5 leading-relaxed">
+                  <p className={`text-sm mb-5 leading-relaxed ${
+                    isLight ? 'text-slate-600' : 'text-zinc-400'
+                  }`}>
                     {activeRegion.narrative}
                   </p>
 
                   {/* 4 Sensor Metric Cards */}
                   <div className="grid grid-cols-2 gap-3 mb-5">
-                    <div className="p-3.5 rounded-xl bg-zinc-900/50 border border-zinc-800">
-                      <div className="flex items-center gap-1.5 text-xs font-mono font-medium mb-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#ef233c]" />
-                        <span className="text-red-400">ΔT • Temp Anomaly</span>
+                    <div className={`p-3.5 rounded-xl border ${
+                      isLight ? 'bg-slate-50 border-slate-200 shadow-xs' : 'bg-zinc-900/50 border-zinc-800'
+                    }`}>
+                      <div className="text-xs font-medium text-red-500 mb-1">
+                        Temperature Anomaly
                       </div>
-                      <div className="text-lg sm:text-xl font-bold font-mono text-white">
+                      <div className={`text-lg sm:text-xl font-bold font-mono ${
+                        isLight ? 'text-slate-900' : 'text-white'
+                      }`}>
                         +{currentTelemetry.tempAnomaly}°C
                       </div>
-                      <div className="text-xs text-zinc-500 font-mono mt-0.5">
-                        Drone: {Math.round(55 * Math.pow(2, currentTelemetry.tempAnomaly / 12))} Hz
+                      <div className={`text-xs font-mono mt-0.5 ${
+                        isLight ? 'text-slate-500' : 'text-zinc-500'
+                      }`}>
+                        Drone Pitch: {Math.round(55 * Math.pow(2, currentTelemetry.tempAnomaly / 12))} Hz
                       </div>
                     </div>
 
-                    <div className="p-3.5 rounded-xl bg-zinc-900/50 border border-zinc-800">
-                      <div className="flex items-center gap-1.5 text-xs font-mono font-medium mb-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-                        <span className="text-blue-400">V_w • Wind Velocity</span>
+                    <div className={`p-3.5 rounded-xl border ${
+                      isLight ? 'bg-slate-50 border-slate-200 shadow-xs' : 'bg-zinc-900/50 border-zinc-800'
+                    }`}>
+                      <div className="text-xs font-medium text-blue-500 mb-1">
+                        Wind Velocity
                       </div>
-                      <div className="text-lg sm:text-xl font-bold font-mono text-white">
+                      <div className={`text-lg sm:text-xl font-bold font-mono ${
+                        isLight ? 'text-slate-900' : 'text-white'
+                      }`}>
                         {currentTelemetry.windSpeed} m/s
                       </div>
-                      <div className="text-xs text-zinc-500 font-mono mt-0.5">
-                        Cutoff: {Math.round(250 + 3550 * (currentTelemetry.windSpeed / 15))} Hz
+                      <div className={`text-xs font-mono mt-0.5 ${
+                        isLight ? 'text-slate-500' : 'text-zinc-500'
+                      }`}>
+                        Sweep Filter: {Math.round(250 + 3550 * (currentTelemetry.windSpeed / 15))} Hz
                       </div>
                     </div>
 
-                    <div className="p-3.5 rounded-xl bg-zinc-900/50 border border-zinc-800">
-                      <div className="flex items-center gap-1.5 text-xs font-mono font-medium mb-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                        <span className="text-emerald-400">NDVI • Vegetation</span>
+                    <div className={`p-3.5 rounded-xl border ${
+                      isLight ? 'bg-slate-50 border-slate-200 shadow-xs' : 'bg-zinc-900/50 border-zinc-800'
+                    }`}>
+                      <div className="text-xs font-medium text-emerald-600 mb-1">
+                        Canopy Vegetation (NDVI)
                       </div>
-                      <div className="text-lg sm:text-xl font-bold font-mono text-white">
+                      <div className={`text-lg sm:text-xl font-bold font-mono ${
+                        isLight ? 'text-slate-900' : 'text-white'
+                      }`}>
                         {currentTelemetry.ndvi}
                       </div>
-                      <div className="text-xs text-zinc-500 font-mono mt-0.5">
+                      <div className={`text-xs font-mono mt-0.5 ${
+                        isLight ? 'text-slate-500' : 'text-zinc-500'
+                      }`}>
                         Density: {Math.round(currentTelemetry.ndvi * 100)}%
                       </div>
                     </div>
 
-                    <div className="p-3.5 rounded-xl bg-zinc-900/50 border border-zinc-800">
-                      <div className="flex items-center gap-1.5 text-xs font-mono font-medium mb-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                        <span className="text-amber-400">F_idx • Active Fire</span>
+                    <div className={`p-3.5 rounded-xl border ${
+                      isLight ? 'bg-slate-50 border-slate-200 shadow-xs' : 'bg-zinc-900/50 border-zinc-800'
+                    }`}>
+                      <div className="text-xs font-medium text-amber-600 mb-1">
+                        Active Fire Index
                       </div>
-                      <div className="text-lg sm:text-xl font-bold font-mono text-white">
+                      <div className={`text-lg sm:text-xl font-bold font-mono ${
+                        isLight ? 'text-slate-900' : 'text-white'
+                      }`}>
                         {currentTelemetry.fireIndex}
                       </div>
-                      <div className="text-xs text-zinc-500 font-mono mt-0.5">
-                        Pulse: {Math.round(60 + currentTelemetry.fireIndex * 80)} BPM
+                      <div className={`text-xs font-mono mt-0.5 ${
+                        isLight ? 'text-slate-500' : 'text-zinc-500'
+                      }`}>
+                        Pulse Tempo: {Math.round(60 + currentTelemetry.fireIndex * 80)} BPM
                       </div>
                     </div>
                   </div>
 
                   <div className="mt-auto flex items-center justify-between pt-2">
-                    <span className="text-xs text-zinc-500 font-mono">Trigger harmonic chord:</span>
+                    <span className={`text-xs font-mono ${isLight ? 'text-slate-500' : 'text-zinc-500'}`}>Trigger harmonic chord:</span>
                     <button
                       onClick={() => {
                         if (isPlaying) {
@@ -836,9 +1100,12 @@ export default function App() {
                           togglePlay();
                         }
                       }}
-                      className="px-4 py-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#ef233c]/40 text-xs font-bold uppercase tracking-wider text-white transition-all flex items-center gap-2 cursor-pointer font-manrope"
+                      className={`px-4 py-2 rounded-full border text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer font-manrope ${
+                        isLight 
+                          ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800' 
+                          : 'bg-white/5 hover:bg-white/10 border-white/10 hover:border-[#ef233c]/40 text-white'
+                      }`}
                     >
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#ef233c]" />
                       Harmonic Chime
                     </button>
                   </div>
@@ -849,20 +1116,39 @@ export default function App() {
               {/* Feature 3: Curated Track 1 */}
               <div 
                 onClick={() => handleSelectStory('arctic-retreat')}
-                className={`group relative overflow-hidden p-6 sm:p-7 border transition-all rounded-xl cursor-pointer ${activeStoryId === 'arctic-retreat' ? 'border-[#ef233c] bg-zinc-900/40 shadow-[0_0_30px_rgba(239,35,60,0.15)]' : 'border-white/10 bg-black hover:border-white/20'}`}
+                className={`group relative overflow-hidden p-6 sm:p-7 border transition-all rounded-xl cursor-pointer ${
+                  activeStoryId === 'arctic-retreat' 
+                    ? isLight 
+                      ? 'border-[#ef233c] bg-white shadow-xl shadow-red-500/15 ring-1 ring-[#ef233c]/30' 
+                      : 'border-[#ef233c] bg-zinc-900/40 shadow-[0_0_30px_rgba(239,35,60,0.15)]' 
+                    : isLight 
+                      ? 'border-slate-200 bg-white hover:border-slate-300 shadow-sm' 
+                      : 'border-white/10 bg-black hover:border-white/20'
+                }`}
               >
                 <div className="relative z-10 flex flex-col h-full">
                   <div className="mb-4 flex items-center justify-between">
-                    <span className="text-xs font-mono uppercase tracking-widest text-amber-400/90 font-semibold flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                      TRACK // 01
+                    <span className={`text-xs font-semibold uppercase tracking-wider ${
+                      isLight ? 'text-amber-700' : 'text-amber-400'
+                    }`}>
+                      Curated Story 01
                     </span>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-400/10 text-amber-300 border border-amber-400/20">
+                    <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
+                      isLight 
+                        ? 'bg-amber-50 text-amber-800 border-amber-200' 
+                        : 'bg-amber-400/10 text-amber-300 border-amber-400/20'
+                    }`}>
                       CRYOSPHERE
                     </span>
                   </div>
-                  <h3 className="text-lg sm:text-xl font-semibold text-white font-manrope mb-2">Track: Arctic Ice Retreat</h3>
-                  <p className="text-sm text-zinc-400 mb-4 leading-relaxed">
+                  <h3 className={`text-lg sm:text-xl font-semibold font-manrope mb-2 ${
+                    isLight ? 'text-slate-900' : 'text-white'
+                  }`}>
+                    Track: Arctic Ice Retreat
+                  </h3>
+                  <p className={`text-sm mb-4 leading-relaxed ${
+                    isLight ? 'text-slate-600' : 'text-zinc-400'
+                  }`}>
                     Witness four decades of polar warming and sea ice decline through deterministic pitch transformation.
                   </p>
                   <div className="mt-auto flex items-center justify-between text-xs font-mono text-[#ef233c]">
@@ -875,20 +1161,39 @@ export default function App() {
               {/* Feature 4: Curated Track 2 */}
               <div 
                 onClick={() => handleSelectStory('amazon-pulse')}
-                className={`group relative overflow-hidden p-6 sm:p-7 border transition-all rounded-xl cursor-pointer ${activeStoryId === 'amazon-pulse' ? 'border-[#ef233c] bg-zinc-900/40 shadow-[0_0_30px_rgba(239,35,60,0.15)]' : 'border-white/10 bg-black hover:border-white/20'}`}
+                className={`group relative overflow-hidden p-6 sm:p-7 border transition-all rounded-xl cursor-pointer ${
+                  activeStoryId === 'amazon-pulse' 
+                    ? isLight 
+                      ? 'border-[#ef233c] bg-white shadow-xl shadow-red-500/15 ring-1 ring-[#ef233c]/30' 
+                      : 'border-[#ef233c] bg-zinc-900/40 shadow-[0_0_30px_rgba(239,35,60,0.15)]' 
+                    : isLight 
+                      ? 'border-slate-200 bg-white hover:border-slate-300 shadow-sm' 
+                      : 'border-white/10 bg-black hover:border-white/20'
+                }`}
               >
                 <div className="relative z-10 flex flex-col h-full">
                   <div className="mb-4 flex items-center justify-between">
-                    <span className="text-xs font-mono uppercase tracking-widest text-emerald-400/90 font-semibold flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                      TRACK // 02
+                    <span className={`text-xs font-semibold uppercase tracking-wider ${
+                      isLight ? 'text-emerald-700' : 'text-emerald-400'
+                    }`}>
+                      Curated Story 02
                     </span>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-400/10 text-emerald-300 border border-emerald-400/20">
+                    <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
+                      isLight 
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
+                        : 'bg-emerald-400/10 text-emerald-300 border-emerald-400/20'
+                    }`}>
                       BIOSPHERE
                     </span>
                   </div>
-                  <h3 className="text-lg sm:text-xl font-semibold text-white font-manrope mb-2">Track: Pulse of the Amazon</h3>
-                  <p className="text-sm text-zinc-400 mb-4 leading-relaxed">
+                  <h3 className={`text-lg sm:text-xl font-semibold font-manrope mb-2 ${
+                    isLight ? 'text-slate-900' : 'text-white'
+                  }`}>
+                    Track: Pulse of the Amazon
+                  </h3>
+                  <p className={`text-sm mb-4 leading-relaxed ${
+                    isLight ? 'text-slate-600' : 'text-zinc-400'
+                  }`}>
                     Acoustic contrast between pristine biosphere canopy and encroaching drought and fire cycles.
                   </p>
                   <div className="mt-auto flex items-center justify-between text-xs font-mono text-[#ef233c]">
@@ -902,13 +1207,19 @@ export default function App() {
         </section>
 
         {/* Climate Time Machine & Sonification Grid Section */}
-        <section id="timeline-section" className="py-20 sm:py-24 px-6 bg-black relative border-t border-white/5">
+        <section id="timeline-section" className={`py-20 sm:py-24 px-6 relative border-t transition-colors ${
+          isLight ? 'bg-slate-100/70 border-slate-200' : 'bg-black border-white/5'
+        }`}>
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-12">
-              <h2 className="text-3xl sm:text-4xl font-semibold text-white font-manrope mb-3 tracking-tight">
+              <h2 className={`text-3xl sm:text-4xl font-semibold font-manrope mb-3 tracking-tight ${
+                isLight ? 'text-slate-900' : 'text-white'
+              }`}>
                 Climate Time Machine & Sonification Grid
               </h2>
-              <p className="text-sm sm:text-base text-zinc-400 max-w-xl mx-auto leading-relaxed">
+              <p className={`text-sm sm:text-base max-w-xl mx-auto leading-relaxed ${
+                isLight ? 'text-slate-600' : 'text-zinc-400'
+              }`}>
                 Scrub across 47 years of observation. Audibly detect the acceleration of planetary warming.
               </p>
             </div>
@@ -926,51 +1237,88 @@ export default function App() {
               setShowScienceModal={setShowScienceModal}
               setShowCreditsModal={setShowCreditsModal}
               activeRegion={activeRegion}
+              theme={theme}
             />
 
             {/* 3 Sonification Voice Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
               {/* Voice 1: Thermal Drone */}
-              <div className="p-6 sm:p-7 border border-zinc-800 bg-black hover:border-zinc-700 transition-all rounded-2xl flex flex-col">
-                <h3 className="text-lg sm:text-xl font-semibold font-manrope mb-1.5">Thermal Drone</h3>
-                <p className="text-zinc-400 text-xs sm:text-sm mb-6 leading-relaxed">NASA GISTEMP v4 anomaly mapped to deterministic sub-bass frequency.</p>
+              <div className={`p-6 sm:p-7 border transition-all rounded-2xl flex flex-col ${
+                isLight 
+                  ? 'border-slate-200 bg-white shadow-md hover:border-slate-300' 
+                  : 'border-zinc-800 bg-black hover:border-zinc-700'
+              }`}>
+                <h3 className={`text-lg sm:text-xl font-semibold font-manrope mb-1.5 ${
+                  isLight ? 'text-slate-900' : 'text-white'
+                }`}>Thermal Drone</h3>
+                <p className={`text-xs sm:text-sm mb-6 leading-relaxed ${
+                  isLight ? 'text-slate-600' : 'text-zinc-400'
+                }`}>NASA GISTEMP v4 anomaly mapped to deterministic sub-bass frequency.</p>
                 <div className="mb-6 flex items-baseline gap-1">
-                  <span className="text-3xl sm:text-4xl font-bold text-white font-mono">
+                  <span className={`text-3xl sm:text-4xl font-bold font-mono ${
+                    isLight ? 'text-slate-900' : 'text-white'
+                  }`}>
                     {Math.round(55 * Math.pow(2, currentTelemetry.tempAnomaly / 12))}
                   </span>
-                  <span className="text-zinc-500 text-sm font-mono">Hz</span>
+                  <span className={`text-sm font-mono ${isLight ? 'text-slate-500' : 'text-zinc-500'}`}>Hz</span>
                 </div>
-                <ul className="space-y-3 mb-6 flex-1">
-                  <li className="flex items-center gap-2.5 text-xs sm:text-sm text-zinc-300 font-mono"><span className="text-[#ef233c] font-mono text-xs select-none">//</span> f(ΔT) = 55.0 × 2^(ΔT/12)</li>
-                  <li className="flex items-center gap-2.5 text-xs sm:text-sm text-zinc-300 font-mono"><span className="text-[#ef233c] font-mono text-xs select-none">//</span> Continuous Bass Drone</li>
-                  <li className="flex items-center gap-2.5 text-xs sm:text-sm text-zinc-300 font-mono"><span className="text-[#ef233c] font-mono text-xs select-none">//</span> Low-Frequency Oscillator</li>
+                <ul className="space-y-2.5 mb-6 flex-1">
+                  <li className={`flex items-center gap-2 text-xs sm:text-sm ${
+                    isLight ? 'text-slate-700' : 'text-zinc-300'
+                  }`}><span className="text-[#ef233c] font-bold select-none">&ndash;</span> f(&Delta;T) = 55.0 &times; 2^(&Delta;T/12)</li>
+                  <li className={`flex items-center gap-2 text-xs sm:text-sm ${
+                    isLight ? 'text-slate-700' : 'text-zinc-300'
+                  }`}><span className="text-[#ef233c] font-bold select-none">&ndash;</span> Continuous Bass Drone</li>
+                  <li className={`flex items-center gap-2 text-xs sm:text-sm ${
+                    isLight ? 'text-slate-700' : 'text-zinc-300'
+                  }`}><span className="text-[#ef233c] font-bold select-none">&ndash;</span> Low-Frequency Oscillator</li>
                 </ul>
                 <button 
                   id="voice-drone-btn" 
                   onClick={() => setShowScienceModal(true)}
-                  className="w-full py-2.5 px-4 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-lg text-xs font-bold uppercase tracking-wider transition-all font-manrope cursor-pointer"
+                  className={`w-full py-2.5 px-4 rounded-lg text-xs font-bold uppercase tracking-wider transition-all font-manrope cursor-pointer border ${
+                    isLight 
+                      ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300 shadow-xs' 
+                      : 'bg-white/5 hover:bg-white/10 text-white border-white/10'
+                  }`}
                 >
                   Inspect Math
                 </button>
               </div>
 
               {/* Voice 2: Biosphere Canopy */}
-              <div className="relative p-6 sm:p-7 border border-[#ef233c] bg-zinc-900/40 shadow-[0_0_30px_rgba(239,35,60,0.1)] rounded-2xl flex flex-col md:-translate-y-1 z-10">
+              <div className={`relative p-6 sm:p-7 border rounded-2xl flex flex-col md:-translate-y-1 z-10 transition-all ${
+                isLight 
+                  ? 'border-[#ef233c] bg-white shadow-xl shadow-red-500/15 ring-1 ring-[#ef233c]/20' 
+                  : 'border-[#ef233c] bg-zinc-900/40 shadow-[0_0_30px_rgba(239,35,60,0.1)]'
+              }`}>
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#ef233c] text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full font-manrope">
                   Primary Voice
                 </div>
-                <h3 className="text-lg sm:text-xl font-semibold font-manrope mb-1.5">Biosphere Canopy</h3>
-                <p className="text-zinc-400 text-xs sm:text-sm mb-6 leading-relaxed">MODIS NDVI vegetation quantized to an A Minor / C Pentatonic grid.</p>
+                <h3 className={`text-lg sm:text-xl font-semibold font-manrope mb-1.5 ${
+                  isLight ? 'text-slate-900' : 'text-white'
+                }`}>Biosphere Canopy</h3>
+                <p className={`text-xs sm:text-sm mb-6 leading-relaxed ${
+                  isLight ? 'text-slate-600' : 'text-zinc-400'
+                }`}>MODIS NDVI vegetation quantized to an A Minor / C Pentatonic grid.</p>
                 <div className="mb-6 flex items-baseline gap-1">
-                  <span className="text-3xl sm:text-4xl font-bold text-white font-mono">
+                  <span className={`text-3xl sm:text-4xl font-bold font-mono ${
+                    isLight ? 'text-slate-900' : 'text-white'
+                  }`}>
                     {Math.round(currentTelemetry.ndvi * 100)}%
                   </span>
-                  <span className="text-zinc-500 text-sm font-mono">Density</span>
+                  <span className={`text-sm font-mono ${isLight ? 'text-slate-500' : 'text-zinc-500'}`}>Density</span>
                 </div>
-                <ul className="space-y-3 mb-6 flex-1">
-                  <li className="flex items-center gap-2.5 text-xs sm:text-sm text-zinc-300 font-mono"><span className="text-[#ef233c] font-mono text-xs select-none">//</span> Pentatonic Harmonic Space</li>
-                  <li className="flex items-center gap-2.5 text-xs sm:text-sm text-zinc-300 font-mono"><span className="text-[#ef233c] font-mono text-xs select-none">//</span> GEOS-FP Wind Filter Sweep</li>
-                  <li className="flex items-center gap-2.5 text-xs sm:text-sm text-zinc-300 font-mono"><span className="text-[#ef233c] font-mono text-xs select-none">//</span> Zero Dissonance Guarantee</li>
+                <ul className="space-y-2.5 mb-6 flex-1">
+                  <li className={`flex items-center gap-2 text-xs sm:text-sm ${
+                    isLight ? 'text-slate-700' : 'text-zinc-300'
+                  }`}><span className="text-[#ef233c] font-bold select-none">&ndash;</span> Pentatonic Harmonic Space</li>
+                  <li className={`flex items-center gap-2 text-xs sm:text-sm ${
+                    isLight ? 'text-slate-700' : 'text-zinc-300'
+                  }`}><span className="text-[#ef233c] font-bold select-none">&ndash;</span> GEOS-FP Wind Filter Sweep</li>
+                  <li className={`flex items-center gap-2 text-xs sm:text-sm ${
+                    isLight ? 'text-slate-700' : 'text-zinc-300'
+                  }`}><span className="text-[#ef233c] font-bold select-none">&ndash;</span> Zero Dissonance Guarantee</li>
                 </ul>
                 <button 
                   id="voice-canopy-btn" 
@@ -989,24 +1337,44 @@ export default function App() {
               </div>
 
               {/* Voice 3: Thermal Pulse */}
-              <div className="p-6 sm:p-7 border border-zinc-800 bg-black hover:border-zinc-700 transition-all rounded-2xl flex flex-col">
-                <h3 className="text-lg sm:text-xl font-semibold font-manrope mb-1.5">Thermal Fire Pulse</h3>
-                <p className="text-zinc-400 text-xs sm:text-sm mb-6 leading-relaxed">VIIRS 375m active fire telemetry driving sub-bass membrane tempo.</p>
+              <div className={`p-6 sm:p-7 border transition-all rounded-2xl flex flex-col ${
+                isLight 
+                  ? 'border-slate-200 bg-white shadow-md hover:border-slate-300' 
+                  : 'border-zinc-800 bg-black hover:border-zinc-700'
+              }`}>
+                <h3 className={`text-lg sm:text-xl font-semibold font-manrope mb-1.5 ${
+                  isLight ? 'text-slate-900' : 'text-white'
+                }`}>Thermal Fire Pulse</h3>
+                <p className={`text-xs sm:text-sm mb-6 leading-relaxed ${
+                  isLight ? 'text-slate-600' : 'text-zinc-400'
+                }`}>VIIRS 375m active fire telemetry driving sub-bass membrane tempo.</p>
                 <div className="mb-6 flex items-baseline gap-1">
-                  <span className="text-3xl sm:text-4xl font-bold text-white font-mono">
+                  <span className={`text-3xl sm:text-4xl font-bold font-mono ${
+                    isLight ? 'text-slate-900' : 'text-white'
+                  }`}>
                     {Math.round(60 + currentTelemetry.fireIndex * 80)}
                   </span>
-                  <span className="text-zinc-500 text-sm font-mono">BPM</span>
+                  <span className={`text-sm font-mono ${isLight ? 'text-slate-500' : 'text-zinc-500'}`}>BPM</span>
                 </div>
-                <ul className="space-y-3 mb-6 flex-1">
-                  <li className="flex items-center gap-2.5 text-xs sm:text-sm text-zinc-300 font-mono"><span className="text-[#ef233c] font-mono text-xs select-none">//</span> Interval = 2800 - 2400*F ms</li>
-                  <li className="flex items-center gap-2.5 text-xs sm:text-sm text-zinc-300 font-mono"><span className="text-[#ef233c] font-mono text-xs select-none">//</span> Membrane Pulse Resonator</li>
-                  <li className="flex items-center gap-2.5 text-xs sm:text-sm text-zinc-300 font-mono"><span className="text-[#ef233c] font-mono text-xs select-none">//</span> Planetary Heartbeat Tempo</li>
+                <ul className="space-y-2.5 mb-6 flex-1">
+                  <li className={`flex items-center gap-2 text-xs sm:text-sm ${
+                    isLight ? 'text-slate-700' : 'text-zinc-300'
+                  }`}><span className="text-[#ef233c] font-bold select-none">&ndash;</span> Interval = 2800 &minus; 2400 &times; Fire Index ms</li>
+                  <li className={`flex items-center gap-2 text-xs sm:text-sm ${
+                    isLight ? 'text-slate-700' : 'text-zinc-300'
+                  }`}><span className="text-[#ef233c] font-bold select-none">&ndash;</span> Membrane Pulse Resonator</li>
+                  <li className={`flex items-center gap-2 text-xs sm:text-sm ${
+                    isLight ? 'text-slate-700' : 'text-zinc-300'
+                  }`}><span className="text-[#ef233c] font-bold select-none">&ndash;</span> Planetary Heartbeat Tempo</li>
                 </ul>
                 <button 
                   id="voice-pulse-btn" 
                   onClick={() => setShowCreditsModal(true)}
-                  className="w-full py-2.5 px-4 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-lg text-xs font-bold uppercase tracking-wider transition-all font-manrope cursor-pointer"
+                  className={`w-full py-2.5 px-4 rounded-lg text-xs font-bold uppercase tracking-wider transition-all font-manrope cursor-pointer border ${
+                    isLight 
+                      ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300 shadow-xs' 
+                      : 'bg-white/5 hover:bg-white/10 text-white border-white/10'
+                  }`}
                 >
                   View NASA Citations
                 </button>
@@ -1014,13 +1382,16 @@ export default function App() {
             </div>
 
             {/* Real-time Spectrum Visualizer */}
-            <div className="border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+            <div className={`border rounded-2xl overflow-hidden shadow-2xl ${
+              isLight ? 'border-slate-200 bg-white shadow-slate-200/50' : 'border-white/10 bg-black'
+            }`}>
               <AudioVisualizer
                 harmonicEngine={harmonicEngine}
                 isPlaying={isPlaying}
                 audioLevel={audioLevel}
                 height={140}
-                theme="crimson"
+                theme={isLight ? 'cyan' : 'crimson'}
+                appTheme={theme}
                 title="ACOUSTIC FREQUENCY SPECTRUM"
                 subtitle="Real-time Tone.js FFT Analysis & Waveform Oscilloscope"
               />
@@ -1029,12 +1400,18 @@ export default function App() {
         </section>
 
         {/* CTA Waitlist / Listen */}
-        <section className="py-20 sm:py-24 px-6 text-center bg-zinc-950/40 border-t border-white/5">
+        <section className={`py-20 sm:py-24 px-6 text-center border-t transition-colors ${
+          isLight ? 'bg-white border-slate-200' : 'bg-zinc-950/40 border-white/5'
+        }`}>
           <div className="max-w-3xl mx-auto">
-            <h2 className="text-3xl sm:text-4xl font-semibold font-manrope mb-3 tracking-tight">
+            <h2 className={`text-3xl sm:text-4xl font-semibold font-manrope mb-3 tracking-tight ${
+              isLight ? 'text-slate-900' : 'text-white'
+            }`}>
               Ready to <span className="text-[#ef233c]">Listen?</span>
             </h2>
-            <p className="text-sm sm:text-base text-zinc-400 mb-8 max-w-lg mx-auto leading-relaxed">
+            <p className={`text-sm sm:text-base mb-8 max-w-lg mx-auto leading-relaxed ${
+              isLight ? 'text-slate-600' : 'text-zinc-400'
+            }`}>
               Experience planetary telemetry synthesized into real-time sound. Accessible, deterministic, and open source.
             </p>
             
@@ -1049,7 +1426,11 @@ export default function App() {
                 type="text" 
                 readOnly
                 value={isPlaying ? `Playing: ${activeRegion.name}` : `Ready: ${activeRegion.name} (${Math.round(currentYear)})`} 
-                className="flex-1 bg-white/5 border border-white/10 rounded-full px-5 py-3 text-white focus:outline-none focus:border-[#ef233c] transition-all text-xs font-mono"
+                className={`flex-1 rounded-full px-5 py-3 transition-all text-xs font-mono border ${
+                  isLight 
+                    ? 'bg-slate-50 border-slate-300 text-slate-800 focus:outline-none focus:border-[#ef233c]' 
+                    : 'bg-white/5 border-white/10 text-white focus:outline-none focus:border-[#ef233c]'
+                }`}
               />
               <button 
                 id="stream-submit-btn" 
@@ -1064,7 +1445,9 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-black border-t border-zinc-900 pt-16 pb-10 relative overflow-hidden">
+      <footer className={`border-t pt-16 pb-10 relative overflow-hidden transition-colors ${
+        isLight ? 'bg-slate-900 text-slate-100 border-slate-800' : 'bg-black border-zinc-900'
+      }`}>
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12 mb-16 relative z-10">
           <div className="md:col-span-2">
             <div className="flex items-center gap-2.5 mb-6">
@@ -1075,8 +1458,8 @@ export default function App() {
               />
               <span className="text-2xl font-bold font-manrope tracking-tight text-white">TerraSonus</span>
             </div>
-            <p className="text-zinc-500 max-w-xs leading-relaxed">
-              Pioneering the future of multi-sensory planetary observation with artificial intelligence, deterministic sound synthesis, and human-centered design principles.
+            <p className="text-zinc-400 max-w-xs leading-relaxed">
+              Pioneering multi-sensory planetary observation through deterministic sonification, open satellite telemetry, and accessible scientific design.
             </p>
           </div>
           
@@ -1136,12 +1519,12 @@ export default function App() {
           <h1 className="text-[14vw] leading-none font-bold font-manrope tracking-tight text-stroke select-none">TERRASONUS</h1>
         </div>
 
-        <div className="max-w-7xl mx-auto px-6 border-t border-zinc-900 pt-8 flex flex-col md:flex-row items-center justify-between text-zinc-600 text-[10px] uppercase tracking-widest">
-          <p>&copy; 2026 TerraSonus AI. All rights reserved.</p>
+        <div className="max-w-7xl mx-auto px-6 border-t border-zinc-800 pt-8 flex flex-col md:flex-row items-center justify-between text-zinc-500 text-[10px] uppercase tracking-widest">
+          <p>&copy; 2026 TerraSonus. All rights reserved.</p>
           <div className="flex gap-6 mt-4 md:mt-0 font-mono">
-            <span id="social-twitter-link" className="text-zinc-500">GISTEMP v4</span>
-            <span id="social-linkedin-link" className="text-zinc-500">MODIS NDVI</span>
-            <span id="social-github-link" className="text-zinc-500">VIIRS Active Fire</span>
+            <span id="social-twitter-link" className="text-zinc-400">GISTEMP v4</span>
+            <span id="social-linkedin-link" className="text-zinc-400">MODIS NDVI</span>
+            <span id="social-github-link" className="text-zinc-400">VIIRS Active Fire</span>
           </div>
         </div>
       </footer>
@@ -1149,88 +1532,94 @@ export default function App() {
       {/* Prominent Center-Stage Headphones Entrance Modal */}
       {showHeadphonesEntranceModal && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-2xl animate-fade-up"
+          className={`fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-2xl animate-fade-up ${
+            isLight ? 'bg-slate-900/50' : 'bg-black/85'
+          }`}
           role="dialog"
           aria-modal="true"
           aria-labelledby="headphones-dialog-title"
         >
-          <div className="relative w-full max-w-lg bg-zinc-950/95 border border-[#ef233c]/40 rounded-3xl p-6 sm:p-8 text-center text-white shadow-[0_0_80px_rgba(239,35,60,0.25)] ring-1 ring-[#ef233c]/30 overflow-hidden">
+          <div className={`relative w-full max-w-lg rounded-3xl p-6 sm:p-8 text-center shadow-2xl overflow-hidden transition-all ${
+            isLight 
+              ? 'bg-white border border-slate-200 text-slate-900 shadow-slate-300/60' 
+              : 'bg-zinc-950/95 border border-[#ef233c]/40 text-white shadow-[0_0_80px_rgba(239,35,60,0.25)] ring-1 ring-[#ef233c]/30'
+          }`}>
             {/* Glowing atmospheric red blob */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-80 h-80 bg-red-600/15 rounded-full blur-3xl pointer-events-none" />
+            <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-80 h-80 rounded-full blur-3xl pointer-events-none ${
+              isLight ? 'bg-red-400/10' : 'bg-red-600/15'
+            }`} />
 
             {/* Close Button */}
             <button
-              onClick={() => {
-                setShowHeadphonesEntranceModal(false);
-                if (typeof window !== 'undefined') sessionStorage.setItem('terrasonus_headphones_seen', 'true');
-              }}
-              className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+              onClick={() => setShowHeadphonesEntranceModal(false)}
+              className={`absolute top-4 right-4 p-2 rounded-full transition-colors cursor-pointer ${
+                isLight ? 'hover:bg-slate-100 text-slate-400 hover:text-slate-900' : 'hover:bg-white/10 text-zinc-400 hover:text-white'
+              }`}
               aria-label="Close announcement"
             >
               <X className="w-5 h-5" />
             </button>
 
             {/* Glowing Icon */}
-            <div className="relative z-10 w-20 h-20 mx-auto mb-5 rounded-2xl bg-gradient-to-tr from-[#ef233c]/25 via-zinc-900 to-zinc-950 border border-[#ef233c]/50 flex items-center justify-center text-[#ef233c] shadow-2xl shadow-red-950/80">
+            <div className={`relative z-10 w-20 h-20 mx-auto mb-5 rounded-2xl flex items-center justify-center text-[#ef233c] shadow-xl ${
+              isLight 
+                ? 'bg-red-50 border border-red-200' 
+                : 'bg-gradient-to-tr from-[#ef233c]/25 via-zinc-900 to-zinc-950 border border-[#ef233c]/50 shadow-red-950/80'
+            }`}>
               <Headphones className="w-10 h-10 animate-pulse" />
             </div>
 
             {/* Badge */}
-            <div className="relative z-10 inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/5 border border-white/10 text-[11px] font-mono tracking-widest text-[#ef233c] uppercase mb-3">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#ef233c] animate-ping" />
-              Immersive Planetary Audio
+            <div className={`relative z-10 inline-flex items-center px-3.5 py-1 rounded-full text-xs font-semibold tracking-wider uppercase mb-3 border ${
+              isLight ? 'bg-red-50 border-red-200 text-[#ef233c]' : 'bg-white/5 border-white/10 text-[#ef233c]'
+            }`}>
+              Headphones Recommended
             </div>
 
             {/* Title */}
-            <h2 id="headphones-dialog-title" className="relative z-10 text-2xl sm:text-3xl font-bold font-manrope tracking-tight text-white mb-3">
+            <h2 id="headphones-dialog-title" className={`relative z-10 text-2xl sm:text-3xl font-bold font-manrope tracking-tight mb-3 ${
+              isLight ? 'text-slate-900' : 'text-white'
+            }`}>
               Please Wear <span className="text-[#ef233c]">Headphones</span>
             </h2>
 
             {/* Description */}
-            <p className="relative z-10 text-zinc-300 text-sm leading-relaxed font-inter mb-6">
+            <p className={`relative z-10 text-sm leading-relaxed font-inter mb-6 ${
+              isLight ? 'text-slate-600' : 'text-zinc-300'
+            }`}>
               TerraSonus translates NASA Earth Observation telemetry into real-time deterministic soundscapes. For the best sensory perception of 55 Hz sub-bass planetary drones, spatial wind filter sweeps, and crystal pentatonic harmonics, wearing headphones is strongly recommended.
             </p>
 
             {/* Telemetry Feature Badges */}
             <div className="relative z-10 grid grid-cols-3 gap-2.5 mb-7 text-left">
-              <div className="p-3 rounded-xl bg-black border border-zinc-800">
-                <div className="text-[10px] font-mono text-zinc-500 uppercase">Sub-Bass Drone</div>
-                <div className="text-xs font-bold text-white font-mono mt-0.5">55 Hz Pitch</div>
+              <div className={`p-3 rounded-xl border ${
+                isLight ? 'bg-slate-50 border-slate-200' : 'bg-black border-zinc-800'
+              }`}>
+                <div className={`text-[10px] font-mono uppercase ${isLight ? 'text-slate-500' : 'text-zinc-500'}`}>Sub-Bass Drone</div>
+                <div className={`text-xs font-bold font-mono mt-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>55 Hz Pitch</div>
               </div>
-              <div className="p-3 rounded-xl bg-black border border-zinc-800">
-                <div className="text-[10px] font-mono text-zinc-500 uppercase">Stereo Field</div>
-                <div className="text-xs font-bold text-white font-mono mt-0.5">3D Spatial Pan</div>
+              <div className={`p-3 rounded-xl border ${
+                isLight ? 'bg-slate-50 border-slate-200' : 'bg-black border-zinc-800'
+              }`}>
+                <div className={`text-[10px] font-mono uppercase ${isLight ? 'text-slate-500' : 'text-zinc-500'}`}>Stereo Field</div>
+                <div className={`text-xs font-bold font-mono mt-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>3D Spatial Pan</div>
               </div>
-              <div className="p-3 rounded-xl bg-black border border-zinc-800">
-                <div className="text-[10px] font-mono text-zinc-500 uppercase">Harmonics</div>
-                <div className="text-xs font-bold text-white font-mono mt-0.5">Pentatonic Grid</div>
+              <div className={`p-3 rounded-xl border ${
+                isLight ? 'bg-slate-50 border-slate-200' : 'bg-black border-zinc-800'
+              }`}>
+                <div className={`text-[10px] font-mono uppercase ${isLight ? 'text-slate-500' : 'text-zinc-500'}`}>Harmonics</div>
+                <div className={`text-xs font-bold font-mono mt-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>Pentatonic Grid</div>
               </div>
             </div>
 
-            {/* Dual CTAs */}
-            <div className="relative z-10 flex flex-col sm:flex-row gap-3">
+            {/* Single Confirmation Action */}
+            <div className="relative z-10 flex justify-center mt-2">
               <button
-                onClick={() => {
-                  setShowHeadphonesEntranceModal(false);
-                  if (typeof window !== 'undefined') sessionStorage.setItem('terrasonus_headphones_seen', 'true');
-                  scrollToVisualStage();
-                }}
-                className="flex-1 py-3.5 px-6 rounded-full bg-[#ef233c] hover:bg-red-700 text-white font-bold font-manrope text-xs uppercase tracking-wider transition-all cursor-pointer shadow-lg shadow-red-950/60 active:scale-95 flex items-center justify-center gap-2"
+                id="headphones-ok-btn"
+                onClick={() => setShowHeadphonesEntranceModal(false)}
+                className="w-full sm:w-auto min-w-[200px] py-3.5 px-8 rounded-full bg-[#ef233c] hover:bg-red-700 text-white font-bold font-manrope text-sm tracking-wider uppercase transition-all cursor-pointer shadow-lg shadow-red-950/60 hover:shadow-[0_0_25px_rgba(239,35,60,0.5)] active:scale-95 flex items-center justify-center gap-2"
               >
-                <span>Explore 3D Globe First</span>
-                <span>&darr;</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  setShowHeadphonesEntranceModal(false);
-                  if (typeof window !== 'undefined') sessionStorage.setItem('terrasonus_headphones_seen', 'true');
-                  togglePlay();
-                }}
-                className="py-3.5 px-6 rounded-full bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/10 text-xs font-bold font-manrope uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2"
-              >
-                <Headphones className="w-4 h-4 text-[#ef233c]" />
-                <span>Start Listening</span>
+                <span>OK</span>
               </button>
             </div>
           </div>
@@ -1247,7 +1636,11 @@ export default function App() {
       >
         <button
           onClick={scrollToVisualStage}
-          className="group flex items-center gap-2.5 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-black/90 backdrop-blur-xl border border-white/20 hover:border-[#ef233c] shadow-[0_10px_35px_rgba(0,0,0,0.9)] hover:shadow-[0_0_30px_rgba(239,35,60,0.4)] text-xs font-mono text-zinc-200 hover:text-white transition-all cursor-pointer hover:scale-105 active:scale-95 ring-1 ring-white/10"
+          className={`group flex items-center gap-2.5 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full backdrop-blur-xl border text-xs font-mono transition-all cursor-pointer hover:scale-105 active:scale-95 ${
+            isLight 
+              ? 'bg-white/95 border-slate-300 hover:border-[#ef233c] shadow-xl shadow-slate-300/60 text-slate-800 hover:text-slate-950 ring-1 ring-slate-200' 
+              : 'bg-black/90 border-white/20 hover:border-[#ef233c] shadow-[0_10px_35px_rgba(0,0,0,0.9)] hover:shadow-[0_0_30px_rgba(239,35,60,0.4)] text-zinc-200 hover:text-white ring-1 ring-white/10'
+          }`}
           aria-label="Scroll down to 3D Globe and sensory telemetry"
         >
           <span className="relative flex h-2 w-2">
@@ -1268,18 +1661,25 @@ export default function App() {
           role="status"
           aria-live="polite"
         >
-          <div className="relative bg-zinc-950/95 backdrop-blur-xl border border-[#ef233c]/50 rounded-2xl p-4 shadow-2xl shadow-red-950/80 ring-1 ring-[#ef233c]/30 text-white">
+          <div className={`relative backdrop-blur-xl border border-[#ef233c]/50 rounded-2xl p-4 shadow-2xl ring-1 ring-[#ef233c]/30 ${
+            isLight 
+              ? 'bg-white/95 text-slate-900 shadow-slate-300/80' 
+              : 'bg-zinc-950/95 text-white shadow-red-950/80'
+          }`}>
             <div className="relative z-10 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-[#ef233c]/15 border border-[#ef233c]/40 flex items-center justify-center shrink-0 text-[#ef233c]">
                   <Headphones className="w-4 h-4 animate-pulse" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold font-manrope text-white flex items-center gap-1.5">
-                    <span>Headphones Recommended</span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#ef233c] animate-ping" />
+                  <div className={`text-xs font-bold font-manrope ${
+                    isLight ? 'text-slate-900' : 'text-white'
+                  }`}>
+                    Headphones Recommended
                   </div>
-                  <div className="text-[11px] text-zinc-400 font-inter">
+                  <div className={`text-[11px] font-inter ${
+                    isLight ? 'text-slate-500' : 'text-zinc-400'
+                  }`}>
                     Stereo spatial audio streaming live
                   </div>
                 </div>
@@ -1287,7 +1687,9 @@ export default function App() {
 
               <button
                 onClick={() => setShowHeadphonesBanner(false)}
-                className="p-1 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                className={`p-1 rounded-full transition-colors cursor-pointer ${
+                  isLight ? 'hover:bg-slate-100 text-slate-400 hover:text-slate-800' : 'hover:bg-white/10 text-zinc-400 hover:text-white'
+                }`}
                 aria-label="Dismiss notification"
               >
                 <X className="w-3.5 h-3.5" />
@@ -1301,10 +1703,12 @@ export default function App() {
       <ScienceModal 
         isOpen={showScienceModal} 
         onClose={() => setShowScienceModal(false)} 
+        theme={theme}
       />
       <CreditsModal 
         isOpen={showCreditsModal} 
         onClose={() => setShowCreditsModal(false)} 
+        theme={theme}
       />
       <SoundGuideModal 
         isOpen={showSoundGuideModal} 
@@ -1312,6 +1716,7 @@ export default function App() {
         onStartListening={togglePlay}
         harmonicEngine={harmonicEngine}
         isPlaying={isPlaying}
+        theme={theme}
       />
     </div>
   );

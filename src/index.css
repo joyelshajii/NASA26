@@ -12,6 +12,12 @@ html, body {
   background-color: #000000;
   color: #ffffff;
   line-height: 1.5;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+html.light, body.light {
+  background-color: #f8fafc;
+  color: #0f172a;
 }
 
 /* Custom Animations */
@@ -102,6 +108,12 @@ html, body {
   background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
   backdrop-filter: blur(8px);
   mask-image: linear-gradient(to bottom, black, transparent);
+  transition: background 0.3s ease;
+}
+
+html.light .gradient-blur {
+  background: linear-gradient(to bottom, rgba(248,250,252,0.85), transparent);
+  mask-image: linear-gradient(to bottom, black, transparent);
 }
 
 .selection-red::selection {
@@ -119,6 +131,17 @@ html, body {
   color: transparent;
 }
 
+html.light .text-stroke {
+  -webkit-text-stroke: 1.5px rgba(15, 23, 42, 0.08);
+  color: transparent;
+}
+
+html.light .shiny-cta {
+  background: linear-gradient(#0f172a, #0f172a) padding-box,
+  conic-gradient(from var(--gradient-angle), transparent 0%, #ef233c 5%, #ef233c 15%, #ef233c 30%, transparent 40%, transparent 100%) border-box;
+  box-shadow: 0 10px 25px -5px rgba(239, 35, 60, 0.25);
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
@@ -127,10 +150,17 @@ html, body {
 ::-webkit-scrollbar-track {
   background: #000000;
 }
+html.light ::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
 ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.15);
   border-radius: 9999px;
 }
-::-webkit-scrollbar-thumb:hover {
+html.light ::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.28);
+}
+::-webkit-scrollbar-thumb:hover,
+html.light ::-webkit-scrollbar-thumb:hover {
   background: #ef233c;
 }

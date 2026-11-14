@@ -8,7 +8,7 @@ import { DEFAULT_REGIONS, CONTINENT_POLYGONS, latLonToVector3 } from '../utils/g
  * Creates high-contrast dark-mode Earth canvas texture with offline procedural landmasses.
  * Uses 100% client-side canvas generation without any CDN or external assets.
  */
-function createProceduralEarthTexture() {
+function createProceduralEarthTexture(isLight = false) {
   const width = 2048;
   const height = 1024;
   const canvas = document.createElement('canvas');
@@ -18,133 +18,257 @@ function createProceduralEarthTexture() {
 
   if (!ctx) return new THREE.Texture();
 
-  // 1. Deep Oceanic Void: #080b12 with polar depth gradients
-  const oceanGrad = ctx.createLinearGradient(0, 0, 0, height);
-  oceanGrad.addColorStop(0, '#04060a');
-  oceanGrad.addColorStop(0.2, '#080c16');
-  oceanGrad.addColorStop(0.5, '#0b101d');
-  oceanGrad.addColorStop(0.8, '#080c16');
-  oceanGrad.addColorStop(1, '#04060a');
-  ctx.fillStyle = oceanGrad;
-  ctx.fillRect(0, 0, width, height);
+  if (isLight) {
+    // 1. Serene Crystalline Oceanic Gradient: #cbe5fd to #9fcbfb with polar cyan highlights
+    const oceanGrad = ctx.createLinearGradient(0, 0, 0, height);
+    oceanGrad.addColorStop(0, '#c7d2fe');
+    oceanGrad.addColorStop(0.2, '#bae6fd');
+    oceanGrad.addColorStop(0.5, '#e0f2fe');
+    oceanGrad.addColorStop(0.8, '#bae6fd');
+    oceanGrad.addColorStop(1, '#c7d2fe');
+    ctx.fillStyle = oceanGrad;
+    ctx.fillRect(0, 0, width, height);
 
-  // 2. Latitude and Longitude Grids (#334155/30)
-  ctx.lineWidth = 1;
-  ctx.strokeStyle = 'rgba(51, 65, 85, 0.28)';
+    // 2. Latitude and Longitude Grids (Sky Cyan)
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(2, 132, 199, 0.22)';
 
-  // Parallels (every 15 degrees)
-  for (let lat = -75; lat <= 75; lat += 15) {
-    const y = ((90 - lat) / 180) * height;
-    ctx.beginPath();
-    if (lat === 0) {
-      ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
-      ctx.lineWidth = 1.5;
-    } else {
-      ctx.strokeStyle = 'rgba(51, 65, 85, 0.25)';
-      ctx.lineWidth = 1;
-    }
-    ctx.moveTo(0, y);
-    ctx.lineTo(width, y);
-    ctx.stroke();
-  }
-
-  // Meridians (every 30 degrees)
-  for (let lon = -180; lon <= 180; lon += 30) {
-    const x = ((lon + 180) / 360) * width;
-    ctx.beginPath();
-    if (lon === 0) {
-      ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
-      ctx.lineWidth = 1.5;
-    } else {
-      ctx.strokeStyle = 'rgba(51, 65, 85, 0.25)';
-      ctx.lineWidth = 1;
-    }
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, height);
-    ctx.stroke();
-  }
-
-  // 3. Draw Continental Landmasses
-  for (const continent of CONTINENT_POLYGONS) {
-    if (continent.pts.length < 3) continue;
-
-    ctx.save();
-    ctx.beginPath();
-    const firstPt = continent.pts[0];
-    ctx.moveTo(((firstPt[0] + 180) / 360) * width, ((90 - firstPt[1]) / 180) * height);
-
-    for (let i = 1; i < continent.pts.length; i++) {
-      const pt = continent.pts[i];
-      ctx.lineTo(((pt[0] + 180) / 360) * width, ((90 - pt[1]) / 180) * height);
-    }
-    ctx.closePath();
-
-    // Clip to continent for interior topography and sensor dot matrix
-    ctx.save();
-    ctx.clip();
-
-    // Continent Base: Dark Slate #1a2233
-    ctx.fillStyle = '#1a2233';
-    ctx.fill();
-
-    // Subtle elevation shading
-    ctx.fillStyle = '#222f46';
-    ctx.fill();
-
-    // Cybernetic Sensor Dots across landmass
-    ctx.fillStyle = 'rgba(56, 189, 248, 0.20)';
-    let minLon = 180;
-    let maxLon = -180;
-    let minLat = 90;
-    let maxLat = -90;
-    for (const [lon, lat] of continent.pts) {
-      if (lon < minLon) minLon = lon;
-      if (lon > maxLon) maxLon = lon;
-      if (lat < minLat) minLat = lat;
-      if (lat > maxLat) maxLat = lat;
-    }
-    const startX = Math.floor(((minLon + 180) / 360) * width);
-    const endX = Math.ceil(((maxLon + 180) / 360) * width);
-    const startY = Math.floor(((90 - maxLat) / 180) * height);
-    const endY = Math.ceil(((90 - minLat) / 180) * height);
-
-    const step = 16;
-    for (let px = startX; px <= endX; px += step) {
-      for (let py = startY; py <= endY; py += step) {
-        ctx.beginPath();
-        ctx.arc(px, py, 1.2, 0, Math.PI * 2);
-        ctx.fill();
+    for (let lat = -75; lat <= 75; lat += 15) {
+      const y = ((90 - lat) / 180) * height;
+      ctx.beginPath();
+      if (lat === 0) {
+        ctx.strokeStyle = 'rgba(2, 132, 199, 0.55)';
+        ctx.lineWidth = 1.5;
+      } else {
+        ctx.strokeStyle = 'rgba(2, 132, 199, 0.20)';
+        ctx.lineWidth = 1;
       }
+      ctx.moveTo(0, y);
+      ctx.lineTo(width, y);
+      ctx.stroke();
     }
-    ctx.restore();
 
-    // Luminous Shoreline Outline in Cyan-Slate (#38bdf8 / #334155)
-    ctx.lineWidth = 1.4;
-    ctx.strokeStyle = 'rgba(56, 189, 248, 0.55)';
-    ctx.stroke();
+    for (let lon = -180; lon <= 180; lon += 30) {
+      const x = ((lon + 180) / 360) * width;
+      ctx.beginPath();
+      if (lon === 0) {
+        ctx.strokeStyle = 'rgba(2, 132, 199, 0.55)';
+        ctx.lineWidth = 1.5;
+      } else {
+        ctx.strokeStyle = 'rgba(2, 132, 199, 0.20)';
+        ctx.lineWidth = 1;
+      }
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, height);
+      ctx.stroke();
+    }
 
-    ctx.restore();
-  }
+    // 3. Draw Continental Landmasses
+    for (const continent of CONTINENT_POLYGONS) {
+      if (continent.pts.length < 3) continue;
 
-  // 4. Subtle Biome Telemetry Zones on the texture
-  const biomeHalos = [
-    { lon: -62.2, lat: -3.5, color: 'rgba(16, 185, 129, 0.35)', r: 60 },  // Amazon
-    { lon: 25.6, lat: 23.4, color: 'rgba(245, 158, 11, 0.30)', r: 75 },   // Sahara
-    { lon: 15.6, lat: 78.2, color: 'rgba(56, 189, 248, 0.40)', r: 90 },   // Arctic
-    { lon: 147.7, lat: -18.3, color: 'rgba(6, 182, 212, 0.35)', r: 50 },  // Reef
-    { lon: 77.2, lat: 28.6, color: 'rgba(239, 68, 68, 0.30)', r: 55 }    // Indo-Gangetic
-  ];
+      ctx.save();
+      ctx.beginPath();
+      const firstPt = continent.pts[0];
+      ctx.moveTo(((firstPt[0] + 180) / 360) * width, ((90 - firstPt[1]) / 180) * height);
 
-  for (const b of biomeHalos) {
-    const cx = ((b.lon + 180) / 360) * width;
-    const cy = ((90 - b.lat) / 180) * height;
-    const radial = ctx.createRadialGradient(cx, cy, 2, cx, cy, b.r);
-    radial.addColorStop(0, b.color);
-    radial.addColorStop(1, 'transparent');
-    ctx.fillStyle = radial;
-    ctx.beginPath();
-    ctx.arc(cx, cy, b.r, 0, Math.PI * 2);
-    ctx.fill();
+      for (let i = 1; i < continent.pts.length; i++) {
+        const pt = continent.pts[i];
+        ctx.lineTo(((pt[0] + 180) / 360) * width, ((90 - pt[1]) / 180) * height);
+      }
+      ctx.closePath();
+
+      ctx.save();
+      ctx.clip();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+
+      ctx.fillStyle = '#f1f5f9';
+      ctx.fill();
+
+      ctx.fillStyle = 'rgba(2, 132, 199, 0.35)';
+      let minLon = 180;
+      let maxLon = -180;
+      let minLat = 90;
+      let maxLat = -90;
+      for (const [lon, lat] of continent.pts) {
+        if (lon < minLon) minLon = lon;
+        if (lon > maxLon) maxLon = lon;
+        if (lat < minLat) minLat = lat;
+        if (lat > maxLat) maxLat = lat;
+      }
+      const startX = Math.floor(((minLon + 180) / 360) * width);
+      const endX = Math.ceil(((maxLon + 180) / 360) * width);
+      const startY = Math.floor(((90 - maxLat) / 180) * height);
+      const endY = Math.ceil(((90 - minLat) / 180) * height);
+
+      const step = 16;
+      for (let px = startX; px <= endX; px += step) {
+        for (let py = startY; py <= endY; py += step) {
+          ctx.beginPath();
+          ctx.arc(px, py, 1.2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      ctx.restore();
+
+      ctx.lineWidth = 1.6;
+      ctx.strokeStyle = 'rgba(2, 132, 199, 0.70)';
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    // 4. Subtle Biome Telemetry Zones on the texture
+    const biomeHalos = [
+      { lon: -62.2, lat: -3.5, color: 'rgba(16, 185, 129, 0.45)', r: 65 },  // Amazon
+      { lon: 25.6, lat: 23.4, color: 'rgba(245, 158, 11, 0.40)', r: 80 },   // Sahara
+      { lon: 15.6, lat: 78.2, color: 'rgba(14, 165, 233, 0.45)', r: 95 },   // Arctic
+      { lon: 147.7, lat: -18.3, color: 'rgba(6, 182, 212, 0.45)', r: 55 },  // Reef
+      { lon: 77.2, lat: 28.6, color: 'rgba(239, 68, 68, 0.40)', r: 60 }    // Indo-Gangetic
+    ];
+
+    for (const b of biomeHalos) {
+      const cx = ((b.lon + 180) / 360) * width;
+      const cy = ((90 - b.lat) / 180) * height;
+      const radial = ctx.createRadialGradient(cx, cy, 2, cx, cy, b.r);
+      radial.addColorStop(0, b.color);
+      radial.addColorStop(1, 'transparent');
+      ctx.fillStyle = radial;
+      ctx.beginPath();
+      ctx.arc(cx, cy, b.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else {
+    // 1. Deep Oceanic Void: #080b12 with polar depth gradients
+    const oceanGrad = ctx.createLinearGradient(0, 0, 0, height);
+    oceanGrad.addColorStop(0, '#04060a');
+    oceanGrad.addColorStop(0.2, '#080c16');
+    oceanGrad.addColorStop(0.5, '#0b101d');
+    oceanGrad.addColorStop(0.8, '#080c16');
+    oceanGrad.addColorStop(1, '#04060a');
+    ctx.fillStyle = oceanGrad;
+    ctx.fillRect(0, 0, width, height);
+
+    // 2. Latitude and Longitude Grids (#334155/30)
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(51, 65, 85, 0.28)';
+
+    // Parallels (every 15 degrees)
+    for (let lat = -75; lat <= 75; lat += 15) {
+      const y = ((90 - lat) / 180) * height;
+      ctx.beginPath();
+      if (lat === 0) {
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
+        ctx.lineWidth = 1.5;
+      } else {
+        ctx.strokeStyle = 'rgba(51, 65, 85, 0.25)';
+        ctx.lineWidth = 1;
+      }
+      ctx.moveTo(0, y);
+      ctx.lineTo(width, y);
+      ctx.stroke();
+    }
+
+    // Meridians (every 30 degrees)
+    for (let lon = -180; lon <= 180; lon += 30) {
+      const x = ((lon + 180) / 360) * width;
+      ctx.beginPath();
+      if (lon === 0) {
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
+        ctx.lineWidth = 1.5;
+      } else {
+        ctx.strokeStyle = 'rgba(51, 65, 85, 0.25)';
+        ctx.lineWidth = 1;
+      }
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, height);
+      ctx.stroke();
+    }
+
+    // 3. Draw Continental Landmasses
+    for (const continent of CONTINENT_POLYGONS) {
+      if (continent.pts.length < 3) continue;
+
+      ctx.save();
+      ctx.beginPath();
+      const firstPt = continent.pts[0];
+      ctx.moveTo(((firstPt[0] + 180) / 360) * width, ((90 - firstPt[1]) / 180) * height);
+
+      for (let i = 1; i < continent.pts.length; i++) {
+        const pt = continent.pts[i];
+        ctx.lineTo(((pt[0] + 180) / 360) * width, ((90 - pt[1]) / 180) * height);
+      }
+      ctx.closePath();
+
+      // Clip to continent for interior topography and sensor dot matrix
+      ctx.save();
+      ctx.clip();
+
+      // Continent Base: Dark Slate #1a2233
+      ctx.fillStyle = '#1a2233';
+      ctx.fill();
+
+      // Subtle elevation shading
+      ctx.fillStyle = '#222f46';
+      ctx.fill();
+
+      // Cybernetic Sensor Dots across landmass
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.20)';
+      let minLon = 180;
+      let maxLon = -180;
+      let minLat = 90;
+      let maxLat = -90;
+      for (const [lon, lat] of continent.pts) {
+        if (lon < minLon) minLon = lon;
+        if (lon > maxLon) maxLon = lon;
+        if (lat < minLat) minLat = lat;
+        if (lat > maxLat) maxLat = lat;
+      }
+      const startX = Math.floor(((minLon + 180) / 360) * width);
+      const endX = Math.ceil(((maxLon + 180) / 360) * width);
+      const startY = Math.floor(((90 - maxLat) / 180) * height);
+      const endY = Math.ceil(((90 - minLat) / 180) * height);
+
+      const step = 16;
+      for (let px = startX; px <= endX; px += step) {
+        for (let py = startY; py <= endY; py += step) {
+          ctx.beginPath();
+          ctx.arc(px, py, 1.2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      ctx.restore();
+
+      // Luminous Shoreline Outline in Cyan-Slate (#38bdf8 / #334155)
+      ctx.lineWidth = 1.4;
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.55)';
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    // 4. Subtle Biome Telemetry Zones on the texture
+    const biomeHalos = [
+      { lon: -62.2, lat: -3.5, color: 'rgba(16, 185, 129, 0.35)', r: 60 },  // Amazon
+      { lon: 25.6, lat: 23.4, color: 'rgba(245, 158, 11, 0.30)', r: 75 },   // Sahara
+      { lon: 15.6, lat: 78.2, color: 'rgba(56, 189, 248, 0.40)', r: 90 },   // Arctic
+      { lon: 147.7, lat: -18.3, color: 'rgba(6, 182, 212, 0.35)', r: 50 },  // Reef
+      { lon: 77.2, lat: 28.6, color: 'rgba(239, 68, 68, 0.30)', r: 55 }    // Indo-Gangetic
+    ];
+
+    for (const b of biomeHalos) {
+      const cx = ((b.lon + 180) / 360) * width;
+      const cy = ((90 - b.lat) / 180) * height;
+      const radial = ctx.createRadialGradient(cx, cy, 2, cx, cy, b.r);
+      radial.addColorStop(0, b.color);
+      radial.addColorStop(1, 'transparent');
+      ctx.fillStyle = radial;
+      ctx.beginPath();
+      ctx.arc(cx, cy, b.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 
   const texture = new THREE.CanvasTexture(canvas);
@@ -221,7 +345,8 @@ export default function EarthGlobe({
   customRegions = null,
   showControls = true,
   autoRotateDefault = true,
-  className = ''
+  className = '',
+  theme = 'dark'
 }) {
   const mountRef = useRef(null);
   const animFrameIdRef = useRef(null);
@@ -230,6 +355,11 @@ export default function EarthGlobe({
   const bottomStemRef = useRef(null);
 
   // Three.js object references for real-time manipulation
+  const sceneRef = useRef(null);
+  const earthMaterialRef = useRef(null);
+  const starPointsRef = useRef(null);
+  const ambientLightRef = useRef(null);
+  const sunLightRef = useRef(null);
   const earthGroupRef = useRef(null);
   const atmosphereMeshRef = useRef(null);
   const outerHaloMeshRef = useRef(null);
@@ -248,6 +378,7 @@ export default function EarthGlobe({
   const onSelectRegionRef = useRef(onSelectRegion);
   const currentRegionRef = useRef(null);
   const regionsRef = useRef([]);
+  const initialThemeRef = useRef(theme);
 
   // Consolidate regions
   const regions = useMemo(() => {
@@ -327,9 +458,11 @@ export default function EarthGlobe({
     const width = container.clientWidth || 800;
     const height = container.clientHeight || 600;
 
-    // 1. Scene & Deep Black Space Canvas
+    // 1. Scene & Canvas
+    const isLightMode = initialThemeRef.current === 'light';
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x020408);
+    scene.background = isLightMode ? null : new THREE.Color(0x020408);
+    sceneRef.current = scene;
 
     // 2. Perspective Camera
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
@@ -366,16 +499,18 @@ export default function EarthGlobe({
     });
 
     // 5. Ambient & Directional Lighting (Atmospheric Light-Blade Horizon)
-    const ambientLight = new THREE.AmbientLight(0x0e1726, 0.85);
+    const ambientLight = new THREE.AmbientLight(isLightMode ? 0xffffff : 0x0e1726, isLightMode ? 1.4 : 0.85);
     scene.add(ambientLight);
+    ambientLightRef.current = ambientLight;
 
     // Primary Sun Light creating sharp terminator
-    const sunLight = new THREE.DirectionalLight(0xffffff, 2.4);
+    const sunLight = new THREE.DirectionalLight(0xffffff, isLightMode ? 2.6 : 2.4);
     sunLight.position.set(5.5, 3.2, 4.8);
     scene.add(sunLight);
+    sunLightRef.current = sunLight;
 
     // Tangential Light-Blade rim light for high-contrast limb aura
-    const rimLight = new THREE.DirectionalLight(0x38bdf8, 1.6);
+    const rimLight = new THREE.DirectionalLight(isLightMode ? 0x0284c7 : 0x38bdf8, isLightMode ? 1.8 : 1.6);
     rimLight.position.set(-6.0, -2.5, -4.5);
     scene.add(rimLight);
 
@@ -421,7 +556,9 @@ export default function EarthGlobe({
       blending: THREE.AdditiveBlending
     });
     const starPoints = new THREE.Points(starGeo, starMaterial);
+    starPoints.visible = !isLightMode;
     scene.add(starPoints);
+    starPointsRef.current = starPoints;
 
     // 7. Earth Group (holds Earth Sphere, Clouds, and 3D Hotspot Pins)
     const earthGroup = new THREE.Group();
@@ -430,14 +567,15 @@ export default function EarthGlobe({
 
     // Earth Sphere (Radius: 1.0)
     const earthGeo = new THREE.SphereGeometry(1.0, 64, 64);
-    const earthTexture = createProceduralEarthTexture();
+    const earthTexture = createProceduralEarthTexture(isLightMode);
     const earthMaterial = new THREE.MeshStandardMaterial({
       map: earthTexture,
       roughness: 0.65,
       metalness: 0.12,
-      emissive: new THREE.Color(0x040812),
-      emissiveIntensity: 0.35
+      emissive: new THREE.Color(isLightMode ? 0x000000 : 0x040812),
+      emissiveIntensity: isLightMode ? 0.05 : 0.35
     });
+    earthMaterialRef.current = earthMaterial;
     const earthMesh = new THREE.Mesh(earthGeo, earthMaterial);
     earthGroup.add(earthMesh);
 
@@ -856,6 +994,41 @@ export default function EarthGlobe({
     };
   }, [regions]);
 
+  // Handle live theme switching for Three.js scene
+  useEffect(() => {
+    const isLight = theme === 'light';
+    if (!sceneRef.current || !earthMaterialRef.current) return;
+
+    const newTexture = createProceduralEarthTexture(isLight);
+    earthMaterialRef.current.map = newTexture;
+    earthMaterialRef.current.emissive = new THREE.Color(isLight ? 0x000000 : 0x040812);
+    earthMaterialRef.current.emissiveIntensity = isLight ? 0.05 : 0.35;
+    earthMaterialRef.current.needsUpdate = true;
+
+    if (sceneRef.current) {
+      sceneRef.current.background = isLight ? null : new THREE.Color(0x020408);
+    }
+
+    if (starPointsRef.current) {
+      starPointsRef.current.visible = !isLight;
+    }
+
+    if (ambientLightRef.current) {
+      ambientLightRef.current.color.setHex(isLight ? 0xffffff : 0x0e1726);
+      ambientLightRef.current.intensity = isLight ? 1.4 : 0.85;
+    }
+    if (sunLightRef.current) {
+      sunLightRef.current.intensity = isLight ? 2.6 : 2.4;
+    }
+
+    if (atmosphereMeshRef.current && atmosphereMeshRef.current.material) {
+      atmosphereMeshRef.current.material.uniforms.glowColor.value.setHex(isLight ? 0x0284c7 : 0x06b6d4);
+    }
+    if (outerHaloMeshRef.current && outerHaloMeshRef.current.material) {
+      outerHaloMeshRef.current.material.uniforms.haloColor.value.setHex(isLight ? 0x38bdf8 : 0x0284c7);
+    }
+  }, [theme]);
+
   // Reset Camera View
   const handleResetView = useCallback(() => {
     if (!currentRegion || !earthGroupRef.current) return;
@@ -869,22 +1042,34 @@ export default function EarthGlobe({
   }, [currentRegion]);
 
   return (
-    <div className={`relative w-full h-full min-h-[400px] overflow-hidden select-none bg-black font-inter ${className}`}>
+    <div className={`relative w-full h-full min-h-[400px] overflow-hidden select-none ${theme === 'light' ? 'bg-transparent' : 'bg-black'} font-inter ${className}`}>
       {/* 3D WebGL Canvas Container */}
       <div ref={mountRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
 
       {/* Atmospheric Vignette Overlay */}
-      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(0,0,0,0.85)_95%)]" />
+      <div className={`absolute inset-0 pointer-events-none ${
+        theme === 'light' 
+          ? 'bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(241,245,249,0.7)_100%)]' 
+          : 'bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(0,0,0,0.85)_95%)]'
+      }`} />
 
       {/* Top Header HUD Telemetry - Z-30 to guarantee priority and visibility above 3D space */}
       <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none z-30">
-        <div className="flex items-center gap-2.5 bg-black/85 backdrop-blur-xl border border-white/10 px-3 py-2 rounded-xl shadow-xl pointer-events-auto">
+        <div className={`flex items-center gap-2.5 backdrop-blur-xl border px-3 py-2 rounded-xl shadow-xl pointer-events-auto ${
+          theme === 'light'
+            ? 'bg-white/90 border-slate-200/90 text-slate-900 shadow-slate-200/50'
+            : 'bg-black/85 border-white/10 text-white shadow-2xl'
+        }`}>
           <Globe className="w-4 h-4 text-[#ef233c] animate-spin-slow shrink-0" />
           <div>
-            <div className="text-[10px] tracking-wider text-zinc-400 font-mono uppercase font-semibold">
-              TERRASONUS PLANETARY TWIN
+            <div className={`text-[10px] tracking-wider uppercase font-semibold ${
+              theme === 'light' ? 'text-slate-500' : 'text-zinc-400'
+            }`}>
+              TerraSonus Planetary Model
             </div>
-            <div className="text-sm font-semibold text-white font-manrope flex items-center gap-2">
+            <div className={`text-sm font-semibold font-manrope flex items-center gap-2 ${
+              theme === 'light' ? 'text-slate-900' : 'text-white'
+            }`}>
               <span>{currentRegion.name}</span>
               <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#ef233c]/15 border border-[#ef233c]/40 text-[#ef233c] font-semibold">
                 {currentRegion.category}
@@ -903,25 +1088,30 @@ export default function EarthGlobe({
                 setAutoRotate(nextState);
                 autoRotateRef.current = nextState;
               }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-medium transition-all border cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all border cursor-pointer ${
                 autoRotate
                   ? 'bg-[#ef233c]/20 border-[#ef233c]/60 text-white shadow-lg shadow-red-950/50'
-                  : 'bg-black/80 border-zinc-800 text-zinc-300 hover:text-white hover:border-zinc-700'
+                  : (theme === 'light'
+                      ? 'bg-white/90 border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-950'
+                      : 'bg-black/80 border-zinc-800 text-zinc-300 hover:text-white hover:border-zinc-700')
               }`}
               title="Toggle Planetary Auto-Rotation"
             >
-              <span className={`w-1.5 h-1.5 rounded-full ${autoRotate ? 'bg-[#ef233c] animate-pulse' : 'bg-zinc-500'}`} />
-              <span>{autoRotate ? 'ORBIT ACTIVE' : 'ORBIT PAUSED'}</span>
+              <span>{autoRotate ? 'Auto-Rotate: On' : 'Auto-Rotate: Off'}</span>
             </button>
 
             <button
               type="button"
               onClick={handleResetView}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-medium bg-black/80 border border-zinc-800 text-zinc-300 hover:bg-zinc-900 hover:text-white hover:border-zinc-700 transition-all cursor-pointer"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer ${
+                theme === 'light'
+                  ? 'bg-white/90 border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-950'
+                  : 'bg-black/80 border-zinc-800 text-zinc-300 hover:bg-zinc-900 hover:text-white hover:border-zinc-700'
+              }`}
               title="Re-Center on Active Region"
             >
-              <RotateCcw className="w-3.5 h-3.5 text-zinc-400" />
-              <span>ALIGN</span>
+              <RotateCcw className={`w-3.5 h-3.5 ${theme === 'light' ? 'text-slate-500' : 'text-zinc-400'}`} />
+              <span>Reset View</span>
             </button>
           </div>
         )}
@@ -943,19 +1133,27 @@ export default function EarthGlobe({
           }}
         />
 
-        <div className="bg-black/95 backdrop-blur-xl border border-white/10 rounded-xl p-3 shadow-2xl shadow-red-950/50 min-w-[210px] max-w-[270px]">
+        <div className={`backdrop-blur-xl border rounded-xl p-3 shadow-2xl min-w-[210px] max-w-[270px] ${
+          theme === 'light'
+            ? 'bg-white/95 border-slate-200 text-slate-900 shadow-slate-300/50'
+            : 'bg-black/95 border-white/10 text-white shadow-red-950/50'
+        }`}>
           {/* Holographic Header Bar */}
-          <div className="flex items-center justify-between gap-2 border-b border-zinc-800 pb-1.5 mb-1.5">
+          <div className={`flex items-center justify-between gap-2 border-b pb-1.5 mb-1.5 ${
+            theme === 'light' ? 'border-slate-200' : 'border-zinc-800'
+          }`}>
             <div className="flex items-center gap-1.5">
               <span
                 className="w-2 h-2 rounded-full animate-ping"
                 style={{ backgroundColor: currentRegion.color || '#ef233c' }}
               />
-              <span className="text-xs sm:text-sm font-semibold text-white tracking-wide font-manrope">
+              <span className={`text-xs sm:text-sm font-semibold tracking-wide font-manrope ${
+                theme === 'light' ? 'text-slate-900' : 'text-white'
+              }`}>
                 {currentRegion.name}
               </span>
             </div>
-            <span className="text-[10px] font-mono text-zinc-400">
+            <span className={`text-[10px] font-mono ${theme === 'light' ? 'text-slate-500' : 'text-zinc-400'}`}>
               {currentRegion.lat.toFixed(1)}° N, {currentRegion.lon.toFixed(1)}° E
             </span>
           </div>
@@ -963,15 +1161,25 @@ export default function EarthGlobe({
           {/* Metrics Chips */}
           <div className="grid grid-cols-2 gap-1.5 mb-2">
             {(currentRegion.metrics || []).slice(0, 2).map((m, idx) => (
-              <div key={idx} className="bg-zinc-900/80 rounded-lg p-1.5 border border-zinc-800">
-                <div className="text-[10px] font-mono text-zinc-400 uppercase font-semibold">{m.label}</div>
-                <div className="text-xs font-bold text-white font-mono">{m.value}</div>
+              <div key={idx} className={`rounded-lg p-1.5 border ${
+                theme === 'light'
+                  ? 'bg-slate-50 border-slate-200/80 text-slate-900'
+                  : 'bg-zinc-900/80 border-zinc-800 text-white'
+              }`}>
+                <div className={`text-[10px] font-mono uppercase font-semibold ${
+                  theme === 'light' ? 'text-slate-500' : 'text-zinc-400'
+                }`}>{m.label}</div>
+                <div className={`text-xs font-bold font-mono ${
+                  theme === 'light' ? 'text-slate-900' : 'text-white'
+                }`}>{m.value}</div>
               </div>
             ))}
           </div>
 
           {/* Quick narrative caption */}
-          <p className="text-[11px] text-zinc-300 leading-relaxed font-inter">
+          <p className={`text-[11px] leading-relaxed font-inter ${
+            theme === 'light' ? 'text-slate-600' : 'text-zinc-300'
+          }`}>
             {currentRegion.narrative || currentRegion.subtitle}
           </p>
         </div>
@@ -990,7 +1198,11 @@ export default function EarthGlobe({
 
       {/* Bottom Region Quick Selector Rail */}
       <div className="absolute bottom-4 left-4 right-4 flex items-center justify-center pointer-events-none z-30">
-        <div className="flex flex-wrap items-center justify-center gap-1.5 p-1.5 rounded-2xl bg-black/85 backdrop-blur-xl border border-white/10 shadow-2xl pointer-events-auto">
+        <div className={`flex flex-wrap items-center justify-center gap-1.5 p-1.5 rounded-2xl backdrop-blur-xl border shadow-2xl pointer-events-auto ${
+          theme === 'light'
+            ? 'bg-white/90 border-slate-200/90 shadow-slate-200/50'
+            : 'bg-black/85 border-white/10'
+        }`}>
           {regions.map((region) => {
             const isSelected =
               currentRegion &&
@@ -1004,7 +1216,9 @@ export default function EarthGlobe({
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-medium transition-all border cursor-pointer ${
                   isSelected
                     ? 'bg-[#ef233c] border-[#ef233c] text-white shadow-lg shadow-red-950/60 font-semibold'
-                    : 'bg-white/5 border-transparent text-zinc-300 hover:text-white hover:bg-white/10'
+                    : (theme === 'light'
+                        ? 'bg-slate-100 border-slate-200 text-slate-700 hover:text-slate-950 hover:bg-slate-200'
+                        : 'bg-white/5 border-transparent text-zinc-300 hover:text-white hover:bg-white/10')
                 }`}
               >
                 <span

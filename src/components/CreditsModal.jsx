@@ -7,8 +7,9 @@ import { nasaCredits } from '../data/nasaDatasets.js';
  * Strict compliance with NASA Space Apps Challenge Data Attribution requirements.
  * Displays official mission names, hosting centers, DOIs, and direct dataset links.
  */
-export default function CreditsModal({ isOpen, onClose }) {
+export default function CreditsModal({ isOpen, onClose, theme = 'dark' }) {
   if (!isOpen) return null;
+  const isLight = theme === 'light';
 
   const creditList = Object.entries(nasaCredits).map(([key, item]) => ({
     key,
@@ -22,23 +23,35 @@ export default function CreditsModal({ isOpen, onClose }) {
       aria-modal="true"
       aria-labelledby="credits-modal-title"
     >
-      <div className="relative w-full max-w-3xl max-h-[85vh] overflow-y-auto bg-zinc-950 border border-white/10 rounded-2xl p-6 sm:p-8 text-white shadow-2xl shadow-red-950/40">
+      <div className={`relative w-full max-w-3xl max-h-[85vh] overflow-y-auto border rounded-2xl p-6 sm:p-8 shadow-2xl transition-colors ${
+        isLight
+          ? 'bg-white border-slate-200 text-slate-900 shadow-slate-300/60'
+          : 'bg-zinc-950 border-white/10 text-white shadow-red-950/40'
+      }`}>
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-6">
+        <div className={`flex items-center justify-between pb-4 border-b mb-6 ${
+          isLight ? 'border-slate-200' : 'border-white/10'
+        }`}>
           <div className="flex items-center gap-3">
             <div className="w-2.5 h-8 bg-[#ef233c] rounded-sm shrink-0" />
             <div>
-              <h2 id="credits-modal-title" className="text-xl sm:text-2xl font-bold tracking-tight font-serif-instrument text-white">
+              <h2 id="credits-modal-title" className={`text-xl sm:text-2xl font-bold tracking-tight font-serif-instrument ${
+                isLight ? 'text-slate-900' : 'text-white'
+              }`}>
                 NASA Open Data Attribution & Credits
               </h2>
-              <p className="text-xs text-zinc-400 font-mono uppercase tracking-wider">
+              <p className={`text-xs font-mono uppercase tracking-wider ${
+                isLight ? 'text-slate-500' : 'text-zinc-400'
+              }`}>
                 Official Space Agency Datasets and Observational Products
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2.5 rounded-full hover:bg-white/10 text-zinc-300 hover:text-white transition-colors cursor-pointer"
+            className={`p-2.5 rounded-full transition-colors cursor-pointer ${
+              isLight ? 'hover:bg-slate-100 text-slate-500 hover:text-slate-900' : 'hover:bg-white/10 text-zinc-300 hover:text-white'
+            }`}
             aria-label="Close dialog"
           >
             <X className="w-6 h-6" />
@@ -46,8 +59,8 @@ export default function CreditsModal({ isOpen, onClose }) {
         </div>
 
         {/* Content */}
-        <div className="space-y-4 text-sm text-zinc-300 font-inter">
-          <p className="text-zinc-300 leading-relaxed text-sm">
+        <div className={`space-y-4 text-sm font-inter ${isLight ? 'text-slate-700' : 'text-zinc-300'}`}>
+          <p className="leading-relaxed text-sm">
             TerraSonus is powered entirely by open data from the National Aeronautics and Space Administration (NASA) and partner space agencies. 
             All planetary metrics, satellite imagery, and atmospheric telemetry are publicly accessible under open science mandates.
           </p>
@@ -57,28 +70,32 @@ export default function CreditsModal({ isOpen, onClose }) {
             {creditList.map((item) => (
               <div 
                 key={item.key} 
-                className="p-4 sm:p-5 rounded-xl bg-black border border-zinc-800 hover:border-zinc-700 transition-colors space-y-2"
+                className={`p-4 sm:p-5 rounded-xl border transition-colors space-y-2 ${
+                  isLight ? 'bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-900' : 'bg-black border-zinc-800 hover:border-zinc-700 text-white'
+                }`}
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                  <span className="font-semibold text-white text-sm sm:text-base">
+                  <span className={`font-semibold text-sm sm:text-base ${isLight ? 'text-slate-900' : 'text-white'}`}>
                     {item.name}
                   </span>
                   <span className="text-xs text-[#ef233c] font-mono font-medium">
                     {item.agency}
                   </span>
                 </div>
-                <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed font-inter">
+                <p className={`text-xs sm:text-sm leading-relaxed font-inter ${isLight ? 'text-slate-600' : 'text-zinc-300'}`}>
                   {item.description}
                 </p>
                 <div className="pt-1.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-                  <span className="text-zinc-400 font-mono">
+                  <span className={`font-mono ${isLight ? 'text-slate-500' : 'text-zinc-400'}`}>
                     Product: {item.product}
                   </span>
                   <a
                     href={item.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-cyan-400 hover:text-cyan-300 font-semibold transition-colors"
+                    className={`inline-flex items-center gap-1.5 font-semibold transition-colors ${
+                      isLight ? 'text-sky-600 hover:text-sky-700' : 'text-cyan-400 hover:text-cyan-300'
+                    }`}
                   >
                     Dataset Link <ExternalLink className="w-3.5 h-3.5" />
                   </a>
@@ -88,7 +105,9 @@ export default function CreditsModal({ isOpen, onClose }) {
           </div>
 
           {/* Open Science & Accessibility Statement */}
-          <div className="p-4 rounded-xl bg-zinc-900/50 border border-[#ef233c]/30 text-xs sm:text-sm text-zinc-300 leading-relaxed">
+          <div className={`p-4 rounded-xl border text-xs sm:text-sm leading-relaxed ${
+            isLight ? 'bg-red-50/60 border-[#ef233c]/30 text-slate-700' : 'bg-zinc-900/50 border-[#ef233c]/30 text-zinc-300'
+          }`}>
             <span className="font-bold text-[#ef233c] font-mono uppercase tracking-wider block mb-1 text-xs">
               NASA Open Science & Accessibility
             </span>
@@ -97,7 +116,7 @@ export default function CreditsModal({ isOpen, onClose }) {
         </div>
 
         {/* Footer */}
-        <div className="mt-6 pt-4 border-t border-white/10 flex justify-end">
+        <div className={`mt-6 pt-4 border-t flex justify-end ${isLight ? 'border-slate-200' : 'border-white/10'}`}>
           <button
             onClick={onClose}
             className="px-5 py-2 rounded-full bg-[#ef233c] hover:bg-red-700 text-white font-semibold text-xs sm:text-sm uppercase tracking-wider transition-all cursor-pointer shadow-lg shadow-red-950/60"

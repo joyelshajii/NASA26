@@ -31,6 +31,7 @@ export default function AudioVisualizer({
   audioLevel = 0.0,
   mode = 'dual', // 'dual' | 'bars' | 'wave'
   theme = 'crimson', // 'crimson' | 'hybrid' | 'cyan' | 'amber'
+  appTheme = 'dark',
   title = 'SPECTRAL HARMONICS',
   subtitle = 'NASA Earth Observation Acoustic FFT & Oscilloscope',
   height = 180,
@@ -39,6 +40,8 @@ export default function AudioVisualizer({
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
   const animFrameIdRef = useRef(null);
+
+  const isLight = appTheme === 'light';
 
   // User interactive display states
   const [activeMode, setActiveMode] = useState(mode);
@@ -388,57 +391,69 @@ export default function AudioVisualizer({
   return (
     <div
       ref={containerRef}
-      className={`relative w-full rounded-xl bg-black border border-white/10 p-5 shadow-2xl font-inter overflow-hidden select-none ${className}`}
+      className={`relative w-full rounded-xl border p-5 shadow-2xl font-inter overflow-hidden select-none transition-colors ${
+        isLight
+          ? 'bg-white border-slate-200/90 shadow-slate-200/40 text-slate-900'
+          : 'bg-black border-white/10 text-white'
+      } ${className}`}
     >
       {/* Top Header Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-4 border-b border-zinc-800 pb-3">
+      <div className={`flex flex-wrap items-center justify-between gap-3 mb-4 border-b pb-3 ${
+        isLight ? 'border-slate-200' : 'border-zinc-800'
+      }`}>
         {/* Left Title & Status Badge */}
         <div className="flex items-center gap-3">
           <div
             className={`flex items-center justify-center gap-1 w-9 h-9 rounded-lg border ${
               isAudioActive
                 ? 'bg-[#ef233c]/20 border-[#ef233c]/60 shadow-lg shadow-red-950/50'
-                : 'bg-zinc-900 border-zinc-800'
+                : (isLight ? 'bg-slate-100 border-slate-200' : 'bg-zinc-900 border-zinc-800')
             }`}
           >
-            <span className={`w-0.5 rounded-full transition-all ${isAudioActive ? 'h-4 bg-[#ef233c] animate-pulse' : 'h-1.5 bg-zinc-600'}`} />
-            <span className={`w-0.5 rounded-full transition-all ${isAudioActive ? 'h-2.5 bg-[#ef233c]/80 animate-pulse [animation-delay:150ms]' : 'h-2.5 bg-zinc-600'}`} />
-            <span className={`w-0.5 rounded-full transition-all ${isAudioActive ? 'h-3.5 bg-[#ef233c] animate-pulse [animation-delay:300ms]' : 'h-1 bg-zinc-600'}`} />
+            <span className={`w-0.5 rounded-full transition-all ${isAudioActive ? 'h-4 bg-[#ef233c] animate-pulse' : (isLight ? 'h-1.5 bg-slate-400' : 'h-1.5 bg-zinc-600')}`} />
+            <span className={`w-0.5 rounded-full transition-all ${isAudioActive ? 'h-2.5 bg-[#ef233c]/80 animate-pulse [animation-delay:150ms]' : (isLight ? 'h-2.5 bg-slate-400' : 'h-2.5 bg-zinc-600')}`} />
+            <span className={`w-0.5 rounded-full transition-all ${isAudioActive ? 'h-3.5 bg-[#ef233c] animate-pulse [animation-delay:300ms]' : (isLight ? 'h-1 bg-slate-400' : 'h-1 bg-zinc-600')}`} />
           </div>
 
           <div>
             <div className="flex items-center gap-2.5">
-              <span className="text-sm sm:text-base font-bold text-white tracking-wider font-mono uppercase">
+              <span className={`text-sm sm:text-base font-bold tracking-wider font-mono uppercase ${
+                isLight ? 'text-slate-900' : 'text-white'
+              }`}>
                 {title}
               </span>
               <span
                 className={`text-xs sm:text-sm font-mono px-2.5 py-0.5 rounded border font-semibold ${
                   isAudioActive
-                    ? 'bg-[#ef233c]/20 border-[#ef233c]/50 text-[#ef233c] animate-pulse'
-                    : 'bg-zinc-900 border-zinc-800 text-zinc-400'
+                    ? (isLight ? 'bg-red-50 border-red-200 text-red-600 animate-pulse' : 'bg-[#ef233c]/20 border-[#ef233c]/50 text-[#ef233c] animate-pulse')
+                    : (isLight ? 'bg-slate-100 border-slate-200 text-slate-500' : 'bg-zinc-900 border-zinc-800 text-zinc-400')
                 }`}
               >
                 {isAudioActive ? 'AUDIO ACTIVE' : 'IDLE STANDBY'}
               </span>
             </div>
-            <div className="text-xs text-zinc-400 font-mono tracking-normal">{subtitle}</div>
+            <div className={`text-xs font-mono tracking-normal ${
+              isLight ? 'text-slate-500' : 'text-zinc-400'
+            }`}>{subtitle}</div>
           </div>
         </div>
 
         {/* Center Live Telemetry Chips */}
-        <div className="hidden sm:flex items-center gap-3 bg-zinc-900/90 border border-zinc-800 rounded-xl px-3 py-1 font-mono text-xs">
-          <div className="flex items-center gap-1.5 text-zinc-300">
-            <span className="text-[11px] uppercase text-zinc-400 font-semibold">PEAK:</span>
-            <span className="font-bold text-white">{telemetry.peakFreq}</span>
+        <div className={`hidden sm:flex items-center gap-3 border rounded-xl px-3 py-1 font-mono text-xs ${
+          isLight ? 'bg-slate-50 border-slate-200 text-slate-700' : 'bg-zinc-900/90 border-zinc-800 text-zinc-300'
+        }`}>
+          <div className="flex items-center gap-1.5">
+            <span className={`text-[11px] uppercase font-semibold ${isLight ? 'text-slate-500' : 'text-zinc-400'}`}>PEAK:</span>
+            <span className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>{telemetry.peakFreq}</span>
           </div>
-          <span className="text-zinc-700 font-bold">|</span>
-          <div className="flex items-center gap-1.5 text-zinc-300">
-            <span className="text-[11px] uppercase text-zinc-400 font-semibold">ENERGY:</span>
-            <span className="font-bold text-amber-400">{telemetry.rmsLevel}</span>
+          <span className={`font-bold ${isLight ? 'text-slate-300' : 'text-zinc-700'}`}>|</span>
+          <div className="flex items-center gap-1.5">
+            <span className={`text-[11px] uppercase font-semibold ${isLight ? 'text-slate-500' : 'text-zinc-400'}`}>ENERGY:</span>
+            <span className="font-bold text-amber-500">{telemetry.rmsLevel}</span>
           </div>
-          <span className="text-zinc-700 font-bold">|</span>
-          <div className="flex items-center gap-1.5 text-zinc-300">
-            <span className="text-[11px] uppercase text-zinc-400 font-semibold">BAND:</span>
+          <span className={`font-bold ${isLight ? 'text-slate-300' : 'text-zinc-700'}`}>|</span>
+          <div className="flex items-center gap-1.5">
+            <span className={`text-[11px] uppercase font-semibold ${isLight ? 'text-slate-500' : 'text-zinc-400'}`}>BAND:</span>
             <span className="font-bold text-[#ef233c]">{telemetry.activeBand}</span>
           </div>
         </div>
@@ -446,14 +461,16 @@ export default function AudioVisualizer({
         {/* Right Mode & Theme Controls */}
         <div className="flex items-center gap-2">
           {/* Mode Switcher */}
-          <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-lg p-0.5">
+          <div className={`flex items-center border rounded-lg p-0.5 ${
+            isLight ? 'bg-slate-100 border-slate-200' : 'bg-zinc-900 border-zinc-800'
+          }`}>
             <button
               type="button"
               onClick={() => setActiveMode('dual')}
               className={`px-3 py-1.5 text-xs font-mono font-semibold rounded transition-all cursor-pointer ${
                 activeMode === 'dual'
                   ? 'bg-[#ef233c] text-white shadow'
-                  : 'text-zinc-400 hover:text-white'
+                  : (isLight ? 'text-slate-600 hover:text-slate-950' : 'text-zinc-400 hover:text-white')
               }`}
             >
               DUAL
@@ -464,7 +481,7 @@ export default function AudioVisualizer({
               className={`px-3 py-1.5 text-xs font-mono font-semibold rounded transition-all cursor-pointer ${
                 activeMode === 'bars'
                   ? 'bg-[#ef233c] text-white shadow'
-                  : 'text-zinc-400 hover:text-white'
+                  : (isLight ? 'text-slate-600 hover:text-slate-950' : 'text-zinc-400 hover:text-white')
               }`}
             >
               FFT
@@ -475,7 +492,7 @@ export default function AudioVisualizer({
               className={`px-3 py-1.5 text-xs font-mono font-semibold rounded transition-all cursor-pointer ${
                 activeMode === 'wave'
                   ? 'bg-[#ef233c] text-white shadow'
-                  : 'text-zinc-400 hover:text-white'
+                  : (isLight ? 'text-slate-600 hover:text-slate-950' : 'text-zinc-400 hover:text-white')
               }`}
             >
               WAVE
@@ -483,7 +500,9 @@ export default function AudioVisualizer({
           </div>
 
           {/* Color Theme Switcher */}
-          <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-lg p-1 gap-1">
+          <div className={`flex items-center border rounded-lg p-1 gap-1 ${
+            isLight ? 'bg-slate-100 border-slate-200' : 'bg-zinc-900 border-zinc-800'
+          }`}>
             <button
               type="button"
               onClick={() => setActiveTheme('crimson')}
@@ -529,7 +548,9 @@ export default function AudioVisualizer({
       </div>
 
       {/* Main High-DPI Visualizer Canvas */}
-      <div className="relative w-full overflow-hidden rounded-xl bg-black border border-zinc-800/80 shadow-inner">
+      <div className={`relative w-full overflow-hidden rounded-xl border shadow-inner ${
+        isLight ? 'bg-[#060913] border-slate-200/80' : 'bg-black border-zinc-800/80'
+      }`}>
         <canvas ref={canvasRef} className="block w-full" />
       </div>
     </div>
