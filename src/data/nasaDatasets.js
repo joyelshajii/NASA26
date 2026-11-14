@@ -134,50 +134,104 @@ export const regionalHotspots = [
 export const planetaryStories = [
   {
     id: 'arctic-retreat',
+    trackNumber: '01',
     title: 'Track 01: Arctic Ice Retreat',
+    theme: 'CRYOSPHERE',
+    hotspotId: 'arctic',
     years: [1985, 2005, 2026],
-    description: 'Witness four decades of polar warming and sea ice decline through pitch transformation.',
+    description: 'Witness four decades of polar warming and sea ice decline through deterministic pitch transformation.',
+    details: 'Arctic sea ice minimum extent has plummeted from 7.85M km² in 1980 down to approximately 4.10M km² in 2026. As the ice volume contracts, high-frequency glacial resonances fade while the baseline thermal drone steadily climbs.',
     focusMetrics: ['tempAnomaly', 'arcticIceExtent'],
+    nasaSources: ['NSIDC / NASA Goddard Sea Ice Index', 'NASA GISTEMP v4'],
     sonificationProfile: {
-      leadInstrument: 'Ice Crystal Resonator',
+      leadInstrument: 'Ice Crystal Resonator (High-Freq Sine/FM)',
       harmonicBehavior: 'Frequency ascent coupled with decaying resonance as ice volume contracts',
       bassFloor: 'Glacial sub-rumble diminishing toward 2026'
     }
   },
   {
     id: 'amazon-pulse',
+    trackNumber: '02',
     title: 'Track 02: Pulse of the Amazon Basin',
+    theme: 'BIOSPHERE',
+    hotspotId: 'amazon',
     years: [1990, 2010, 2026],
     description: 'Acoustic contrast between pristine biosphere canopy and encroaching drought cycles.',
+    details: 'Tracks the evapotranspiration and green canopy health of the Amazon rainforest. Pristine forest yields dense, sparkling pentatonic arpeggios. During drought episodes and agricultural expansion, canopy chimes thin out and low-end thermal pulses escalate.',
     focusMetrics: ['ndvi', 'wildfireIndex', 'tempAnomaly'],
+    nasaSources: ['MODIS Terra/Aqua 16-Day NDVI', 'VIIRS Active Fire 375m'],
     sonificationProfile: {
-      leadInstrument: 'Canopy Flute and Pentatonic Marimba',
-      harmonicBehavior: 'Rich multi-harmonic chords thinning out during high fire and drought episodes',
+      leadInstrument: 'Canopy Flute & Pentatonic Chimes',
+      harmonicBehavior: 'Rich multi-harmonic pentatonic chords thinning out during high fire and drought episodes',
       bassFloor: 'Warm low-end pulse modulated by evapotranspiration rate'
     }
   },
   {
     id: 'marine-heatwaves',
+    trackNumber: '03',
     title: 'Track 03: Global Marine Heatwave',
+    theme: 'HYDROSPHERE',
+    hotspotId: 'great-barrier-reef',
     years: [1995, 2015, 2026],
     description: 'Thermal expansion of ocean waters captured in sub-bass frequency escalation.',
+    details: 'Earth’s oceans absorb over 90% of excess planetary heat. This track captures the continuous accumulation of 360+ Zettajoules in the upper 2000m, driving exponential sub-bass pressure waves and modulating the ocean chorus.',
     focusMetrics: ['oceanHeatContent', 'tempAnomaly'],
+    nasaSources: ['NASA JPL ECCO / NOAA Ocean Heat Content', 'GISTEMP v4'],
     sonificationProfile: {
       leadInstrument: 'Sub-surface Ocean Drone',
-      harmonicBehavior: 'Exponential sub-bass accumulation reflecting continuous Zettajoule uptake',
+      harmonicBehavior: 'Exponential sub-bass accumulation reflecting continuous Zettajoule thermal uptake',
       bassFloor: 'Deep 32Hz-55Hz pressure waves with oscillatory oceanic chorus'
     }
   },
   {
     id: 'carbon-trajectory',
+    trackNumber: '04',
     title: 'Track 04: The Global Carbon Ascent',
+    theme: 'ATMOSPHERE',
+    hotspotId: 'sahara',
     years: [1980, 2000, 2026],
     description: 'Atmospheric CO2 rising from 338 ppm to 426 ppm driving harmonic density.',
+    details: 'Follows the relentless ascent of atmospheric carbon dioxide recorded from Mauna Loa and NASA atmospheric sounders (AIRS/OCO-2). As greenhouse gas concentrations climb past 400 ppm, additive overtones tighten into sustained acoustic tension.',
     focusMetrics: ['co2Ppm', 'tempAnomaly'],
+    nasaSources: ['NOAA ESRL / NASA OCO-2 & AIRS', 'NASA Goddard GISTEMP'],
     sonificationProfile: {
       leadInstrument: 'Additive Atmospheric Organ',
-      harmonicBehavior: 'Successive addition of dissonant overtone layers indexed to ppm thresholds',
-      bassFloor: 'Steadily stiffening fundamental tone mirroring greenhouse thermal trapping'
+      harmonicBehavior: 'Successive addition of overtone layers indexed to CO2 ppm milestones',
+      bassFloor: 'Steadily stiffening fundamental drone mirroring greenhouse thermal trapping'
+    }
+  },
+  {
+    id: 'sahara-transatlantic',
+    trackNumber: '05',
+    title: 'Track 05: Sahara Aerosol & Atlantic Winds',
+    theme: 'AEROSOLS',
+    hotspotId: 'sahara',
+    years: [1988, 2008, 2026],
+    description: 'Mineral dust plumes swept across the Atlantic Ocean by powerful trade winds.',
+    details: 'Billions of tons of Saharan mineral dust are lofted into the atmosphere each summer, fertilizing the Amazon and dampening Atlantic tropical cyclone formation. Mapped through sweeping resonant bandpass filters and desert thermal harmonics.',
+    focusMetrics: ['windSpeed', 'tempAnomaly', 'wildfireIndex'],
+    nasaSources: ['NASA POWER / MERRA-2', 'MODIS Terra Aerosol Optical Depth'],
+    sonificationProfile: {
+      leadInstrument: 'Resonant Sandstorm Bandpass Filter',
+      harmonicBehavior: 'Sweeping filter cutoffs between 400 Hz and 3800 Hz modulated by wind velocity',
+      bassFloor: 'Dry low-frequency desert thermal resonance'
+    }
+  },
+  {
+    id: 'indus-monsoon',
+    trackNumber: '06',
+    title: 'Track 06: Indo-Gangetic Anthropocene Pulse',
+    theme: 'ANTHROPOCENE',
+    hotspotId: 'indus-gangetic',
+    years: [1992, 2012, 2026],
+    description: 'Agricultural seasonal burning and urban heat island dynamics creating rhythmic pulses.',
+    details: 'Home to over 400 million people, the Indo-Gangetic Plain undergoes intensive post-harvest crop residue burning coupled with seasonal monsoon fluctuations and intense urban heat, translated into rapid rhythmic percussive shifts.',
+    focusMetrics: ['fireIndex', 'tempAnomaly', 'ndvi'],
+    nasaSources: ['VIIRS Active Fire 375m', 'MODIS NDVI Surface Reflectance'],
+    sonificationProfile: {
+      leadInstrument: 'Thermal Pulse Membrane & High Chimes',
+      harmonicBehavior: 'Accelerating percussive tempo (60 to 140 BPM) mirroring regional thermal fire density',
+      bassFloor: 'Resonant sub-bass rising in concert with regional heat anomalies'
     }
   }
 ];

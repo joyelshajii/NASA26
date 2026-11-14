@@ -10,7 +10,8 @@ import {
   Menu,
   ChevronDown,
   Sun,
-  Moon
+  Moon,
+  Disc
 } from 'lucide-react';
 
 import EarthGlobe from './components/EarthGlobe.jsx';
@@ -20,6 +21,7 @@ import CreditsModal from './components/CreditsModal.jsx';
 import SoundGuideModal from './components/SoundGuideModal.jsx';
 import SoundLegendBar from './components/SoundLegendBar.jsx';
 import ClimateTimeline from './components/ClimateTimeline.jsx';
+import JukeboxModal from './components/JukeboxModal.jsx';
 
 import { harmonicEngine } from './audio/HarmonicEngine.js';
 import { 
@@ -78,6 +80,7 @@ export default function App() {
   const [showScienceModal, setShowScienceModal] = useState(false);
   const [showCreditsModal, setShowCreditsModal] = useState(false);
   const [showSoundGuideModal, setShowSoundGuideModal] = useState(false);
+  const [showJukeboxModal, setShowJukeboxModal] = useState(false);
   const [isAccessibilityMode, setIsAccessibilityMode] = useState(false);
   const [screenReaderAnnouncement, setScreenReaderAnnouncement] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -305,10 +308,21 @@ export default function App() {
     setActiveStoryId(storyId);
 
     // Map story to relevant hotspot
-    if (story.id === 'arctic-retreat') setActiveRegionId('arctic');
-    if (story.id === 'amazon-pulse') setActiveRegionId('amazon');
-    if (story.id === 'marine-heatwaves') setActiveRegionId('great-barrier-reef');
-    if (story.id === 'carbon-trajectory') setActiveRegionId('sahara');
+    if (story.hotspotId) {
+      setActiveRegionId(story.hotspotId);
+    } else if (story.id === 'arctic-retreat') {
+      setActiveRegionId('arctic');
+    } else if (story.id === 'amazon-pulse') {
+      setActiveRegionId('amazon');
+    } else if (story.id === 'marine-heatwaves') {
+      setActiveRegionId('great-barrier-reef');
+    } else if (story.id === 'carbon-trajectory') {
+      setActiveRegionId('sahara');
+    } else if (story.id === 'sahara-transatlantic') {
+      setActiveRegionId('sahara');
+    } else if (story.id === 'indus-monsoon') {
+      setActiveRegionId('indus-gangetic');
+    }
 
     if (!isPlaying) {
       togglePlay();
@@ -471,6 +485,16 @@ export default function App() {
             >
               NASA Open Data
             </button>
+            <button 
+              id="nav-jukebox-link"
+              onClick={() => setShowJukeboxModal(true)} 
+              className={`text-xs xl:text-sm font-medium transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                isLight ? 'text-slate-600 hover:text-slate-900' : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              <Disc className="w-3.5 h-3.5 text-[#ef233c]" />
+              <span>Jukebox Vault (6)</span>
+            </button>
             <a 
               id="nav-resources-link"
               href="https://science.nasa.gov/earth/earth-information-center/" 
@@ -627,6 +651,20 @@ export default function App() {
               >
                 <span>NASA Open Data</span>
                 <ChevronRight className="w-4 h-4 text-zinc-400" />
+              </button>
+              <button 
+                onClick={() => { setShowJukeboxModal(true); setMobileMenuOpen(false); }} 
+                className={`flex items-center justify-between p-2.5 rounded-xl text-left text-sm font-medium transition-colors cursor-pointer ${
+                  isLight ? 'hover:bg-slate-100 text-slate-700 hover:text-slate-900' : 'hover:bg-white/5 text-zinc-300 hover:text-white'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Disc className="w-4 h-4 text-[#ef233c]" />
+                  <span>Earth Jukebox Vault</span>
+                </div>
+                <span className="text-[10px] px-2 py-0.5 rounded font-mono font-bold bg-[#ef233c]/15 text-[#ef233c] border border-[#ef233c]/30">
+                  6 TRACKS
+                </span>
               </button>
               <a 
                 href="https://science.nasa.gov/earth/earth-information-center/" 
@@ -837,6 +875,18 @@ export default function App() {
               >
                 <span>Climate Time Machine</span>
                 <span className={isLight ? 'text-slate-400 text-xs' : 'text-zinc-500 text-xs'}>&darr;</span>
+              </button>
+
+              <button
+                onClick={() => setShowJukeboxModal(true)}
+                className={`px-3.5 py-1.5 rounded-full border text-xs transition-all flex items-center gap-1.5 cursor-pointer font-semibold ${
+                  isLight 
+                    ? 'bg-red-50 hover:bg-red-100 border-red-200 text-red-800 shadow-xs' 
+                    : 'bg-red-950/40 hover:bg-red-900/50 border-red-500/40 text-red-200 hover:text-white'
+                }`}
+              >
+                <Disc className="w-3.5 h-3.5 text-[#ef233c]" />
+                <span>All 6 Jukebox Tracks</span>
               </button>
             </div>
           </div>
@@ -1246,9 +1296,17 @@ export default function App() {
                   }`}>
                     Witness four decades of polar warming and sea ice decline through deterministic pitch transformation.
                   </p>
-                  <div className="mt-auto flex items-center justify-between text-xs font-manrope text-[#ef233c]">
-                    <span>{activeStoryId === 'arctic-retreat' ? 'PLAYING NOW' : 'ACTIVATE STORY'}</span>
-                    <span>&rarr;</span>
+                  <div className="mt-auto flex items-center justify-between text-xs font-manrope">
+                    <span className="text-[#ef233c] font-semibold">{activeStoryId === 'arctic-retreat' ? 'PLAYING NOW' : 'ACTIVATE STORY'}</span>
+                    <button 
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setShowJukeboxModal(true); }}
+                      className={`text-[11px] font-semibold underline underline-offset-2 transition-colors cursor-pointer ${
+                        isLight ? 'text-slate-500 hover:text-slate-900' : 'text-zinc-500 hover:text-zinc-300'
+                      }`}
+                    >
+                      All 6 tracks &rarr;
+                    </button>
                   </div>
                 </div>
               </div>
@@ -1291,12 +1349,63 @@ export default function App() {
                   }`}>
                     Acoustic contrast between pristine biosphere canopy and encroaching drought and fire cycles.
                   </p>
-                  <div className="mt-auto flex items-center justify-between text-xs font-manrope text-[#ef233c]">
-                    <span>{activeStoryId === 'amazon-pulse' ? 'PLAYING NOW' : 'ACTIVATE STORY'}</span>
-                    <span>&rarr;</span>
+                  <div className="mt-auto flex items-center justify-between text-xs font-manrope">
+                    <span className="text-[#ef233c] font-semibold">{activeStoryId === 'amazon-pulse' ? 'PLAYING NOW' : 'ACTIVATE STORY'}</span>
+                    <button 
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setShowJukeboxModal(true); }}
+                      className={`text-[11px] font-semibold underline underline-offset-2 transition-colors cursor-pointer ${
+                        isLight ? 'text-slate-500 hover:text-slate-900' : 'text-zinc-500 hover:text-zinc-300'
+                      }`}
+                    >
+                      All 6 tracks &rarr;
+                    </button>
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Earth Jukebox: Full Planetary Tracks Vault Banner */}
+            <div className={`mt-5 p-5 sm:p-6 rounded-2xl border transition-all flex flex-col md:flex-row items-center justify-between gap-4 ${
+              isLight 
+                ? 'bg-gradient-to-r from-red-50/70 via-white to-slate-50 border-red-200/80 shadow-md shadow-red-500/5' 
+                : 'bg-gradient-to-r from-red-950/30 via-zinc-950 to-zinc-900 border-[#ef233c]/30 shadow-[0_0_40px_rgba(239,35,60,0.12)]'
+            }`}>
+              <div className="flex items-center gap-4">
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border ${
+                  isLight 
+                    ? 'bg-red-50 border-red-200 text-[#ef233c] shadow-xs' 
+                    : 'bg-gradient-to-tr from-[#ef233c]/30 to-zinc-900 border-[#ef233c]/40 text-[#ef233c] shadow-[0_0_20px_rgba(239,35,60,0.25)]'
+                }`}>
+                  <Disc className="w-6 h-6 animate-[spin_8s_linear_infinite]" />
+                </div>
+                <div>
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#ef233c]/15 text-[#ef233c] font-bold border border-[#ef233c]/30 uppercase tracking-wider">
+                      Earth Jukebox Vault &bull; 6 Curated Tracks
+                    </span>
+                    <span className={`text-xs ${isLight ? 'text-slate-500' : 'text-zinc-500'}`}>
+                      Automated Multi-Sensory Data Tours
+                    </span>
+                  </div>
+                  <h4 className={`text-base sm:text-lg font-bold font-manrope ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                    Explore More Planetary Sonification Stories
+                  </h4>
+                  <p className={`text-xs sm:text-sm font-manrope mt-1 leading-relaxed max-w-2xl ${isLight ? 'text-slate-600' : 'text-zinc-400'}`}>
+                    Beyond these 2 featured biomes, listen to guided sonifications for <strong>Global Marine Heatwaves</strong> (deep ocean thermal uptake), <strong>The Global Carbon Ascent</strong> (atmospheric CO₂), <strong>Sahara Dust &amp; Atlantic Winds</strong>, and the <strong>Indo-Gangetic Anthropocene Pulse</strong>.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                id="explore-jukebox-vault-btn"
+                onClick={() => setShowJukeboxModal(true)}
+                className="shrink-0 w-full md:w-auto px-6 py-3 rounded-full bg-[#ef233c] hover:bg-red-700 text-white font-bold font-manrope text-xs sm:text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-red-950/50 hover:shadow-[0_0_25px_rgba(239,35,60,0.5)] active:scale-95 whitespace-nowrap"
+              >
+                <Disc className="w-4 h-4" />
+                <span>Explore All 6 Tracks</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </section>
@@ -1562,6 +1671,7 @@ export default function App() {
             <h4 className="text-xs font-bold text-[#ef233c] uppercase tracking-widest mb-6 font-manrope">Platform</h4>
             <ul className="space-y-4 text-zinc-400 text-sm font-manrope">
               <li><button onClick={() => setShowSoundGuideModal(true)} id="footer-sound-guide-link" className="text-white hover:text-[#ef233c] font-semibold transition-colors cursor-pointer">Sound Guide & Tutorial</button></li>
+              <li><button onClick={() => setShowJukeboxModal(true)} id="footer-jukebox-link" className="hover:text-white transition-colors cursor-pointer flex items-center gap-1.5"><Disc className="w-3.5 h-3.5 text-[#ef233c]" /><span>Earth Jukebox Vault (6 Tracks)</span></button></li>
               <li><button onClick={() => setShowScienceModal(true)} id="footer-feat-link" className="hover:text-white transition-colors cursor-pointer">Science Methodology</button></li>
               <li><button onClick={() => setShowCreditsModal(true)} id="footer-int-link" className="hover:text-white transition-colors cursor-pointer">NASA Open Data</button></li>
               <li><a href="#timeline-section" id="footer-timeline-link" className="hover:text-white transition-colors">Time Machine</a></li>
@@ -1874,6 +1984,19 @@ export default function App() {
         onStartListening={togglePlay}
         harmonicEngine={harmonicEngine}
         isPlaying={isPlaying}
+        theme={theme}
+      />
+      <JukeboxModal
+        isOpen={showJukeboxModal}
+        onClose={() => setShowJukeboxModal(false)}
+        planetaryStories={planetaryStories}
+        activeStoryId={activeStoryId}
+        onSelectStory={(storyId) => {
+          handleSelectStory(storyId);
+          setShowJukeboxModal(false);
+        }}
+        isPlaying={isPlaying}
+        togglePlay={togglePlay}
         theme={theme}
       />
     </div>
