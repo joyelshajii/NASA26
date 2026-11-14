@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { Globe, RotateCcw, Play, Pause } from 'lucide-react';
+import { Globe, RotateCcw } from 'lucide-react';
 import { DEFAULT_REGIONS, CONTINENT_POLYGONS, latLonToVector3 } from '../utils/geoUtils.js';
 
 /**
@@ -225,6 +225,9 @@ export default function EarthGlobe({
 }) {
   const mountRef = useRef(null);
   const animFrameIdRef = useRef(null);
+  const tooltipRef = useRef(null);
+  const topStemRef = useRef(null);
+  const bottomStemRef = useRef(null);
 
   // Three.js object references for real-time manipulation
   const earthGroupRef = useRef(null);
@@ -234,12 +237,17 @@ export default function EarthGlobe({
 
   // Transition & Interaction State
   const [autoRotate, setAutoRotate] = useState(autoRotateDefault);
+  const autoRotateRef = useRef(autoRotateDefault);
   const isDraggingRef = useRef(false);
   const targetQuaternionRef = useRef(null);
   const currentAudioPulseRef = useRef(0.0);
 
-  // Screen-space 2D projected coordinates for active tooltip/badges
-  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0, visible: false, region: null });
+  // Dynamic props & state refs to avoid tearing down the WebGL scene on state changes
+  const audioLevelRef = useRef(audioLevel);
+  const frequencyDataRef = useRef(frequencyData);
+  const onSelectRegionRef = useRef(onSelectRegion);
+  const currentRegionRef = useRef(null);
+  const regionsRef = useRef([]);
 
   // Consolidate regions
   const regions = useMemo(() => {
@@ -258,6 +266,38 @@ export default function EarthGlobe({
     return match || regions[0];
   }, [activeRegion, regions]);
 
+  // Synchronize mutable refs
+  useEffect(() => {
+    audioLevelRef.current = audioLevel;
+  }, [audioLevel]);
+
+  useEffect(() => {
+    frequencyDataRef.current = frequencyData;
+  }, [frequencyData]);
+
+  useEffect(() => {
+    onSelectRegionRef.current = onSelectRegion;
+  }, [onSelectRegion]);
+
+  useEffect(() => {
+    currentRegionRef.current = currentRegion;
+  }, [currentRegion]);
+
+  useEffect(() => {
+    regionsRef.current = regions;
+  }, [regions]);
+
+  // Synchronize autoRotate when default prop changes
+  const [prevDefault, setPrevDefault] = useState(autoRotateDefault);
+  if (prevDefault !== autoRotateDefault) {
+    setPrevDefault(autoRotateDefault);
+    setAutoRotate(autoRotateDefault);
+  }
+
+  useEffect(() => {
+    autoRotateRef.current = autoRotate;
+  }, [autoRotate]);
+
   // Synchronize target orientation when activeRegion prop changes
   useEffect(() => {
     if (!currentRegion || !earthGroupRef.current) return;
@@ -265,10 +305,11 @@ export default function EarthGlobe({
     const coords = { lat: currentRegion.lat, lon: currentRegion.lon };
     const pos = latLonToVector3(coords.lat, coords.lon, 1.0);
 
-    // Compute exact quaternion to orient this hotspot directly toward the camera (0, 0, 1)
+    // Compute exact quaternion to orient this hotspot directly toward the camera line of sight
+    const cameraDir = new THREE.Vector3(0, 0.4, 2.85).normalize();
     const q = new THREE.Quaternion().setFromUnitVectors(
       pos.clone().normalize(),
-      new THREE.Vector3(0, 0, 1)
+      cameraDir
     );
     targetQuaternionRef.current = q;
   }, [currentRegion]);
@@ -277,6 +318,11 @@ export default function EarthGlobe({
   useEffect(() => {
     const container = mountRef.current;
     if (!container) return;
+
+    // Pre-allocated vectors for frame calculations (zero garbage collection overhead)
+    const tempVec = new THREE.Vector3();
+    const toCameraVec = new THREE.Vector3();
+    const normalVec = new THREE.Vector3();
 
     const width = container.clientWidth || 800;
     const height = container.clientHeight || 600;
@@ -581,26 +627,29 @@ export default function EarthGlobe({
 
       if (intersects.length > 0) {
         const clickedRegion = intersects[0].object.userData.region;
-        onSelectRegion(clickedRegion.id);
+        if (onSelectRegionRef.current) {
+          onSelectRegionRef.current(clickedRegion.id);
+        }
       }
     };
 
     renderer.domElement.addEventListener('pointermove', handlePointerMove);
     renderer.domElement.addEventListener('pointerdown', handlePointerDown);
 
-    // Initial camera focus on initial region
-    if (currentRegion) {
-      const initialPos = latLonToVector3(currentRegion.lat, currentRegion.lon, 1.0);
+    // Initial camera focus on initial region directly facing camera line of sight
+    const initialRegion = currentRegionRef.current;
+    if (initialRegion) {
+      const initialPos = latLonToVector3(initialRegion.lat, initialRegion.lon, 1.0);
+      const cameraDir = new THREE.Vector3(0, 0.4, 2.85).normalize();
       const initialQuat = new THREE.Quaternion().setFromUnitVectors(
         initialPos.clone().normalize(),
-        new THREE.Vector3(0, 0, 1)
+        cameraDir
       );
       earthGroup.quaternion.copy(initialQuat);
     }
 
     // 11. Animation & Render Loop
     const clock = new THREE.Clock();
-    const tempVec = new THREE.Vector3();
 
     const animate = () => {
       animFrameIdRef.current = requestAnimationFrame(animate);
@@ -610,15 +659,17 @@ export default function EarthGlobe({
       // Controls update with damping
       controls.update();
 
-      // Audio-reactive calculation
+      // Audio-reactive calculation using mutable refs without restarting the WebGL loop
       let rawAudio = 0;
-      if (typeof audioLevel === 'number') {
-        rawAudio = Math.max(0, Math.min(1, audioLevel));
-      } else if (frequencyData && frequencyData.length > 0) {
+      const lvl = audioLevelRef.current;
+      const freq = frequencyDataRef.current;
+      if (typeof lvl === 'number') {
+        rawAudio = Math.max(0, Math.min(1, lvl));
+      } else if (freq && freq.length > 0) {
         let sum = 0;
-        const count = Math.min(frequencyData.length, 24);
+        const count = Math.min(freq.length, 24);
         for (let i = 0; i < count; i++) {
-          const val = frequencyData[i];
+          const val = freq[i];
           if (val <= 0 && val >= -140) {
             sum += Math.max(0, Math.min(1, (val + 90) / 80));
           } else if (val > 1) {
@@ -648,11 +699,11 @@ export default function EarthGlobe({
 
       // Smooth Quaternion Slerp to active region
       if (targetQuaternionRef.current && !isDraggingRef.current) {
-        earthGroup.quaternion.slerp(targetQuaternionRef.current, 0.045);
-        if (earthGroup.quaternion.angleTo(targetQuaternionRef.current) < 0.005) {
+        earthGroup.quaternion.slerp(targetQuaternionRef.current, 0.05);
+        if (earthGroup.quaternion.angleTo(targetQuaternionRef.current) < 0.003) {
           targetQuaternionRef.current = null;
         }
-      } else if (autoRotate && !isDraggingRef.current) {
+      } else if (autoRotateRef.current && !isDraggingRef.current) {
         // Gentle planetary idle rotation
         earthGroup.rotateY(0.0009);
       }
@@ -663,11 +714,12 @@ export default function EarthGlobe({
       }
 
       // Animate 3D Hotspot Beacons & Radar Rings
+      const curReg = currentRegionRef.current;
       hitTargets.forEach((hit) => {
         const { region, beaconMesh, ringMesh1, ringMesh2 } = hit.userData;
         const isSelected =
-          currentRegion &&
-          (region.id === currentRegion.id || (region.aliases && region.aliases.includes(currentRegion.id)));
+          curReg &&
+          (region.id === curReg.id || (region.aliases && region.aliases.includes(curReg.id)));
 
         // Radar pulse phase 1 & 2
         const phase1 = (elapsed * 1.5) % 1;
@@ -692,33 +744,67 @@ export default function EarthGlobe({
         }
       });
 
-      // Update projected 2D screen positions for active tooltip badge
-      if (currentRegion) {
+      // Update projected 2D screen positions for active tooltip badge with frame-perfect GPU synchronization
+      const tooltipEl = tooltipRef.current;
+      if (tooltipEl && curReg) {
         const activeHit = hitTargets.find(
-          (h) => h.userData.region.id === currentRegion.id ||
-            (h.userData.region.aliases && h.userData.region.aliases.includes(currentRegion.id))
+          (h) => h.userData.region.id === curReg.id ||
+            (h.userData.region.aliases && h.userData.region.aliases.includes(curReg.id))
         );
 
         if (activeHit) {
           activeHit.getWorldPosition(tempVec);
-          const toCamera = camera.position.clone().sub(tempVec).normalize();
-          const normal = tempVec.clone().normalize();
-          const isFacingCamera = normal.dot(toCamera) > 0.15;
+          toCameraVec.copy(camera.position).sub(tempVec).normalize();
+          normalVec.copy(tempVec).normalize();
+          const dotVal = normalVec.dot(toCameraVec);
+          const isFacingCamera = dotVal > 0.15;
 
           if (isFacingCamera) {
             tempVec.project(camera);
-            const screenX = (tempVec.x * 0.5 + 0.5) * width;
-            const screenY = (-tempVec.y * 0.5 + 0.5) * height;
+            const domW = renderer.domElement.clientWidth || container.clientWidth;
+            const domH = renderer.domElement.clientHeight || container.clientHeight;
 
-            setTooltipPos({
-              x: screenX,
-              y: screenY,
-              visible: true,
-              region: currentRegion
-            });
+            const screenX = (tempVec.x * 0.5 + 0.5) * domW;
+            const screenY = (-tempVec.y * 0.5 + 0.5) * domH;
+
+            // Half-width of card for boundary protection
+            const cardHalfWidth = 135;
+            const clampedX = Math.max(cardHalfWidth + 12, Math.min(domW - cardHalfWidth - 12, screenX));
+            const stemOffset = Math.max(-90, Math.min(90, screenX - clampedX));
+
+            // Determine vertical placement:
+            // Default: place BELOW the hotspot (stem at top, card body below),
+            // strictly ensuring it never floats above or covers the top options HUD.
+            // Only flip ABOVE if near the very bottom of the viewport where there is no room below.
+            const isNearBottom = screenY > domH - 175;
+
+            if (isNearBottom) {
+              if (topStemRef.current) topStemRef.current.style.display = 'none';
+              if (bottomStemRef.current) {
+                bottomStemRef.current.style.display = 'block';
+                bottomStemRef.current.style.transform = `translateX(${stemOffset}px)`;
+              }
+              tooltipEl.style.transform = `translate3d(${clampedX}px, ${screenY}px, 0) translate(-50%, -100%)`;
+            } else {
+              if (topStemRef.current) {
+                topStemRef.current.style.display = 'block';
+                topStemRef.current.style.transform = `translateX(${stemOffset}px)`;
+              }
+              if (bottomStemRef.current) bottomStemRef.current.style.display = 'none';
+              // Ensure top of stem/card never clips into the top options bar (header occupies y = 16 to 64px)
+              const safeY = Math.max(68, screenY);
+              tooltipEl.style.transform = `translate3d(${clampedX}px, ${safeY}px, 0) translate(-50%, 0)`;
+            }
+
+            // Smooth fade near horizon boundary
+            const edgeAlpha = Math.min(1, Math.max(0, (dotVal - 0.15) / 0.15));
+            tooltipEl.style.opacity = edgeAlpha.toFixed(2);
+            tooltipEl.style.display = 'block';
           } else {
-            setTooltipPos((prev) => ({ ...prev, visible: false }));
+            tooltipEl.style.display = 'none';
           }
+        } else {
+          tooltipEl.style.display = 'none';
         }
       }
 
@@ -768,38 +854,39 @@ export default function EarthGlobe({
         container.removeChild(renderer.domElement);
       }
     };
-  }, [regions, onSelectRegion, currentRegion, autoRotate, audioLevel, frequencyData]);
+  }, [regions]);
 
   // Reset Camera View
   const handleResetView = useCallback(() => {
     if (!currentRegion || !earthGroupRef.current) return;
     const pos = latLonToVector3(currentRegion.lat, currentRegion.lon, 1.0);
+    const cameraDir = new THREE.Vector3(0, 0.4, 2.85).normalize();
     const q = new THREE.Quaternion().setFromUnitVectors(
       pos.clone().normalize(),
-      new THREE.Vector3(0, 0, 1)
+      cameraDir
     );
     targetQuaternionRef.current = q;
   }, [currentRegion]);
 
   return (
-    <div className={`relative w-full h-full min-h-[500px] overflow-hidden select-none bg-slate-950 font-sans ${className}`}>
+    <div className={`relative w-full h-full min-h-[400px] overflow-hidden select-none bg-black font-inter ${className}`}>
       {/* 3D WebGL Canvas Container */}
       <div ref={mountRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
 
       {/* Atmospheric Vignette Overlay */}
-      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(2,4,8,0.75)_95%)]" />
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(0,0,0,0.85)_95%)]" />
 
-      {/* Top Header HUD Telemetry */}
-      <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none">
-        <div className="flex items-center gap-3 bg-slate-950/80 backdrop-blur-md border border-slate-800/80 px-4 py-2 rounded-xl shadow-xl pointer-events-auto">
-          <Globe className="w-5 h-5 text-sky-400 animate-spin-slow" />
+      {/* Top Header HUD Telemetry - Z-30 to guarantee priority and visibility above 3D space */}
+      <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none z-30">
+        <div className="flex items-center gap-2.5 bg-black/85 backdrop-blur-xl border border-white/10 px-3 py-2 rounded-xl shadow-xl pointer-events-auto">
+          <Globe className="w-4 h-4 text-[#ef233c] animate-spin-slow shrink-0" />
           <div>
-            <div className="text-[10px] tracking-widest text-slate-400 font-mono uppercase">
+            <div className="text-[10px] tracking-wider text-zinc-400 font-mono uppercase font-semibold">
               TERRASONUS PLANETARY TWIN
             </div>
-            <div className="text-sm font-semibold text-slate-100 flex items-center gap-2">
+            <div className="text-sm font-semibold text-white font-manrope flex items-center gap-2">
               <span>{currentRegion.name}</span>
-              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-sky-950/60 border border-sky-800/60 text-sky-300">
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#ef233c]/15 border border-[#ef233c]/40 text-[#ef233c] font-semibold">
                 {currentRegion.category}
               </span>
             </div>
@@ -811,80 +898,99 @@ export default function EarthGlobe({
           <div className="flex items-center gap-2 pointer-events-auto">
             <button
               type="button"
-              onClick={() => setAutoRotate(!autoRotate)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono transition-all border ${
+              onClick={() => {
+                const nextState = !autoRotate;
+                setAutoRotate(nextState);
+                autoRotateRef.current = nextState;
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-medium transition-all border cursor-pointer ${
                 autoRotate
-                  ? 'bg-sky-500/15 border-sky-500/40 text-sky-300 shadow-lg shadow-sky-950/50'
-                  : 'bg-slate-900/80 border-slate-800 text-slate-400 hover:text-slate-200'
+                  ? 'bg-[#ef233c]/20 border-[#ef233c]/60 text-white shadow-lg shadow-red-950/50'
+                  : 'bg-black/80 border-zinc-800 text-zinc-300 hover:text-white hover:border-zinc-700'
               }`}
               title="Toggle Planetary Auto-Rotation"
             >
-              {autoRotate ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+              <span className={`w-1.5 h-1.5 rounded-full ${autoRotate ? 'bg-[#ef233c] animate-pulse' : 'bg-zinc-500'}`} />
               <span>{autoRotate ? 'ORBIT ACTIVE' : 'ORBIT PAUSED'}</span>
             </button>
 
             <button
               type="button"
               onClick={handleResetView}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono bg-slate-900/80 border border-slate-800 text-slate-300 hover:bg-slate-800 hover:text-slate-100 transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-medium bg-black/80 border border-zinc-800 text-zinc-300 hover:bg-zinc-900 hover:text-white hover:border-zinc-700 transition-all cursor-pointer"
               title="Re-Center on Active Region"
             >
-              <RotateCcw className="w-3.5 h-3.5" />
+              <RotateCcw className="w-3.5 h-3.5 text-zinc-400" />
               <span>ALIGN</span>
             </button>
           </div>
         )}
       </div>
 
-      {/* Screen-Space Holographic Beacon Badge (Tracks 3D Hotspot) */}
-      {tooltipPos.visible && tooltipPos.region && (
+      {/* Screen-Space Holographic Beacon Badge (Direct GPU Transform Sync with 3D Hotspot) */}
+      <div
+        ref={tooltipRef}
+        className="absolute top-0 left-0 pointer-events-auto z-20 will-change-transform"
+        style={{ display: 'none' }}
+      >
+        {/* Top Beacon Pointer Stem (when card is below hotspot - pointing up to hotspot) */}
         <div
-          className="absolute pointer-events-auto transform -translate-x-1/2 -translate-y-full mb-4 z-20 transition-all duration-75"
+          ref={topStemRef}
+          className="w-0.5 h-4 mx-auto"
           style={{
-            left: `${tooltipPos.x}px`,
-            top: `${tooltipPos.y}px`
+            backgroundColor: currentRegion.color || '#ef233c',
+            boxShadow: `0 0 8px ${currentRegion.color || '#ef233c'}`
           }}
-        >
-          <div className="bg-slate-950/90 backdrop-blur-md border border-slate-700/80 rounded-xl p-3 shadow-2xl shadow-cyan-950/50 min-w-[210px]">
-            {/* Holographic Header Bar */}
-            <div className="flex items-center justify-between gap-2 border-b border-slate-800/80 pb-1.5 mb-2">
-              <div className="flex items-center gap-1.5">
-                <span
-                  className="w-2 h-2 rounded-full animate-ping"
-                  style={{ backgroundColor: tooltipPos.region.color }}
-                />
-                <span className="text-xs font-bold text-slate-100 tracking-wide">
-                  {tooltipPos.region.name}
-                </span>
-              </div>
-              <span className="text-[10px] font-mono text-slate-400">
-                {tooltipPos.region.lat.toFixed(1)} N, {tooltipPos.region.lon.toFixed(1)} E
+        />
+
+        <div className="bg-black/95 backdrop-blur-xl border border-white/10 rounded-xl p-3 shadow-2xl shadow-red-950/50 min-w-[210px] max-w-[270px]">
+          {/* Holographic Header Bar */}
+          <div className="flex items-center justify-between gap-2 border-b border-zinc-800 pb-1.5 mb-1.5">
+            <div className="flex items-center gap-1.5">
+              <span
+                className="w-2 h-2 rounded-full animate-ping"
+                style={{ backgroundColor: currentRegion.color || '#ef233c' }}
+              />
+              <span className="text-xs sm:text-sm font-semibold text-white tracking-wide font-manrope">
+                {currentRegion.name}
               </span>
             </div>
-
-            {/* Metrics Chips */}
-            <div className="grid grid-cols-2 gap-1.5 mb-2">
-              {(tooltipPos.region.metrics || []).slice(0, 2).map((m, idx) => (
-                <div key={idx} className="bg-slate-900/80 rounded p-1.5 border border-slate-800/60">
-                  <div className="text-[9px] font-mono text-slate-400 uppercase">{m.label}</div>
-                  <div className="text-xs font-semibold text-slate-200">{m.value}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* Quick narrative caption */}
-            <p className="text-[10px] text-slate-400 leading-tight">
-              {tooltipPos.region.narrative || tooltipPos.region.subtitle}
-            </p>
+            <span className="text-[10px] font-mono text-zinc-400">
+              {currentRegion.lat.toFixed(1)}° N, {currentRegion.lon.toFixed(1)}° E
+            </span>
           </div>
-          {/* Beacon Pointer Stem */}
-          <div className="w-0.5 h-4 bg-sky-400/80 mx-auto shadow-[0_0_8px_#38bdf8]" />
+
+          {/* Metrics Chips */}
+          <div className="grid grid-cols-2 gap-1.5 mb-2">
+            {(currentRegion.metrics || []).slice(0, 2).map((m, idx) => (
+              <div key={idx} className="bg-zinc-900/80 rounded-lg p-1.5 border border-zinc-800">
+                <div className="text-[10px] font-mono text-zinc-400 uppercase font-semibold">{m.label}</div>
+                <div className="text-xs font-bold text-white font-mono">{m.value}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Quick narrative caption */}
+          <p className="text-[11px] text-zinc-300 leading-relaxed font-inter">
+            {currentRegion.narrative || currentRegion.subtitle}
+          </p>
         </div>
-      )}
+
+        {/* Bottom Beacon Pointer Stem (when card is above hotspot - pointing down to hotspot) */}
+        <div
+          ref={bottomStemRef}
+          className="w-0.5 h-4 mx-auto"
+          style={{
+            display: 'none',
+            backgroundColor: currentRegion.color || '#ef233c',
+            boxShadow: `0 0 8px ${currentRegion.color || '#ef233c'}`
+          }}
+        />
+      </div>
 
       {/* Bottom Region Quick Selector Rail */}
-      <div className="absolute bottom-4 left-4 right-4 flex items-center justify-center pointer-events-none">
-        <div className="flex flex-wrap items-center justify-center gap-1.5 p-1.5 rounded-2xl bg-slate-950/85 backdrop-blur-md border border-slate-800/80 shadow-2xl pointer-events-auto">
+      <div className="absolute bottom-4 left-4 right-4 flex items-center justify-center pointer-events-none z-30">
+        <div className="flex flex-wrap items-center justify-center gap-1.5 p-1.5 rounded-2xl bg-black/85 backdrop-blur-xl border border-white/10 shadow-2xl pointer-events-auto">
           {regions.map((region) => {
             const isSelected =
               currentRegion &&
@@ -895,10 +1001,10 @@ export default function EarthGlobe({
                 key={region.id}
                 type="button"
                 onClick={() => onSelectRegion(region.id)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-mono transition-all border ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-medium transition-all border cursor-pointer ${
                   isSelected
-                    ? `${region.accentClass} shadow-lg font-bold scale-105`
-                    : 'bg-slate-900/60 border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    ? 'bg-[#ef233c] border-[#ef233c] text-white shadow-lg shadow-red-950/60 font-semibold'
+                    : 'bg-white/5 border-transparent text-zinc-300 hover:text-white hover:bg-white/10'
                 }`}
               >
                 <span
