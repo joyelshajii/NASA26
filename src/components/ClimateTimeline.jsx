@@ -6,8 +6,6 @@ import {
   Zap,
   ChevronLeft,
   ChevronRight,
-  Volume2,
-  VolumeX,
   Activity,
   Sparkles,
   Thermometer,
@@ -314,6 +312,32 @@ export default function ClimateTimeline({
                   {activeEpoch.status}
                 </span>
               </div>
+              {togglePlay && (
+                <button
+                  type="button"
+                  onClick={togglePlay}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold font-manrope transition-all cursor-pointer border shadow-sm ${
+                    isPlaying
+                      ? 'bg-[#ef233c] text-white border-[#ef233c] shadow-red-950/40'
+                      : (isLight
+                          ? 'bg-red-50 hover:bg-[#ef233c] text-[#ef233c] hover:text-white border-red-200 shadow-xs'
+                          : 'bg-[#ef233c]/15 hover:bg-[#ef233c] text-[#ef233c] hover:text-white border-[#ef233c]/40')
+                  }`}
+                  title={isPlaying ? 'Pause acoustic stream' : `Start listening to year ${Math.round(currentYear)}`}
+                >
+                  {isPlaying ? (
+                    <>
+                      <Pause className="w-3.5 h-3.5 fill-current" />
+                      <span>Pause Audio</span>
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-3.5 h-3.5 fill-current" />
+                      <span>Start Listening</span>
+                    </>
+                  )}
+                </button>
+              )}
             </div>
           </div>
 
@@ -430,24 +454,25 @@ export default function ClimateTimeline({
               isLight ? 'border-slate-300' : 'border-white/10'
             }`}>
               <button
+                type="button"
                 onClick={togglePlay}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-mono transition-all cursor-pointer ${
                   isPlaying
-                    ? (isLight ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-sm' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.2)]')
-                    : (isLight ? 'bg-slate-200/90 text-slate-700 hover:bg-slate-300 border border-slate-300' : 'bg-zinc-800/80 text-zinc-400 hover:text-white border border-zinc-700')
+                    ? (isLight ? 'bg-red-500 text-white border border-red-600 shadow-sm' : 'bg-[#ef233c] text-white border border-red-400/50 shadow-[0_0_15px_rgba(239,35,60,0.4)]')
+                    : (isLight ? 'bg-red-50 text-[#ef233c] hover:bg-[#ef233c] hover:text-white border border-red-200 shadow-xs' : 'bg-[#ef233c]/15 text-[#ef233c] hover:bg-[#ef233c] hover:text-white border border-[#ef233c]/40')
                 }`}
-                title={isPlaying ? 'Audio active - modulating with timeline' : 'Click to start sonification audio'}
+                title={isPlaying ? 'Audio active - modulating with timeline (Click to pause)' : 'Click to start listening'}
               >
                 {isPlaying ? (
                   <>
-                    <Volume2 className="w-3.5 h-3.5 text-emerald-500 animate-pulse" />
-                    <span className="hidden md:inline font-bold">Drone {droneFreq} Hz</span>
-                    <span className="md:hidden">Audio On</span>
+                    <Pause className="w-3.5 h-3.5 fill-current" />
+                    <span className="hidden md:inline font-bold">Drone {droneFreq} Hz &bull; Pause</span>
+                    <span className="md:hidden font-bold">Pause</span>
                   </>
                 ) : (
                   <>
-                    <VolumeX className="w-3.5 h-3.5" />
-                    <span>Connect Audio</span>
+                    <Play className="w-3.5 h-3.5 fill-current" />
+                    <span>Start Listening</span>
                   </>
                 )}
               </button>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { 
   Pause, 
+  Play,
   Eye, 
   ChevronRight, 
   ArrowRight,
@@ -65,6 +66,7 @@ export default function App() {
 
   // Playback & Audio States
   const [isPlaying, setIsPlaying] = useState(false);
+  const [hasStartedListening, setHasStartedListening] = useState(false);
   const [audioLevel, setAudioLevel] = useState(0.0);
 
   // Planetary Exploration States
@@ -226,6 +228,7 @@ export default function App() {
         harmonicEngine.setTelemetry(currentTelemetry);
         harmonicEngine.start();
         setIsPlaying(true);
+        setHasStartedListening(true);
         const msg = `Audio playback started. Headphones recommended for full spatial clarity. Year: ${Math.round(currentYear)}. Region: ${activeRegion.name}. Surface temperature anomaly: ${currentTelemetry.tempAnomaly} degrees Celsius.`;
         setScreenReaderAnnouncement(msg);
         speakText(msg);
@@ -905,6 +908,7 @@ export default function App() {
               onOpenGuide={() => setShowSoundGuideModal(true)}
               harmonicEngine={harmonicEngine}
               theme={theme}
+              togglePlay={togglePlay}
             />
 
             <div id="bento-stage" className="scroll-mt-24 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 h-auto">
@@ -919,17 +923,49 @@ export default function App() {
                     : 'border-white/10 bg-gradient-to-b from-zinc-900/50 to-black hover:border-white/20'
               }`}>
                 <div className="relative z-10 h-full flex flex-col">
-                  <div className="mb-4 flex items-center justify-between">
-                    <div>
+                  <div className="mb-4 flex flex-wrap items-center justify-between gap-2.5">
+                    <div className="flex items-center gap-2">
                       <span className={`text-xs font-semibold uppercase tracking-wider ${
                         isLight ? 'text-slate-500' : 'text-zinc-400'
                       }`}>
                         Planetary 3D View
                       </span>
+                      <span className={`text-[11px] font-mono px-2 py-0.5 rounded-full border font-semibold ${
+                        isLight ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-white/5 text-zinc-300 border-white/10'
+                      }`}>
+                        Year {Math.round(currentYear)}
+                      </span>
                     </div>
-                    <span className="text-xs font-mono text-[#ef233c] font-semibold">
-                      {isPlaying ? 'Audio Active' : 'Offline Topology'}
-                    </span>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={togglePlay}
+                        className={`group flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold font-manrope transition-all cursor-pointer border shadow-sm ${
+                          isPlaying
+                            ? 'bg-[#ef233c] text-white border-[#ef233c] shadow-red-950/40'
+                            : (isLight 
+                                ? 'bg-red-50 hover:bg-[#ef233c] text-[#ef233c] hover:text-white border-red-200' 
+                                : 'bg-[#ef233c]/15 hover:bg-[#ef233c] text-[#ef233c] hover:text-white border-[#ef233c]/40')
+                        }`}
+                        title={isPlaying ? 'Pause acoustic stream' : 'Start listening to planetary sonification'}
+                      >
+                        {isPlaying ? (
+                          <>
+                            <Pause className="w-3 h-3 fill-current" />
+                            <span>Pause</span>
+                          </>
+                        ) : (
+                          <>
+                            <Play className="w-3 h-3 fill-current" />
+                            <span>Start Listening</span>
+                          </>
+                        )}
+                      </button>
+                      <span className="text-xs font-mono text-[#ef233c] font-semibold">
+                        {isPlaying ? 'Audio Active' : 'Offline Topology'}
+                      </span>
+                    </div>
                   </div>
                   
                   <h3 className={`text-2xl font-semibold font-manrope mb-2 tracking-tight ${
@@ -953,6 +989,9 @@ export default function App() {
                       autoRotateDefault={!isPlaying}
                       className="w-full h-full min-h-[340px]"
                       theme={theme}
+                      isPlaying={isPlaying}
+                      togglePlay={togglePlay}
+                      currentYear={currentYear}
                     />
                   </div>
 
@@ -996,17 +1035,48 @@ export default function App() {
                     : 'border-white/10 bg-black hover:border-white/20'
               }`}>
                 <div className="relative z-10 flex flex-col h-full">
-                  <div className="mb-4 flex items-center justify-between">
-                    <div>
+                  <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
                       <span className={`text-xs font-semibold uppercase tracking-wider ${
                         isLight ? 'text-slate-500' : 'text-zinc-400'
                       }`}>
                         Active Sensor Feed
                       </span>
+                      <span className={`text-[11px] font-mono px-2 py-0.5 rounded-full border font-semibold ${
+                        isLight ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-white/5 text-zinc-300 border-white/10'
+                      }`}>
+                        Year {Math.round(currentYear)}
+                      </span>
                     </div>
-                    <span className={`text-xs font-mono ${isLight ? 'text-slate-500' : 'text-zinc-500'}`}>
-                      {activeRegion.coordinates[0].toFixed(2)}°N, {activeRegion.coordinates[1].toFixed(2)}°E
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={togglePlay}
+                        className={`group flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold font-manrope transition-all cursor-pointer border shadow-sm ${
+                          isPlaying
+                            ? 'bg-[#ef233c] text-white border-[#ef233c] shadow-red-950/40'
+                            : (isLight 
+                                ? 'bg-red-50 hover:bg-[#ef233c] text-[#ef233c] hover:text-white border-red-200' 
+                                : 'bg-[#ef233c]/15 hover:bg-[#ef233c] text-[#ef233c] hover:text-white border-[#ef233c]/40')
+                        }`}
+                        title={isPlaying ? 'Pause acoustic stream' : 'Start listening to active telemetry'}
+                      >
+                        {isPlaying ? (
+                          <>
+                            <Pause className="w-3 h-3 fill-current" />
+                            <span>Pause</span>
+                          </>
+                        ) : (
+                          <>
+                            <Play className="w-3 h-3 fill-current" />
+                            <span>Start Listening</span>
+                          </>
+                        )}
+                      </button>
+                      <span className={`text-xs font-mono ${isLight ? 'text-slate-500' : 'text-zinc-500'}`}>
+                        {activeRegion.coordinates[0].toFixed(2)}°N, {activeRegion.coordinates[1].toFixed(2)}°E
+                      </span>
+                    </div>
                   </div>
 
                   <h3 className={`text-xl sm:text-2xl font-semibold font-manrope mb-1.5 ${
@@ -1660,10 +1730,63 @@ export default function App() {
         </button>
       </div>
 
+      {/* Floating Persistent Play/Pause Button on Bottom Right Corner (Starts only after listening has started) */}
+      {hasStartedListening && (
+        <aside 
+          aria-label="Floating playback controls"
+          className="fixed bottom-6 right-4 sm:right-6 z-50 animate-fade-up pointer-events-auto"
+        >
+          <button
+            id="floating-playback-toggle-btn"
+            type="button"
+            onClick={togglePlay}
+            className={`group flex items-center gap-2.5 px-4 sm:px-5 py-2.5 sm:py-3 rounded-full backdrop-blur-2xl border transition-all cursor-pointer shadow-2xl hover:scale-105 active:scale-95 ${
+              isPlaying
+                ? isLight
+                  ? 'bg-[#ef233c] text-white border-red-500 shadow-xl shadow-red-500/30 hover:bg-red-600 ring-2 ring-red-400/40'
+                  : 'bg-[#ef233c] text-white border-red-400/50 shadow-[0_0_30px_rgba(239,35,60,0.6)] hover:bg-red-600 ring-2 ring-[#ef233c]/50'
+                : isLight
+                  ? 'bg-slate-900 text-white border-slate-700 shadow-slate-900/40 hover:bg-slate-800 hover:border-[#ef233c]'
+                  : 'bg-zinc-900/95 text-white border-white/20 shadow-[0_0_25px_rgba(0,0,0,0.8)] hover:bg-zinc-800 hover:border-[#ef233c]/60'
+            }`}
+            aria-label={isPlaying ? 'Pause acoustic stream' : 'Play acoustic stream'}
+            title={isPlaying ? 'Pause acoustic stream' : 'Play acoustic stream'}
+          >
+            <span className="relative flex h-2.5 w-2.5 items-center justify-center">
+              {isPlaying && (
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+              )}
+              <span className={`relative inline-flex rounded-full h-2 w-2 ${isPlaying ? 'bg-white' : 'bg-emerald-400'}`} />
+            </span>
+
+            {isPlaying ? (
+              <>
+                <Pause className="w-4 h-4 fill-current text-white shrink-0" />
+                <span className="text-xs font-bold font-manrope tracking-wider uppercase">Pause</span>
+              </>
+            ) : (
+              <>
+                <Play className="w-4 h-4 fill-current text-white shrink-0" />
+                <span className="text-xs font-bold font-manrope tracking-wider uppercase">Play</span>
+              </>
+            )}
+
+            {/* Mini Equalizer Activity Animation when playing */}
+            {isPlaying && (
+              <div className="flex items-center gap-0.5 h-3 ml-0.5">
+                <span className="w-0.5 h-3 bg-white/90 rounded-full animate-pulse" />
+                <span className="w-0.5 h-1.5 bg-white/70 rounded-full animate-pulse [animation-delay:150ms]" />
+                <span className="w-0.5 h-2.5 bg-white/90 rounded-full animate-pulse [animation-delay:300ms]" />
+              </div>
+            )}
+          </button>
+        </aside>
+      )}
+
       {/* Headphones Active Listening Toast (Appears upon starting playback) */}
       {showHeadphonesBanner && (
         <div 
-          className="fixed bottom-6 left-4 right-4 sm:left-auto sm:right-6 z-50 max-w-sm animate-fade-up pointer-events-auto"
+          className="fixed bottom-24 left-4 right-4 sm:left-auto sm:right-6 z-50 max-w-sm animate-fade-up pointer-events-auto"
           role="status"
           aria-live="polite"
         >

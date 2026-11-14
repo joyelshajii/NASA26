@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronRight, Volume2, VolumeX } from 'lucide-react';
+import { ChevronRight, Volume2, VolumeX, Play, Pause } from 'lucide-react';
 
 /**
  * SoundLegendBar Component
@@ -12,7 +12,8 @@ export default function SoundLegendBar({
   isPlaying,
   onOpenGuide,
   harmonicEngine,
-  theme = 'dark'
+  theme = 'dark',
+  togglePlay = null
 }) {
   const [testingVoice, setTestingVoice] = useState(null);
   const isLight = theme === 'light';
@@ -87,6 +88,32 @@ export default function SoundLegendBar({
               }`}>
                 {isPlaying ? '4 Voices Active' : 'Standby'}
               </span>
+              {togglePlay && (
+                <button
+                  type="button"
+                  onClick={togglePlay}
+                  className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] font-semibold font-manrope transition-all cursor-pointer border ${
+                    isPlaying
+                      ? 'bg-[#ef233c] text-white border-[#ef233c] shadow-sm shadow-red-950/40'
+                      : (isLight
+                          ? 'bg-red-50 hover:bg-[#ef233c] text-[#ef233c] hover:text-white border-red-200'
+                          : 'bg-[#ef233c]/15 hover:bg-[#ef233c] text-[#ef233c] hover:text-white border-[#ef233c]/40')
+                  }`}
+                  title={isPlaying ? "Pause Acoustic Stream" : "Start Listening to Audio Layers"}
+                >
+                  {isPlaying ? (
+                    <>
+                      <Pause className="w-3 h-3 fill-current" />
+                      <span>Pause</span>
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-3 h-3 fill-current" />
+                      <span>Start Listening</span>
+                    </>
+                  )}
+                </button>
+              )}
             </div>
             <p className={`text-xs font-inter ${isLight ? 'text-slate-500' : 'text-zinc-400'}`}>
               Every sound corresponds to live NASA satellite telemetry, synthesized into harmonic scales.
