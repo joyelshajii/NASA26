@@ -384,7 +384,7 @@ export default function App() {
   }, [togglePlay, handleSelectRegion, toggleAccessibilityMode, showHeadphonesEntranceModal]);
 
   return (
-    <div className={`min-h-screen font-inter relative overflow-x-hidden transition-colors duration-300 ${
+    <div className={`min-h-screen font-manrope relative overflow-x-hidden transition-colors duration-300 ${
       isLight ? 'bg-slate-50 text-slate-900 selection:bg-[#ef233c] selection:text-white' : 'bg-black text-white selection:bg-[#ef233c] selection:text-white'
     } ${isAccessibilityMode ? 'contrast-125' : ''}`}>
       
@@ -443,7 +443,7 @@ export default function App() {
           </div>
           
           {/* Navigation Links - Single line, balanced spacing, no wrapping */}
-          <div className="hidden lg:flex items-center gap-6 xl:gap-8 font-inter">
+          <div className="hidden lg:flex items-center gap-6 xl:gap-8 font-manrope">
             <button 
               id="nav-sound-guide-link"
               onClick={() => setShowSoundGuideModal(true)} 
@@ -581,7 +581,7 @@ export default function App() {
               ? 'bg-white/95 backdrop-blur-2xl border border-slate-200 text-slate-800' 
               : 'bg-black/90 backdrop-blur-2xl border border-white/10 text-white'
           }`}>
-            <div className="flex flex-col gap-1 font-inter">
+            <div className="flex flex-col gap-1 font-manrope">
               <button 
                 onClick={() => { setShowSoundGuideModal(true); setMobileMenuOpen(false); }} 
                 className={`flex items-center justify-between p-2.5 rounded-xl text-left text-sm font-medium transition-colors cursor-pointer ${
@@ -641,7 +641,7 @@ export default function App() {
                   {isLight ? <Moon className="w-4 h-4 text-slate-700" /> : <Sun className="w-4 h-4 text-amber-400" />}
                   <span>Appearance</span>
                 </div>
-                <span className={`text-[10px] px-2 py-0.5 rounded font-mono font-bold uppercase ${
+                <span className={`text-[10px] px-2 py-0.5 rounded font-manrope font-bold uppercase ${
                   isLight ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-white/10 text-zinc-300'
                 }`}>
                   {isLight ? 'White Theme' : 'Dark Theme'}
@@ -657,7 +657,7 @@ export default function App() {
                   <Eye className="w-4 h-4 text-[#ef233c]" />
                   <span>Blind & Low-Vision Access</span>
                 </div>
-                <span className={`text-[10px] px-2 py-0.5 rounded font-mono ${isAccessibilityMode ? 'bg-[#ef233c]/20 text-[#ef233c] border border-[#ef233c]/40' : (isLight ? 'bg-slate-100 text-slate-600' : 'bg-white/5 text-zinc-400')}`}>
+                <span className={`text-[10px] px-2 py-0.5 rounded font-manrope ${isAccessibilityMode ? 'bg-[#ef233c]/20 text-[#ef233c] border border-[#ef233c]/40' : (isLight ? 'bg-slate-100 text-slate-600' : 'bg-white/5 text-zinc-400')}`}>
                   {isAccessibilityMode ? 'ON' : 'OFF'}
                 </span>
               </button>
@@ -860,7 +860,7 @@ export default function App() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-[#ef233c]"></span>
                 </span>
-                <span className={`text-[11px] font-mono tracking-widest uppercase font-medium ${
+                <span className={`text-[11px] font-manrope tracking-widest uppercase font-medium ${
                   isLight ? 'text-slate-700 group-hover:text-slate-900' : 'text-zinc-300 group-hover:text-white'
                 }`}>
                   Scroll To Explore 3D Globe & Soundscapes
@@ -925,7 +925,7 @@ export default function App() {
                       }`}>
                         Planetary 3D View
                       </span>
-                      <span className={`text-[11px] font-mono px-2 py-0.5 rounded-full border font-semibold ${
+                      <span className={`text-[11px] font-manrope px-2 py-0.5 rounded-full border font-semibold ${
                         isLight ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-white/5 text-zinc-300 border-white/10'
                       }`}>
                         Year {Math.round(currentYear)}
@@ -957,7 +957,7 @@ export default function App() {
                           </>
                         )}
                       </button>
-                      <span className="text-xs font-mono text-[#ef233c] font-semibold">
+                      <span className="text-xs font-manrope text-[#ef233c] font-semibold">
                         {isPlaying ? 'Audio Active' : 'Offline Topology'}
                       </span>
                     </div>
@@ -998,7 +998,7 @@ export default function App() {
                         <button
                           key={r.id}
                           onClick={() => handleSelectRegion(r.id)}
-                          className={`px-3 py-1 rounded-full text-xs font-mono tracking-wider uppercase transition-all cursor-pointer ${
+                          className={`px-3 py-1 rounded-full text-xs font-manrope tracking-wider uppercase transition-all cursor-pointer ${
                             activeRegionId === r.id 
                               ? 'bg-[#ef233c] text-white font-bold' 
                               : isLight 
@@ -1010,7 +1010,7 @@ export default function App() {
                         </button>
                       ))}
                     </div>
-                    <div className="flex items-center gap-1 text-xs font-mono text-[#ef233c]">
+                    <div className="flex items-center gap-1 text-xs font-manrope text-[#ef233c]">
                       <span>EXPLORE</span>
                       <span>&rarr;</span>
                     </div>
@@ -1037,14 +1037,14 @@ export default function App() {
                       }`}>
                         Active Sensor Feed
                       </span>
-                      <span className={`text-[11px] font-mono px-2 py-0.5 rounded-full border font-semibold ${
+                      <span className={`text-[11px] font-manrope px-2 py-0.5 rounded-full border font-semibold ${
                         isLight ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-white/5 text-zinc-300 border-white/10'
                       }`}>
                         Year {Math.round(currentYear)}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className={`text-xs font-mono ${isLight ? 'text-slate-500' : 'text-zinc-500'}`}>
+                      <span className={`text-xs font-manrope ${isLight ? 'text-slate-500' : 'text-zinc-500'}`}>
                         {activeRegion.coordinates[0].toFixed(2)}°N, {activeRegion.coordinates[1].toFixed(2)}°E
                       </span>
                     </div>
@@ -1069,12 +1069,12 @@ export default function App() {
                       <div className="text-xs font-medium text-red-500 mb-1">
                         Temperature Anomaly
                       </div>
-                      <div className={`text-lg sm:text-xl font-bold font-mono ${
+                      <div className={`text-lg sm:text-xl font-bold font-manrope ${
                         isLight ? 'text-slate-900' : 'text-white'
                       }`}>
                         +{currentTelemetry.tempAnomaly}°C
                       </div>
-                      <div className={`text-xs font-mono mt-0.5 ${
+                      <div className={`text-xs font-manrope mt-0.5 ${
                         isLight ? 'text-slate-500' : 'text-zinc-500'
                       }`}>
                         Drone Pitch: {Math.round(55 * Math.pow(2, currentTelemetry.tempAnomaly / 12))} Hz
@@ -1087,12 +1087,12 @@ export default function App() {
                       <div className="text-xs font-medium text-blue-500 mb-1">
                         Wind Velocity
                       </div>
-                      <div className={`text-lg sm:text-xl font-bold font-mono ${
+                      <div className={`text-lg sm:text-xl font-bold font-manrope ${
                         isLight ? 'text-slate-900' : 'text-white'
                       }`}>
                         {currentTelemetry.windSpeed} m/s
                       </div>
-                      <div className={`text-xs font-mono mt-0.5 ${
+                      <div className={`text-xs font-manrope mt-0.5 ${
                         isLight ? 'text-slate-500' : 'text-zinc-500'
                       }`}>
                         Sweep Filter: {Math.round(250 + 3550 * (currentTelemetry.windSpeed / 15))} Hz
@@ -1105,12 +1105,12 @@ export default function App() {
                       <div className="text-xs font-medium text-emerald-600 mb-1">
                         Canopy Vegetation (NDVI)
                       </div>
-                      <div className={`text-lg sm:text-xl font-bold font-mono ${
+                      <div className={`text-lg sm:text-xl font-bold font-manrope ${
                         isLight ? 'text-slate-900' : 'text-white'
                       }`}>
                         {currentTelemetry.ndvi}
                       </div>
-                      <div className={`text-xs font-mono mt-0.5 ${
+                      <div className={`text-xs font-manrope mt-0.5 ${
                         isLight ? 'text-slate-500' : 'text-zinc-500'
                       }`}>
                         Density: {Math.round(currentTelemetry.ndvi * 100)}%
@@ -1123,12 +1123,12 @@ export default function App() {
                       <div className="text-xs font-medium text-amber-600 mb-1">
                         Active Fire Index
                       </div>
-                      <div className={`text-lg sm:text-xl font-bold font-mono ${
+                      <div className={`text-lg sm:text-xl font-bold font-manrope ${
                         isLight ? 'text-slate-900' : 'text-white'
                       }`}>
                         {currentTelemetry.fireIndex}
                       </div>
-                      <div className={`text-xs font-mono mt-0.5 ${
+                      <div className={`text-xs font-manrope mt-0.5 ${
                         isLight ? 'text-slate-500' : 'text-zinc-500'
                       }`}>
                         Pulse Tempo: {Math.round(60 + currentTelemetry.fireIndex * 80)} BPM
@@ -1137,7 +1137,7 @@ export default function App() {
                   </div>
 
                   <div className="mt-auto flex items-center justify-between pt-2">
-                    <span className={`text-xs font-mono ${isLight ? 'text-slate-500' : 'text-zinc-500'}`}>Trigger harmonic chord:</span>
+                    <span className={`text-xs font-manrope ${isLight ? 'text-slate-500' : 'text-zinc-500'}`}>Trigger harmonic chord:</span>
                     <button
                       onClick={() => {
                         if (isPlaying) {
@@ -1180,7 +1180,7 @@ export default function App() {
                     }`}>
                       Curated Story 01
                     </span>
-                    <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
+                    <span className={`text-[10px] font-manrope px-2 py-0.5 rounded border ${
                       isLight 
                         ? 'bg-amber-50 text-amber-800 border-amber-200' 
                         : 'bg-amber-400/10 text-amber-300 border-amber-400/20'
@@ -1198,7 +1198,7 @@ export default function App() {
                   }`}>
                     Witness four decades of polar warming and sea ice decline through deterministic pitch transformation.
                   </p>
-                  <div className="mt-auto flex items-center justify-between text-xs font-mono text-[#ef233c]">
+                  <div className="mt-auto flex items-center justify-between text-xs font-manrope text-[#ef233c]">
                     <span>{activeStoryId === 'arctic-retreat' ? 'PLAYING NOW' : 'ACTIVATE STORY'}</span>
                     <span>&rarr;</span>
                   </div>
@@ -1225,7 +1225,7 @@ export default function App() {
                     }`}>
                       Curated Story 02
                     </span>
-                    <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
+                    <span className={`text-[10px] font-manrope px-2 py-0.5 rounded border ${
                       isLight 
                         ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
                         : 'bg-emerald-400/10 text-emerald-300 border-emerald-400/20'
@@ -1243,7 +1243,7 @@ export default function App() {
                   }`}>
                     Acoustic contrast between pristine biosphere canopy and encroaching drought and fire cycles.
                   </p>
-                  <div className="mt-auto flex items-center justify-between text-xs font-mono text-[#ef233c]">
+                  <div className="mt-auto flex items-center justify-between text-xs font-manrope text-[#ef233c]">
                     <span>{activeStoryId === 'amazon-pulse' ? 'PLAYING NOW' : 'ACTIVATE STORY'}</span>
                     <span>&rarr;</span>
                   </div>
@@ -1302,12 +1302,12 @@ export default function App() {
                   isLight ? 'text-slate-600' : 'text-zinc-400'
                 }`}>NASA GISTEMP v4 anomaly mapped to deterministic sub-bass frequency.</p>
                 <div className="mb-6 flex items-baseline gap-1">
-                  <span className={`text-3xl sm:text-4xl font-bold font-mono ${
+                  <span className={`text-3xl sm:text-4xl font-bold font-manrope ${
                     isLight ? 'text-slate-900' : 'text-white'
                   }`}>
                     {Math.round(55 * Math.pow(2, currentTelemetry.tempAnomaly / 12))}
                   </span>
-                  <span className={`text-sm font-mono ${isLight ? 'text-slate-500' : 'text-zinc-500'}`}>Hz</span>
+                  <span className={`text-sm font-manrope ${isLight ? 'text-slate-500' : 'text-zinc-500'}`}>Hz</span>
                 </div>
                 <ul className="space-y-2.5 mb-6 flex-1">
                   <li className={`flex items-center gap-2 text-xs sm:text-sm ${
@@ -1349,12 +1349,12 @@ export default function App() {
                   isLight ? 'text-slate-600' : 'text-zinc-400'
                 }`}>MODIS NDVI vegetation quantized to an A Minor / C Pentatonic grid.</p>
                 <div className="mb-6 flex items-baseline gap-1">
-                  <span className={`text-3xl sm:text-4xl font-bold font-mono ${
+                  <span className={`text-3xl sm:text-4xl font-bold font-manrope ${
                     isLight ? 'text-slate-900' : 'text-white'
                   }`}>
                     {Math.round(currentTelemetry.ndvi * 100)}%
                   </span>
-                  <span className={`text-sm font-mono ${isLight ? 'text-slate-500' : 'text-zinc-500'}`}>Density</span>
+                  <span className={`text-sm font-manrope ${isLight ? 'text-slate-500' : 'text-zinc-500'}`}>Density</span>
                 </div>
                 <ul className="space-y-2.5 mb-6 flex-1">
                   <li className={`flex items-center gap-2 text-xs sm:text-sm ${
@@ -1396,12 +1396,12 @@ export default function App() {
                   isLight ? 'text-slate-600' : 'text-zinc-400'
                 }`}>VIIRS 375m active fire telemetry driving sub-bass membrane tempo.</p>
                 <div className="mb-6 flex items-baseline gap-1">
-                  <span className={`text-3xl sm:text-4xl font-bold font-mono ${
+                  <span className={`text-3xl sm:text-4xl font-bold font-manrope ${
                     isLight ? 'text-slate-900' : 'text-white'
                   }`}>
                     {Math.round(60 + currentTelemetry.fireIndex * 80)}
                   </span>
-                  <span className={`text-sm font-mono ${isLight ? 'text-slate-500' : 'text-zinc-500'}`}>BPM</span>
+                  <span className={`text-sm font-manrope ${isLight ? 'text-slate-500' : 'text-zinc-500'}`}>BPM</span>
                 </div>
                 <ul className="space-y-2.5 mb-6 flex-1">
                   <li className={`flex items-center gap-2 text-xs sm:text-sm ${
@@ -1473,7 +1473,7 @@ export default function App() {
                 type="text" 
                 readOnly
                 value={isPlaying ? `Playing: ${activeRegion.name}` : `Ready: ${activeRegion.name} (${Math.round(currentYear)})`} 
-                className={`flex-1 rounded-full px-5 py-3 transition-all text-xs font-mono border ${
+                className={`flex-1 rounded-full px-5 py-3 transition-all text-xs font-manrope border ${
                   isLight 
                     ? 'bg-slate-50 border-slate-300 text-slate-800 focus:outline-none focus:border-[#ef233c]' 
                     : 'bg-white/5 border-white/10 text-white focus:outline-none focus:border-[#ef233c]'
@@ -1512,7 +1512,7 @@ export default function App() {
           
           <div>
             <h4 className="text-xs font-bold text-[#ef233c] uppercase tracking-widest mb-6 font-manrope">Platform</h4>
-            <ul className="space-y-4 text-zinc-400 text-sm font-inter">
+            <ul className="space-y-4 text-zinc-400 text-sm font-manrope">
               <li><button onClick={() => setShowSoundGuideModal(true)} id="footer-sound-guide-link" className="text-white hover:text-[#ef233c] font-semibold transition-colors cursor-pointer">Sound Guide & Tutorial</button></li>
               <li><button onClick={() => setShowScienceModal(true)} id="footer-feat-link" className="hover:text-white transition-colors cursor-pointer">Science Methodology</button></li>
               <li><button onClick={() => setShowCreditsModal(true)} id="footer-int-link" className="hover:text-white transition-colors cursor-pointer">NASA Open Data</button></li>
@@ -1523,7 +1523,7 @@ export default function App() {
           
           <div>
             <h4 className="text-xs font-bold text-[#ef233c] uppercase tracking-widest mb-6 font-manrope">Accessibility</h4>
-            <ul className="space-y-4 text-zinc-400 text-sm font-inter">
+            <ul className="space-y-4 text-zinc-400 text-sm font-manrope">
               <li>
                 <button 
                   onClick={toggleAccessibilityMode} 
@@ -1532,7 +1532,7 @@ export default function App() {
                 >
                   <Eye className="w-3.5 h-3.5 text-[#ef233c] shrink-0" />
                   <span>Blind & Low-Vision Access</span>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono uppercase ${isAccessibilityMode ? 'bg-[#ef233c]/20 text-[#ef233c] border border-[#ef233c]/40' : 'bg-white/5 text-zinc-500'}`}>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-manrope uppercase ${isAccessibilityMode ? 'bg-[#ef233c]/20 text-[#ef233c] border border-[#ef233c]/40' : 'bg-white/5 text-zinc-500'}`}>
                     {isAccessibilityMode ? 'ON' : 'OFF'}
                   </span>
                 </button>
@@ -1549,7 +1549,7 @@ export default function App() {
               </li>
               <li>
                 <span className="text-zinc-500 text-xs block leading-relaxed">
-                  Keyboard: Press <kbd className="px-1.5 py-0.5 bg-zinc-800 border border-zinc-700 rounded text-zinc-300 font-mono text-[10px]">A</kbd> for voice narration
+                  Keyboard: Press <kbd className="px-1.5 py-0.5 bg-zinc-800 border border-zinc-700 rounded text-zinc-300 font-manrope text-[10px]">A</kbd> for voice narration
                 </span>
               </li>
               <li>
@@ -1568,7 +1568,7 @@ export default function App() {
 
         <div className="max-w-7xl mx-auto px-6 border-t border-zinc-800 pt-8 flex flex-col md:flex-row items-center justify-between text-zinc-500 text-[10px] uppercase tracking-widest">
           <p>&copy; 2026 TerraSonus. All rights reserved.</p>
-          <div className="flex gap-6 mt-4 md:mt-0 font-mono">
+          <div className="flex gap-6 mt-4 md:mt-0 font-manrope">
             <span id="social-twitter-link" className="text-zinc-400">GISTEMP v4</span>
             <span id="social-linkedin-link" className="text-zinc-400">MODIS NDVI</span>
             <span id="social-github-link" className="text-zinc-400">VIIRS Active Fire</span>
@@ -1631,7 +1631,7 @@ export default function App() {
             </h2>
 
             {/* Description */}
-            <p className={`relative z-10 text-sm leading-relaxed font-inter mb-6 ${
+            <p className={`relative z-10 text-sm leading-relaxed font-manrope mb-6 ${
               isLight ? 'text-slate-600' : 'text-zinc-300'
             }`}>
               TerraSonus translates NASA Earth Observation telemetry into real-time deterministic soundscapes. For the best sensory perception of 55 Hz sub-bass planetary drones, spatial wind filter sweeps, and crystal pentatonic harmonics, wearing headphones is strongly recommended.
@@ -1642,20 +1642,20 @@ export default function App() {
               <div className={`p-3 rounded-xl border ${
                 isLight ? 'bg-slate-50 border-slate-200' : 'bg-black border-zinc-800'
               }`}>
-                <div className={`text-[10px] font-mono uppercase ${isLight ? 'text-slate-500' : 'text-zinc-500'}`}>Sub-Bass Drone</div>
-                <div className={`text-xs font-bold font-mono mt-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>55 Hz Pitch</div>
+                <div className={`text-[10px] font-manrope uppercase ${isLight ? 'text-slate-500' : 'text-zinc-500'}`}>Sub-Bass Drone</div>
+                <div className={`text-xs font-bold font-manrope mt-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>55 Hz Pitch</div>
               </div>
               <div className={`p-3 rounded-xl border ${
                 isLight ? 'bg-slate-50 border-slate-200' : 'bg-black border-zinc-800'
               }`}>
-                <div className={`text-[10px] font-mono uppercase ${isLight ? 'text-slate-500' : 'text-zinc-500'}`}>Stereo Field</div>
-                <div className={`text-xs font-bold font-mono mt-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>3D Spatial Pan</div>
+                <div className={`text-[10px] font-manrope uppercase ${isLight ? 'text-slate-500' : 'text-zinc-500'}`}>Stereo Field</div>
+                <div className={`text-xs font-bold font-manrope mt-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>3D Spatial Pan</div>
               </div>
               <div className={`p-3 rounded-xl border ${
                 isLight ? 'bg-slate-50 border-slate-200' : 'bg-black border-zinc-800'
               }`}>
-                <div className={`text-[10px] font-mono uppercase ${isLight ? 'text-slate-500' : 'text-zinc-500'}`}>Harmonics</div>
-                <div className={`text-xs font-bold font-mono mt-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>Pentatonic Grid</div>
+                <div className={`text-[10px] font-manrope uppercase ${isLight ? 'text-slate-500' : 'text-zinc-500'}`}>Harmonics</div>
+                <div className={`text-xs font-bold font-manrope mt-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>Pentatonic Grid</div>
               </div>
             </div>
 
@@ -1683,7 +1683,7 @@ export default function App() {
       >
         <button
           onClick={scrollToVisualStage}
-          className={`group flex items-center gap-2.5 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full backdrop-blur-xl border text-xs font-mono transition-all cursor-pointer hover:scale-105 active:scale-95 ${
+          className={`group flex items-center gap-2.5 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full backdrop-blur-xl border text-xs font-manrope transition-all cursor-pointer hover:scale-105 active:scale-95 ${
             isLight 
               ? 'bg-white/95 border-slate-300 hover:border-[#ef233c] shadow-xl shadow-slate-300/60 text-slate-800 hover:text-slate-950 ring-1 ring-slate-200' 
               : 'bg-black/90 border-white/20 hover:border-[#ef233c] shadow-[0_10px_35px_rgba(0,0,0,0.9)] hover:shadow-[0_0_30px_rgba(239,35,60,0.4)] text-zinc-200 hover:text-white ring-1 ring-white/10'
@@ -1777,7 +1777,7 @@ export default function App() {
                   }`}>
                     Headphones Recommended
                   </div>
-                  <div className={`text-[11px] font-inter ${
+                  <div className={`text-[11px] font-manrope ${
                     isLight ? 'text-slate-500' : 'text-zinc-400'
                   }`}>
                     Stereo spatial audio streaming live
