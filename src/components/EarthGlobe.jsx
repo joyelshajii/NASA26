@@ -2,8 +2,55 @@ import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react'
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { Globe, RotateCcw, Play, Pause } from 'lucide-react';
+import { Globe, RotateCcw, Play, Pause, ChevronDown, ChevronUp } from 'lucide-react';
 import { DEFAULT_REGIONS, CONTINENT_POLYGONS, latLonToVector3 } from '../utils/geoUtils.js';
+
+// Module-level GLTF cache so model starts downloading and parsing immediately on script load
+let cachedGltfScene = null;
+let gltfPromise = null;
+
+function loadEarthModel() {
+  if (cachedGltfScene) return Promise.resolve(cachedGltfScene);
+  if (!gltfPromise) {
+    const gltfLoader = new GLTFLoader();
+    const localModelUrl = `${import.meta.env.BASE_URL}Earth_1_12756.glb`;
+    gltfPromise = new Promise((resolve) => {
+      const setupScene = (gltf) => {
+        const scene = gltf.scene;
+        scene.scale.set(0.002, 0.002, 0.002);
+        scene.rotation.y = -Math.PI / 2;
+        scene.traverse((child) => {
+          if (child.isMesh) {
+            child.castShadow = false;
+            child.receiveShadow = true;
+            if (child.material) {
+              child.material.roughness = 0.72;
+              child.material.metalness = 0.10;
+            }
+          }
+        });
+        cachedGltfScene = scene;
+        resolve(scene);
+      };
+
+      gltfLoader.load(
+        localModelUrl,
+        setupScene,
+        undefined,
+        (err) => {
+          console.warn('Local NASA 3D model could not be loaded, trying remote NASA URL:', err);
+          const remoteModelUrl = 'https://solarsystem.nasa.gov/rails/active_storage/blobs/redirect/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBBaTBSIiwiZXhwIjpudWxsLCJwdXIiOiJibG9iX2lkIn19--7c1183d35fdc9e4b5143c8601376552b89b5d99f/Earth_1_12756.glb';
+          gltfLoader.load(remoteModelUrl, setupScene, undefined, () => resolve(null));
+        }
+      );
+    });
+  }
+  return gltfPromise;
+}
+
+if (typeof window !== 'undefined') {
+  loadEarthModel();
+}
 
 /**
  * Creates high-contrast dark-mode Earth canvas texture with offline procedural landmasses.
@@ -297,6 +344,13 @@ export default function EarthGlobe({
   const targetQuaternionRef = useRef(null);
   const currentAudioPulseRef = useRef(0.0);
 
+  // Minimizable Hotspot Description Card State
+  const [isCardMinimized, setIsCardMinimized] = useState(false);
+  const isCardMinimizedRef = useRef(false);
+  useEffect(() => {
+    isCardMinimizedRef.current = isCardMinimized;
+  }, [isCardMinimized]);
+
   // Dynamic props & state refs to avoid tearing down the WebGL scene on state changes
   const audioLevelRef = useRef(audioLevel);
   const frequencyDataRef = useRef(frequencyData);
@@ -511,57 +565,28 @@ export default function EarthGlobe({
     const modelGroup = new THREE.Group();
     earthGroup.add(modelGroup);
 
-    // Initial placeholder Earth Sphere (Radius: 1.0) for instant render
-    const earthGeo = new THREE.SphereGeometry(1.0, 64, 64);
-    const earthTexture = createProceduralEarthTexture(isLightMode);
-    const earthMaterial = new THREE.MeshStandardMaterial({
-      map: earthTexture,
-      roughness: 0.65,
-      metalness: 0.12,
-      emissive: new THREE.Color(isLightMode ? 0x000000 : 0x040812),
-      emissiveIntensity: isLightMode ? 0.05 : 0.35
-    });
-    earthMaterialRef.current = earthMaterial;
-    const placeholderMesh = new THREE.Mesh(earthGeo, earthMaterial);
-    modelGroup.add(placeholderMesh);
-
-    // Load official NASA 3D Earth Model (Earth_1_12756.glb)
     let isDisposed = false;
+    let placeholderMesh = null;
+    let earthGeo = null;
+    let earthMaterial = null;
+    let earthTexture = null;
     let loadedNasaScene = null;
-    const gltfLoader = new GLTFLoader();
-    const localModelUrl = `${import.meta.env.BASE_URL}Earth_1_12756.glb`;
-    const remoteModelUrl = 'https://solarsystem.nasa.gov/rails/active_storage/blobs/redirect/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBBaTBSIiwiZXhwIjpudWxsLCJwdXIiOiJibG9iX2lkIn19--7c1183d35fdc9e4b5143c8601376552b89b5d99f/Earth_1_12756.glb';
 
-    const onModelLoaded = (gltf) => {
-      if (isDisposed) return;
-      loadedNasaScene = gltf.scene;
+    const attachModel = (nasaScene) => {
+      if (!nasaScene || isDisposed) return;
+      loadedNasaScene = nasaScene;
 
-      // NASA geoid mesh has equatorial radius ~500, scale 0.002 matches unit radius 1.0
-      loadedNasaScene.scale.set(0.002, 0.002, 0.002);
-      // Rotate -90 degrees (-PI/2) on Y to precisely align Prime Meridian & equatorial hotspots with geo coordinates
-      loadedNasaScene.rotation.y = -Math.PI / 2;
-
-      loadedNasaScene.traverse((child) => {
-        if (child.isMesh) {
-          child.castShadow = false;
-          child.receiveShadow = true;
-          if (child.material) {
-            child.material.roughness = 0.72;
-            child.material.metalness = 0.10;
-          }
-        }
-      });
-
-      // Replace placeholder with the official NASA 3D Earth model
-      if (modelGroup.children.includes(placeholderMesh)) {
+      // Remove placeholder immediately
+      if (placeholderMesh && modelGroup.children.includes(placeholderMesh)) {
         modelGroup.remove(placeholderMesh);
-        earthGeo.dispose();
-        earthMaterial.dispose();
-        earthTexture.dispose();
+        if (earthGeo) earthGeo.dispose();
+        if (earthMaterial) earthMaterial.dispose();
+        if (earthTexture) earthTexture.dispose();
+        placeholderMesh = null;
       }
-      modelGroup.add(loadedNasaScene);
+      modelGroup.add(nasaScene);
 
-      // Snap orientation immediately to active region when model is loaded
+      // Snap orientation immediately to active region when model is attached
       const curReg = currentRegionRef.current;
       if (curReg) {
         const coords = { lat: curReg.lat, lon: curReg.lon };
@@ -576,22 +601,30 @@ export default function EarthGlobe({
       }
     };
 
-    gltfLoader.load(
-      localModelUrl,
-      onModelLoaded,
-      undefined,
-      (err) => {
-        console.warn('Local NASA 3D model could not be loaded, trying remote NASA URL:', err);
-        gltfLoader.load(
-          remoteModelUrl,
-          onModelLoaded,
-          undefined,
-          (remoteErr) => {
-            console.warn('Remote NASA 3D model could not be loaded, using procedural sphere:', remoteErr);
-          }
-        );
-      }
-    );
+    if (cachedGltfScene) {
+      // Model is already cached! Attach immediately with zero delay
+      attachModel(cachedGltfScene.clone());
+    } else {
+      // Light temporary placeholder only if cache is still resolving (takes a few milliseconds)
+      earthGeo = new THREE.SphereGeometry(1.0, 64, 64);
+      earthTexture = createProceduralEarthTexture(isLightMode);
+      earthMaterial = new THREE.MeshStandardMaterial({
+        map: earthTexture,
+        roughness: 0.65,
+        metalness: 0.12,
+        emissive: new THREE.Color(isLightMode ? 0x000000 : 0x040812),
+        emissiveIntensity: isLightMode ? 0.05 : 0.35
+      });
+      earthMaterialRef.current = earthMaterial;
+      placeholderMesh = new THREE.Mesh(earthGeo, earthMaterial);
+      modelGroup.add(placeholderMesh);
+
+      loadEarthModel().then((scene) => {
+        if (scene) {
+          attachModel(scene.clone());
+        }
+      });
+    }
 
     // 8. Subtle Atmospheric Rim Highlight (fine, reduced border size)
     const outerHaloMaterial = new THREE.ShaderMaterial({
@@ -868,8 +901,8 @@ export default function EarthGlobe({
             tooltipRef.current.style.pointerEvents = 'auto';
 
             // Place HUD card intelligently in viewport
-            const cardWidth = 260;
-            const cardHeight = 120;
+            const cardWidth = isCardMinimizedRef.current ? 220 : 260;
+            const cardHeight = isCardMinimizedRef.current ? 44 : 120;
             let cardLeft = screenX + 30;
             let cardTop = screenY - cardHeight / 2;
 
@@ -1088,51 +1121,79 @@ export default function EarthGlobe({
           }}
         />
 
-        <div className={`p-3 rounded-xl backdrop-blur-xl border shadow-2xl w-[260px] ${
+        <div className={`p-3 rounded-xl backdrop-blur-xl border shadow-2xl pointer-events-auto transition-all duration-300 ${
+          isCardMinimized ? 'w-[220px]' : 'w-[260px]'
+        } ${
           theme === 'light'
             ? 'bg-white/95 border-slate-200/90 text-slate-900 shadow-slate-300/60'
             : 'bg-black/90 border-white/15 text-white shadow-black/80'
         }`}>
           {/* Header */}
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-1.5">
+          <div className={`flex items-center justify-between ${isCardMinimized ? 'mb-0' : 'mb-2'}`}>
+            <div className="flex items-center gap-1.5 min-w-0">
               <span
-                className="w-2 h-2 rounded-full animate-ping"
+                className="w-2 h-2 rounded-full animate-ping shrink-0"
                 style={{ backgroundColor: currentRegion.color || '#ef233c' }}
               />
-              <span className="text-xs font-bold font-manrope">
+              <span className="text-xs font-bold font-manrope truncate">
                 {currentRegion.name}
               </span>
             </div>
-            <span className={`text-[10px] font-manrope ${theme === 'light' ? 'text-slate-500' : 'text-zinc-400'}`}>
-              {currentRegion.lat.toFixed(1)}° N, {currentRegion.lon.toFixed(1)}° E
-            </span>
+            <div className="flex items-center gap-1.5 shrink-0 ml-1">
+              <span className={`text-[10px] font-manrope ${theme === 'light' ? 'text-slate-500' : 'text-zinc-400'}`}>
+                {currentRegion.lat.toFixed(1)}°, {currentRegion.lon.toFixed(1)}°
+              </span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsCardMinimized(!isCardMinimized);
+                }}
+                className={`p-1 rounded transition-colors cursor-pointer flex items-center justify-center ${
+                  theme === 'light'
+                    ? 'hover:bg-slate-200 text-slate-600 hover:text-slate-950'
+                    : 'hover:bg-white/15 text-zinc-400 hover:text-white'
+                }`}
+                title={isCardMinimized ? "Expand telemetry description" : "Minimize description"}
+                aria-label={isCardMinimized ? "Expand description" : "Minimize description"}
+              >
+                {isCardMinimized ? (
+                  <ChevronDown className="w-3.5 h-3.5 text-[#ef233c]" />
+                ) : (
+                  <ChevronUp className="w-3.5 h-3.5" />
+                )}
+              </button>
+            </div>
           </div>
 
-          {/* Key Metrics Chips */}
-          <div className="grid grid-cols-3 gap-1.5 mb-2">
-            {currentRegion.metrics && currentRegion.metrics.map((m, idx) => (
-              <div key={idx} className={`p-1.5 rounded-lg border text-center ${
-                theme === 'light'
-                  ? 'bg-slate-50 border-slate-200/80 text-slate-900'
-                  : 'bg-zinc-900/80 border-zinc-800 text-white'
-              }`}>
-                <div className={`text-[10px] font-manrope uppercase font-semibold ${
-                  theme === 'light' ? 'text-slate-500' : 'text-zinc-400'
-                }`}>{m.label}</div>
-                <div className={`text-xs font-bold font-manrope ${
-                  theme === 'light' ? 'text-slate-900' : 'text-white'
-                }`}>{m.value}</div>
+          {!isCardMinimized && (
+            <>
+              {/* Key Metrics Chips */}
+              <div className="grid grid-cols-3 gap-1.5 mb-2">
+                {currentRegion.metrics && currentRegion.metrics.map((m, idx) => (
+                  <div key={idx} className={`p-1.5 rounded-lg border text-center ${
+                    theme === 'light'
+                      ? 'bg-slate-50 border-slate-200/80 text-slate-900'
+                      : 'bg-zinc-900/80 border-zinc-800 text-white'
+                  }`}>
+                    <div className={`text-[10px] font-manrope uppercase font-semibold ${
+                      theme === 'light' ? 'text-slate-500' : 'text-zinc-400'
+                    }`}>{m.label}</div>
+                    <div className={`text-xs font-bold font-manrope ${
+                      theme === 'light' ? 'text-slate-900' : 'text-white'
+                    }`}>{m.value}</div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
 
-          {/* Quick narrative caption */}
-          <p className={`text-[11px] leading-relaxed font-manrope ${
-            theme === 'light' ? 'text-slate-600' : 'text-zinc-300'
-          }`}>
-            {currentRegion.narrative || currentRegion.subtitle}
-          </p>
+              {/* Quick narrative caption */}
+              <p className={`text-[11px] leading-relaxed font-manrope ${
+                theme === 'light' ? 'text-slate-600' : 'text-zinc-300'
+              }`}>
+                {currentRegion.narrative || currentRegion.subtitle}
+              </p>
+            </>
+          )}
         </div>
 
         <div
