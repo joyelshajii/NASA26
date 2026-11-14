@@ -89,7 +89,7 @@ export default function SoundLegendBar({
                 {isPlaying ? '4 Voices Active' : 'Standby'}
               </span>
             </div>
-            <p className={`text-xs font-inter ${isLight ? 'text-slate-500' : 'text-zinc-400'}`}>
+            <p className={`text-xs font-manrope ${isLight ? 'text-slate-500' : 'text-zinc-400'}`}>
               Every sound corresponds to live NASA satellite telemetry, synthesized into harmonic scales.
             </p>
           </div>
@@ -112,7 +112,7 @@ export default function SoundLegendBar({
                 <Volume2 className={`w-3.5 h-3.5 ${masterVolume > 100 ? 'text-[#ef233c] animate-pulse' : 'text-emerald-500'}`} />
               )}
             </button>
-            <span className={`text-[11px] font-mono font-medium ${isLight ? 'text-slate-600' : 'text-zinc-300'}`}>
+            <span className={`text-[11px] font-manrope font-medium ${isLight ? 'text-slate-600' : 'text-zinc-300'}`}>
               Volume
             </span>
             <input
@@ -126,7 +126,7 @@ export default function SoundLegendBar({
               title={`Master Volume: ${masterVolume}%`}
               aria-label="Master Volume Slider"
             />
-            <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded font-bold ${
+            <span className={`text-[10px] font-manrope px-1.5 py-0.5 rounded font-bold ${
               masterVolume > 100
                 ? (isLight ? 'bg-red-100 text-red-700 border border-red-300' : 'bg-[#ef233c]/20 text-[#ef233c] border border-[#ef233c]/30')
                 : (isLight ? 'bg-slate-200 text-slate-700' : 'bg-zinc-800 text-zinc-300')
@@ -137,7 +137,7 @@ export default function SoundLegendBar({
 
           <button
             onClick={onOpenGuide}
-            className={`px-3.5 py-1.5 rounded-full border text-xs font-mono transition-all flex items-center gap-1.5 cursor-pointer font-medium ${
+            className={`px-3.5 py-1.5 rounded-full border text-xs font-manrope transition-all flex items-center gap-1.5 cursor-pointer font-medium ${
               isLight
                 ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700 hover:text-slate-950'
                 : 'bg-white/5 hover:bg-white/10 border-white/10 text-zinc-300 hover:text-white'
@@ -162,12 +162,12 @@ export default function SoundLegendBar({
           }`}
         >
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs font-semibold text-red-500 tracking-wide">
+            <span className="text-xs font-semibold text-red-500 tracking-wide font-manrope">
               Sub-Bass Drone
             </span>
             <button
               onClick={(e) => handleQuickTest(e, 'drone')}
-              className={`px-2 py-0.5 rounded text-[10px] font-mono tracking-wider uppercase border transition-all cursor-pointer ${
+              className={`px-2 py-0.5 rounded text-[10px] font-manrope tracking-wider uppercase border transition-all cursor-pointer font-semibold ${
                 testingVoice === 'drone'
                   ? 'bg-[#ef233c] text-white border-[#ef233c]'
                   : (isLight
@@ -179,10 +179,10 @@ export default function SoundLegendBar({
               {testingVoice === 'drone' ? 'PLAYING' : 'TEST'}
             </button>
           </div>
-          <div className={`text-xs font-semibold mb-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
+          <div className={`text-xs font-semibold mb-0.5 font-manrope ${isLight ? 'text-slate-900' : 'text-white'}`}>
             Temperature Anomaly (+{currentTelemetry.tempAnomaly}°C)
           </div>
-          <p className={`text-[11px] leading-tight ${isLight ? 'text-slate-600' : 'text-zinc-400'}`}>
+          <p className={`text-[11px] leading-tight font-manrope ${isLight ? 'text-slate-600' : 'text-zinc-400'}`}>
             Pitch climbs higher as heat anomaly rises (55 Hz &rarr; 110 Hz).
           </p>
         </div>
@@ -197,12 +197,12 @@ export default function SoundLegendBar({
           }`}
         >
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs font-semibold text-blue-500 tracking-wide">
+            <span className="text-xs font-semibold text-blue-500 tracking-wide font-manrope">
               Wind Velocity Sweep
             </span>
             <button
               onClick={(e) => handleQuickTest(e, 'wind')}
-              className={`px-2 py-0.5 rounded text-[10px] font-mono tracking-wider uppercase border transition-all cursor-pointer ${
+              className={`px-2 py-0.5 rounded text-[10px] font-manrope tracking-wider uppercase border transition-all cursor-pointer font-semibold ${
                 testingVoice === 'wind'
                   ? 'bg-blue-600 text-white border-blue-500'
                   : (isLight
@@ -214,10 +214,10 @@ export default function SoundLegendBar({
               {testingVoice === 'wind' ? 'PLAYING' : 'TEST'}
             </button>
           </div>
-          <div className={`text-xs font-semibold mb-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
+          <div className={`text-xs font-semibold mb-0.5 font-manrope ${isLight ? 'text-slate-900' : 'text-white'}`}>
             Wind Velocity ({currentTelemetry.windSpeed} m/s)
           </div>
-          <p className={`text-[11px] leading-tight ${isLight ? 'text-slate-600' : 'text-zinc-400'}`}>
+          <p className={`text-[11px] leading-tight font-manrope ${isLight ? 'text-slate-600' : 'text-zinc-400'}`}>
             Filtered pink noise sweeps open into whistling wind during storms.
           </p>
         </div>
@@ -232,12 +232,12 @@ export default function SoundLegendBar({
           }`}
         >
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs font-semibold text-emerald-500 tracking-wide">
+            <span className="text-xs font-semibold text-emerald-500 tracking-wide font-manrope">
               Canopy Pentatonic Bells
             </span>
             <button
               onClick={(e) => handleQuickTest(e, 'chime')}
-              className={`px-2 py-0.5 rounded text-[10px] font-mono tracking-wider uppercase border transition-all cursor-pointer ${
+              className={`px-2 py-0.5 rounded text-[10px] font-manrope tracking-wider uppercase border transition-all cursor-pointer font-semibold ${
                 testingVoice === 'chime'
                   ? 'bg-emerald-600 text-white border-emerald-500'
                   : (isLight
@@ -249,10 +249,10 @@ export default function SoundLegendBar({
               {testingVoice === 'chime' ? 'PLAYING' : 'TEST'}
             </button>
           </div>
-          <div className={`text-xs font-semibold mb-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
+          <div className={`text-xs font-semibold mb-0.5 font-manrope ${isLight ? 'text-slate-900' : 'text-white'}`}>
             Canopy Density ({Math.round(currentTelemetry.ndvi * 100)}% NDVI)
           </div>
-          <p className={`text-[11px] leading-tight ${isLight ? 'text-slate-600' : 'text-zinc-400'}`}>
+          <p className={`text-[11px] leading-tight font-manrope ${isLight ? 'text-slate-600' : 'text-zinc-400'}`}>
             Pentatonic bells ring over lush forests; silent over deserts/ice.
           </p>
         </div>
@@ -267,12 +267,12 @@ export default function SoundLegendBar({
           }`}
         >
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs font-semibold text-amber-500 tracking-wide">
+            <span className="text-xs font-semibold text-amber-500 tracking-wide font-manrope">
               Active Fire Pulse
             </span>
             <button
               onClick={(e) => handleQuickTest(e, 'pulse')}
-              className={`px-2 py-0.5 rounded text-[10px] font-mono tracking-wider uppercase border transition-all cursor-pointer ${
+              className={`px-2 py-0.5 rounded text-[10px] font-manrope tracking-wider uppercase border transition-all cursor-pointer font-semibold ${
                 testingVoice === 'pulse'
                   ? 'bg-amber-600 text-white border-amber-500'
                   : (isLight
@@ -284,10 +284,10 @@ export default function SoundLegendBar({
               {testingVoice === 'pulse' ? 'PLAYING' : 'TEST'}
             </button>
           </div>
-          <div className={`text-xs font-semibold mb-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
+          <div className={`text-xs font-semibold mb-0.5 font-manrope ${isLight ? 'text-slate-900' : 'text-white'}`}>
             Active Fires ({Math.round(60 + currentTelemetry.fireIndex * 80)} BPM)
           </div>
-          <p className={`text-[11px] leading-tight ${isLight ? 'text-slate-600' : 'text-zinc-400'}`}>
+          <p className={`text-[11px] leading-tight font-manrope ${isLight ? 'text-slate-600' : 'text-zinc-400'}`}>
             Resting heartbeat pulse accelerates into rapid kicks during fires.
           </p>
         </div>
