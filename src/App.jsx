@@ -443,7 +443,7 @@ export default function App() {
             : 'bg-black/70 backdrop-blur-xl border border-white/10 shadow-2xl'
         }`}>
           {/* Brand Logo */}
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-2.5 shrink-0 mr-4 lg:mr-8">
             <img 
               src="/favicon.svg" 
               alt="TerraSonus" 
@@ -484,16 +484,6 @@ export default function App() {
               }`}
             >
               NASA Open Data
-            </button>
-            <button 
-              id="nav-jukebox-link"
-              onClick={() => setShowJukeboxModal(true)} 
-              className={`text-xs xl:text-sm font-medium transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
-                isLight ? 'text-slate-600 hover:text-slate-900' : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              <Disc className="w-3.5 h-3.5 text-[#ef233c]" />
-              <span>Jukebox Vault (6)</span>
             </button>
             <a 
               id="nav-resources-link"
@@ -879,14 +869,14 @@ export default function App() {
 
               <button
                 onClick={() => setShowJukeboxModal(true)}
-                className={`px-3.5 py-1.5 rounded-full border text-xs transition-all flex items-center gap-1.5 cursor-pointer font-semibold ${
+                className={`px-3.5 py-1.5 rounded-full border text-xs transition-all flex items-center gap-1.5 cursor-pointer ${
                   isLight 
-                    ? 'bg-red-50 hover:bg-red-100 border-red-200 text-red-800 shadow-xs' 
-                    : 'bg-red-950/40 hover:bg-red-900/50 border-red-500/40 text-red-200 hover:text-white'
+                    ? 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700 hover:text-slate-900 shadow-xs' 
+                    : 'bg-white/5 hover:bg-white/10 border-white/10 hover:border-white/30 text-zinc-300 hover:text-white'
                 }`}
               >
-                <Disc className="w-3.5 h-3.5 text-[#ef233c]" />
                 <span>All 6 Jukebox Tracks</span>
+                <span className={isLight ? 'text-slate-400 text-xs' : 'text-zinc-500 text-xs'}>&darr;</span>
               </button>
             </div>
           </div>
