@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { Globe, RotateCcw, Play, Pause } from 'lucide-react';
 import { DEFAULT_REGIONS, CONTINENT_POLYGONS, latLonToVector3 } from '../utils/geoUtils.js';
 
@@ -98,72 +99,54 @@ function createProceduralEarthTexture(isLight = false) {
         if (lat < minLat) minLat = lat;
         if (lat > maxLat) maxLat = lat;
       }
+      const dotSpacing = 7;
       const startX = Math.floor(((minLon + 180) / 360) * width);
       const endX = Math.ceil(((maxLon + 180) / 360) * width);
       const startY = Math.floor(((90 - maxLat) / 180) * height);
       const endY = Math.ceil(((90 - minLat) / 180) * height);
 
-      const step = 16;
-      for (let px = startX; px <= endX; px += step) {
-        for (let py = startY; py <= endY; py += step) {
+      for (let x = startX; x <= endX; x += dotSpacing) {
+        for (let y = startY; y <= endY; y += dotSpacing) {
           ctx.beginPath();
-          ctx.arc(px, py, 1.2, 0, Math.PI * 2);
+          ctx.arc(x, y, 1.2, 0, Math.PI * 2);
           ctx.fill();
         }
       }
       ctx.restore();
 
-      ctx.lineWidth = 1.6;
-      ctx.strokeStyle = 'rgba(2, 132, 199, 0.70)';
+      ctx.strokeStyle = '#0284c7';
+      ctx.lineWidth = 1.8;
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(2, 132, 199, 0.45)';
+      ctx.lineWidth = 4.0;
       ctx.stroke();
 
       ctx.restore();
     }
-
-    // 4. Subtle Biome Telemetry Zones on the texture
-    const biomeHalos = [
-      { lon: -62.2, lat: -3.5, color: 'rgba(16, 185, 129, 0.45)', r: 65 },  // Amazon
-      { lon: 25.6, lat: 23.4, color: 'rgba(245, 158, 11, 0.40)', r: 80 },   // Sahara
-      { lon: 15.6, lat: 78.2, color: 'rgba(14, 165, 233, 0.45)', r: 95 },   // Arctic
-      { lon: 147.7, lat: -18.3, color: 'rgba(6, 182, 212, 0.45)', r: 55 },  // Reef
-      { lon: 77.2, lat: 28.6, color: 'rgba(239, 68, 68, 0.40)', r: 60 }    // Indo-Gangetic
-    ];
-
-    for (const b of biomeHalos) {
-      const cx = ((b.lon + 180) / 360) * width;
-      const cy = ((90 - b.lat) / 180) * height;
-      const radial = ctx.createRadialGradient(cx, cy, 2, cx, cy, b.r);
-      radial.addColorStop(0, b.color);
-      radial.addColorStop(1, 'transparent');
-      ctx.fillStyle = radial;
-      ctx.beginPath();
-      ctx.arc(cx, cy, b.r, 0, Math.PI * 2);
-      ctx.fill();
-    }
   } else {
-    // 1. Deep Oceanic Void: #080b12 with polar depth gradients
+    // Dark mode
     const oceanGrad = ctx.createLinearGradient(0, 0, 0, height);
-    oceanGrad.addColorStop(0, '#04060a');
-    oceanGrad.addColorStop(0.2, '#080c16');
-    oceanGrad.addColorStop(0.5, '#0b101d');
-    oceanGrad.addColorStop(0.8, '#080c16');
-    oceanGrad.addColorStop(1, '#04060a');
+    oceanGrad.addColorStop(0, '#020617');
+    oceanGrad.addColorStop(0.3, '#040d21');
+    oceanGrad.addColorStop(0.5, '#051329');
+    oceanGrad.addColorStop(0.7, '#040d21');
+    oceanGrad.addColorStop(1, '#020617');
     ctx.fillStyle = oceanGrad;
     ctx.fillRect(0, 0, width, height);
 
-    // 2. Latitude and Longitude Grids (#334155/30)
     ctx.lineWidth = 1;
-    ctx.strokeStyle = 'rgba(51, 65, 85, 0.28)';
+    ctx.strokeStyle = 'rgba(14, 165, 233, 0.18)';
 
-    // Parallels (every 15 degrees)
     for (let lat = -75; lat <= 75; lat += 15) {
       const y = ((90 - lat) / 180) * height;
       ctx.beginPath();
       if (lat === 0) {
-        ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
+        ctx.strokeStyle = 'rgba(14, 165, 233, 0.45)';
         ctx.lineWidth = 1.5;
       } else {
-        ctx.strokeStyle = 'rgba(51, 65, 85, 0.25)';
+        ctx.strokeStyle = 'rgba(14, 165, 233, 0.15)';
         ctx.lineWidth = 1;
       }
       ctx.moveTo(0, y);
@@ -171,15 +154,14 @@ function createProceduralEarthTexture(isLight = false) {
       ctx.stroke();
     }
 
-    // Meridians (every 30 degrees)
     for (let lon = -180; lon <= 180; lon += 30) {
       const x = ((lon + 180) / 360) * width;
       ctx.beginPath();
       if (lon === 0) {
-        ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
+        ctx.strokeStyle = 'rgba(14, 165, 233, 0.45)';
         ctx.lineWidth = 1.5;
       } else {
-        ctx.strokeStyle = 'rgba(51, 65, 85, 0.25)';
+        ctx.strokeStyle = 'rgba(14, 165, 233, 0.15)';
         ctx.lineWidth = 1;
       }
       ctx.moveTo(x, 0);
@@ -187,7 +169,6 @@ function createProceduralEarthTexture(isLight = false) {
       ctx.stroke();
     }
 
-    // 3. Draw Continental Landmasses
     for (const continent of CONTINENT_POLYGONS) {
       if (continent.pts.length < 3) continue;
 
@@ -202,20 +183,13 @@ function createProceduralEarthTexture(isLight = false) {
       }
       ctx.closePath();
 
-      // Clip to continent for interior topography and sensor dot matrix
       ctx.save();
       ctx.clip();
 
-      // Continent Base: Dark Slate #1a2233
-      ctx.fillStyle = '#1a2233';
+      ctx.fillStyle = '#061325';
       ctx.fill();
 
-      // Subtle elevation shading
-      ctx.fillStyle = '#222f46';
-      ctx.fill();
-
-      // Cybernetic Sensor Dots across landmass
-      ctx.fillStyle = 'rgba(56, 189, 248, 0.20)';
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.4)';
       let minLon = 180;
       let maxLon = -180;
       let minLat = 90;
@@ -226,60 +200,42 @@ function createProceduralEarthTexture(isLight = false) {
         if (lat < minLat) minLat = lat;
         if (lat > maxLat) maxLat = lat;
       }
+      const dotSpacing = 7;
       const startX = Math.floor(((minLon + 180) / 360) * width);
       const endX = Math.ceil(((maxLon + 180) / 360) * width);
       const startY = Math.floor(((90 - maxLat) / 180) * height);
       const endY = Math.ceil(((90 - minLat) / 180) * height);
 
-      const step = 16;
-      for (let px = startX; px <= endX; px += step) {
-        for (let py = startY; py <= endY; py += step) {
+      for (let x = startX; x <= endX; x += dotSpacing) {
+        for (let y = startY; y <= endY; y += dotSpacing) {
           ctx.beginPath();
-          ctx.arc(px, py, 1.2, 0, Math.PI * 2);
+          ctx.arc(x, y, 1.2, 0, Math.PI * 2);
           ctx.fill();
         }
       }
       ctx.restore();
 
-      // Luminous Shoreline Outline in Cyan-Slate (#38bdf8 / #334155)
-      ctx.lineWidth = 1.4;
-      ctx.strokeStyle = 'rgba(56, 189, 248, 0.55)';
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 1.6;
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
+      ctx.lineWidth = 3.5;
       ctx.stroke();
 
       ctx.restore();
-    }
-
-    // 4. Subtle Biome Telemetry Zones on the texture
-    const biomeHalos = [
-      { lon: -62.2, lat: -3.5, color: 'rgba(16, 185, 129, 0.35)', r: 60 },  // Amazon
-      { lon: 25.6, lat: 23.4, color: 'rgba(245, 158, 11, 0.30)', r: 75 },   // Sahara
-      { lon: 15.6, lat: 78.2, color: 'rgba(56, 189, 248, 0.40)', r: 90 },   // Arctic
-      { lon: 147.7, lat: -18.3, color: 'rgba(6, 182, 212, 0.35)', r: 50 },  // Reef
-      { lon: 77.2, lat: 28.6, color: 'rgba(239, 68, 68, 0.30)', r: 55 }    // Indo-Gangetic
-    ];
-
-    for (const b of biomeHalos) {
-      const cx = ((b.lon + 180) / 360) * width;
-      const cy = ((90 - b.lat) / 180) * height;
-      const radial = ctx.createRadialGradient(cx, cy, 2, cx, cy, b.r);
-      radial.addColorStop(0, b.color);
-      radial.addColorStop(1, 'transparent');
-      ctx.fillStyle = radial;
-      ctx.beginPath();
-      ctx.arc(cx, cy, b.r, 0, Math.PI * 2);
-      ctx.fill();
     }
   }
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.ClampToEdgeWrapping;
-  texture.colorSpace = THREE.SRGBColorSpace;
   return texture;
 }
 
 /**
- * Creates a circular glowing star particle texture.
+ * Creates subtle procedural star sprite texture.
  */
 function createProceduralStarTexture() {
   const canvas = document.createElement('canvas');
@@ -290,9 +246,9 @@ function createProceduralStarTexture() {
 
   const grad = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
   grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
-  grad.addColorStop(0.3, 'rgba(186, 230, 253, 0.8)');
-  grad.addColorStop(0.7, 'rgba(56, 189, 248, 0.3)');
-  grad.addColorStop(1, 'transparent');
+  grad.addColorStop(0.2, 'rgba(255, 255, 255, 0.8)');
+  grad.addColorStop(0.6, 'rgba(186, 230, 253, 0.25)');
+  grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, 32, 32);
@@ -301,41 +257,9 @@ function createProceduralStarTexture() {
 }
 
 /**
- * Creates subtle procedural clouds texture.
- */
-function createProceduralCloudsTexture() {
-  const width = 1024;
-  const height = 512;
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return new THREE.Texture();
-
-  ctx.clearRect(0, 0, width, height);
-
-  // Wispy cloud bands
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
-  for (let i = 0; i < 28; i++) {
-    const y = 80 + Math.random() * (height - 160);
-    const x = Math.random() * width;
-    const radiusX = 60 + Math.random() * 140;
-    const radiusY = 15 + Math.random() * 35;
-
-    ctx.beginPath();
-    ctx.ellipse(x, y, radiusX, radiusY, Math.random() * 0.2 - 0.1, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.wrapS = THREE.RepeatWrapping;
-  texture.wrapT = THREE.ClampToEdgeWrapping;
-  return texture;
-}
-
-/**
  * EarthGlobe Component
- * Interactive 3D Earth Globe with audio-reactive atmosphere, 5 hotspot beacons, and OrbitControls.
+ * Interactive 3D Earth Globe with NASA 3D model, balanced 360° lighting, audio-reactive atmosphere,
+ * 5 hotspot beacons, and OrbitControls.
  */
 export default function EarthGlobe({
   activeRegion = 'amazon',
@@ -364,9 +288,7 @@ export default function EarthGlobe({
   const ambientLightRef = useRef(null);
   const sunLightRef = useRef(null);
   const earthGroupRef = useRef(null);
-  const atmosphereMeshRef = useRef(null);
   const outerHaloMeshRef = useRef(null);
-  const cloudMeshRef = useRef(null);
 
   // Transition & Interaction State
   const [autoRotate, setAutoRotate] = useState(autoRotateDefault);
@@ -400,6 +322,19 @@ export default function EarthGlobe({
     return match || regions[0];
   }, [activeRegion, regions]);
 
+  // Helper to re-orient the globe directly toward the camera for any region
+  const focusRegion = useCallback((reg) => {
+    if (!reg || !earthGroupRef.current) return;
+    const coords = { lat: reg.lat, lon: reg.lon };
+    const pos = latLonToVector3(coords.lat, coords.lon, 1.0);
+    const cameraDir = new THREE.Vector3(0, 0.4, 2.85).normalize();
+    const q = new THREE.Quaternion().setFromUnitVectors(
+      pos.clone().normalize(),
+      cameraDir
+    );
+    targetQuaternionRef.current = q;
+  }, []);
+
   // Synchronize mutable refs
   useEffect(() => {
     audioLevelRef.current = audioLevel;
@@ -432,21 +367,20 @@ export default function EarthGlobe({
     autoRotateRef.current = autoRotate;
   }, [autoRotate]);
 
+  const hasMountedRef = useRef(false);
+
   // Synchronize target orientation when activeRegion prop changes
   useEffect(() => {
-    if (!currentRegion || !earthGroupRef.current) return;
-
-    const coords = { lat: currentRegion.lat, lon: currentRegion.lon };
-    const pos = latLonToVector3(coords.lat, coords.lon, 1.0);
-
-    // Compute exact quaternion to orient this hotspot directly toward the camera line of sight
-    const cameraDir = new THREE.Vector3(0, 0.4, 2.85).normalize();
-    const q = new THREE.Quaternion().setFromUnitVectors(
-      pos.clone().normalize(),
-      cameraDir
-    );
-    targetQuaternionRef.current = q;
-  }, [currentRegion]);
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      return;
+    }
+    if (currentRegion) {
+      setAutoRotate(false);
+      autoRotateRef.current = false;
+      focusRegion(currentRegion);
+    }
+  }, [currentRegion, focusRegion]);
 
   // Main Three.js Scene Setup & Render Loop
   useEffect(() => {
@@ -501,21 +435,26 @@ export default function EarthGlobe({
       isDraggingRef.current = false;
     });
 
-    // 5. Ambient & Directional Lighting (Atmospheric Light-Blade Horizon)
-    const ambientLight = new THREE.AmbientLight(isLightMode ? 0xffffff : 0x0e1726, isLightMode ? 1.4 : 0.85);
+    // 5. Balanced Omnidirectional Studio Lighting - Crisp, clear visibility on all 360° sides
+    const ambientLight = new THREE.AmbientLight(0xffffff, isLightMode ? 2.4 : 2.2);
     scene.add(ambientLight);
     ambientLightRef.current = ambientLight;
 
-    // Primary Sun Light creating sharp terminator
-    const sunLight = new THREE.DirectionalLight(0xffffff, isLightMode ? 2.6 : 2.4);
-    sunLight.position.set(5.5, 3.2, 4.8);
-    scene.add(sunLight);
-    sunLightRef.current = sunLight;
+    // Primary front-facing key light
+    const keyLight = new THREE.DirectionalLight(0xffffff, isLightMode ? 1.6 : 1.4);
+    keyLight.position.set(5.0, 3.0, 5.0);
+    scene.add(keyLight);
+    sunLightRef.current = keyLight;
 
-    // Tangential Light-Blade rim light for high-contrast limb aura
-    const rimLight = new THREE.DirectionalLight(isLightMode ? 0x0284c7 : 0x38bdf8, isLightMode ? 1.8 : 1.6);
-    rimLight.position.set(-6.0, -2.5, -4.5);
-    scene.add(rimLight);
+    // Opposite back fill light to ensure full 360° illumination without dark shadows
+    const backLight = new THREE.DirectionalLight(0xffffff, isLightMode ? 1.6 : 1.4);
+    backLight.position.set(-5.0, -2.0, -5.0);
+    scene.add(backLight);
+
+    // Lateral fill light for uniform rim and polar clarity
+    const sideLight = new THREE.DirectionalLight(0xffffff, 1.0);
+    sideLight.position.set(-5.0, 4.0, 4.0);
+    scene.add(sideLight);
 
     // 6. Deep Space Background Starfield
     const starCount = 1400;
@@ -563,12 +502,16 @@ export default function EarthGlobe({
     scene.add(starPoints);
     starPointsRef.current = starPoints;
 
-    // 7. Earth Group (holds Earth Sphere, Clouds, and 3D Hotspot Pins)
+    // 7. Earth Group (holds NASA 3D Earth Model and 3D Hotspot Pins)
     const earthGroup = new THREE.Group();
     scene.add(earthGroup);
     earthGroupRef.current = earthGroup;
 
-    // Earth Sphere (Radius: 1.0)
+    // Model group container
+    const modelGroup = new THREE.Group();
+    earthGroup.add(modelGroup);
+
+    // Initial placeholder Earth Sphere (Radius: 1.0) for instant render
     const earthGeo = new THREE.SphereGeometry(1.0, 64, 64);
     const earthTexture = createProceduralEarthTexture(isLightMode);
     const earthMaterial = new THREE.MeshStandardMaterial({
@@ -579,61 +522,78 @@ export default function EarthGlobe({
       emissiveIntensity: isLightMode ? 0.05 : 0.35
     });
     earthMaterialRef.current = earthMaterial;
-    const earthMesh = new THREE.Mesh(earthGeo, earthMaterial);
-    earthGroup.add(earthMesh);
+    const placeholderMesh = new THREE.Mesh(earthGeo, earthMaterial);
+    modelGroup.add(placeholderMesh);
 
-    // Atmospheric Cloud Layer (Radius: 1.015)
-    const cloudGeo = new THREE.SphereGeometry(1.015, 48, 48);
-    const cloudTexture = createProceduralCloudsTexture();
-    const cloudMaterial = new THREE.MeshBasicMaterial({
-      map: cloudTexture,
-      transparent: true,
-      opacity: 0.32,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false
-    });
-    const cloudMesh = new THREE.Mesh(cloudGeo, cloudMaterial);
-    earthGroup.add(cloudMesh);
-    cloudMeshRef.current = cloudMesh;
+    // Load official NASA 3D Earth Model (Earth_1_12756.glb)
+    let isDisposed = false;
+    let loadedNasaScene = null;
+    const gltfLoader = new GLTFLoader();
+    const localModelUrl = `${import.meta.env.BASE_URL}Earth_1_12756.glb`;
+    const remoteModelUrl = 'https://solarsystem.nasa.gov/rails/active_storage/blobs/redirect/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBBaTBSIiwiZXhwIjpudWxsLCJwdXIiOiJibG9iX2lkIn19--7c1183d35fdc9e4b5143c8601376552b89b5d99f/Earth_1_12756.glb';
 
-    // 8. Audio-Reactive Atmosphere Glow (Dual-Sphere Fresnel Shader)
-    // Inner Fresnel Rim
-    const atmosphereMaterial = new THREE.ShaderMaterial({
-      vertexShader: `
-        varying vec3 vNormal;
-        varying vec3 vPosition;
-        void main() {
-          vNormal = normalize(normalMatrix * normal);
-          vPosition = (modelViewMatrix * vec4(position, 1.0)).xyz;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    const onModelLoaded = (gltf) => {
+      if (isDisposed) return;
+      loadedNasaScene = gltf.scene;
+
+      // NASA geoid mesh has equatorial radius ~500, scale 0.002 matches unit radius 1.0
+      loadedNasaScene.scale.set(0.002, 0.002, 0.002);
+      // Rotate -90 degrees (-PI/2) on Y to precisely align Prime Meridian & equatorial hotspots with geo coordinates
+      loadedNasaScene.rotation.y = -Math.PI / 2;
+
+      loadedNasaScene.traverse((child) => {
+        if (child.isMesh) {
+          child.castShadow = false;
+          child.receiveShadow = true;
+          if (child.material) {
+            child.material.roughness = 0.72;
+            child.material.metalness = 0.10;
+          }
         }
-      `,
-      fragmentShader: `
-        uniform vec3 glowColor;
-        uniform float audioPulse;
-        varying vec3 vNormal;
-        varying vec3 vPosition;
-        void main() {
-          vec3 viewDir = normalize(-vPosition);
-          float rim = 1.0 - max(dot(vNormal, viewDir), 0.0);
-          float intensity = pow(rim, 3.2);
-          float alpha = clamp(intensity * (0.65 + audioPulse * 0.75), 0.0, 1.0);
-          gl_FragColor = vec4(glowColor, alpha);
-        }
-      `,
-      uniforms: {
-        glowColor: { value: new THREE.Color(0x06b6d4) }, // Radiant Cyan
-        audioPulse: { value: 0.0 }
-      },
-      blending: THREE.AdditiveBlending,
-      transparent: true,
-      depthWrite: false
-    });
-    const atmosphereMesh = new THREE.Mesh(new THREE.SphereGeometry(1.035, 64, 64), atmosphereMaterial);
-    scene.add(atmosphereMesh);
-    atmosphereMeshRef.current = atmosphereMesh;
+      });
 
-    // Outer Atmospheric Halo Ring
+      // Replace placeholder with the official NASA 3D Earth model
+      if (modelGroup.children.includes(placeholderMesh)) {
+        modelGroup.remove(placeholderMesh);
+        earthGeo.dispose();
+        earthMaterial.dispose();
+        earthTexture.dispose();
+      }
+      modelGroup.add(loadedNasaScene);
+
+      // Snap orientation immediately to active region when model is loaded
+      const curReg = currentRegionRef.current;
+      if (curReg) {
+        const coords = { lat: curReg.lat, lon: curReg.lon };
+        const pos = latLonToVector3(coords.lat, coords.lon, 1.0);
+        const cameraDir = new THREE.Vector3(0, 0.4, 2.85).normalize();
+        const initialQuat = new THREE.Quaternion().setFromUnitVectors(
+          pos.clone().normalize(),
+          cameraDir
+        );
+        earthGroup.quaternion.copy(initialQuat);
+        targetQuaternionRef.current = null;
+      }
+    };
+
+    gltfLoader.load(
+      localModelUrl,
+      onModelLoaded,
+      undefined,
+      (err) => {
+        console.warn('Local NASA 3D model could not be loaded, trying remote NASA URL:', err);
+        gltfLoader.load(
+          remoteModelUrl,
+          onModelLoaded,
+          undefined,
+          (remoteErr) => {
+            console.warn('Remote NASA 3D model could not be loaded, using procedural sphere:', remoteErr);
+          }
+        );
+      }
+    );
+
+    // 8. Subtle Atmospheric Rim Highlight (fine, reduced border size)
     const outerHaloMaterial = new THREE.ShaderMaterial({
       vertexShader: `
         varying vec3 vNormal;
@@ -652,13 +612,13 @@ export default function EarthGlobe({
         void main() {
           vec3 viewDir = normalize(-vPosition);
           float rim = 1.0 - max(dot(vNormal, viewDir), 0.0);
-          float intensity = pow(rim, 4.0);
-          float alpha = clamp(intensity * (0.45 + audioPulse * 0.90), 0.0, 1.0);
+          float intensity = pow(rim, 6.0);
+          float alpha = clamp(intensity * (0.35 + audioPulse * 0.4), 0.0, 0.6);
           gl_FragColor = vec4(haloColor, alpha);
         }
       `,
       uniforms: {
-        haloColor: { value: new THREE.Color(0x0284c7) },
+        haloColor: { value: new THREE.Color(isLightMode ? 0x0284c7 : 0x38bdf8) },
         audioPulse: { value: 0.0 }
       },
       side: THREE.BackSide,
@@ -666,7 +626,8 @@ export default function EarthGlobe({
       transparent: true,
       depthWrite: false
     });
-    const outerHaloMesh = new THREE.Mesh(new THREE.SphereGeometry(1.12, 64, 64), outerHaloMaterial);
+    // Reduced outer halo radius to 1.018 for a thin, refined atmospheric border
+    const outerHaloMesh = new THREE.Mesh(new THREE.SphereGeometry(1.018, 64, 64), outerHaloMaterial);
     scene.add(outerHaloMesh);
     outerHaloMeshRef.current = outerHaloMesh;
 
@@ -771,6 +732,7 @@ export default function EarthGlobe({
         if (onSelectRegionRef.current) {
           onSelectRegionRef.current(clickedRegion.id);
         }
+        focusRegion(clickedRegion);
       }
     };
 
@@ -827,31 +789,22 @@ export default function EarthGlobe({
       currentAudioPulseRef.current += (rawAudio - currentAudioPulseRef.current) * smoothing;
       const pulse = currentAudioPulseRef.current;
 
-      // Pulse Atmosphere mesh scale and shader uniforms
-      if (atmosphereMeshRef.current && outerHaloMeshRef.current) {
-        const scaleVal = 1.0 + pulse * 0.06;
-        atmosphereMeshRef.current.scale.set(scaleVal, scaleVal, scaleVal);
-        atmosphereMaterial.uniforms.audioPulse.value = pulse;
-
-        const haloScale = 1.0 + pulse * 0.08;
+      // Pulse outer atmosphere halo ring subtly
+      if (outerHaloMeshRef.current) {
+        const haloScale = 1.0 + pulse * 0.012;
         outerHaloMeshRef.current.scale.set(haloScale, haloScale, haloScale);
         outerHaloMaterial.uniforms.audioPulse.value = pulse;
       }
 
       // Smooth Quaternion Slerp to active region
       if (targetQuaternionRef.current && !isDraggingRef.current) {
-        earthGroup.quaternion.slerp(targetQuaternionRef.current, 0.05);
-        if (earthGroup.quaternion.angleTo(targetQuaternionRef.current) < 0.003) {
+        earthGroup.quaternion.slerp(targetQuaternionRef.current, 0.06);
+        if (earthGroup.quaternion.angleTo(targetQuaternionRef.current) < 0.002) {
           targetQuaternionRef.current = null;
         }
       } else if (autoRotateRef.current && !isDraggingRef.current) {
         // Gentle planetary idle rotation
         earthGroup.rotateY(0.0009);
-      }
-
-      // Differential Cloud Rotation
-      if (cloudMeshRef.current) {
-        cloudMeshRef.current.rotateY(0.0014);
       }
 
       // Animate 3D Hotspot Beacons & Radar Rings
@@ -868,84 +821,81 @@ export default function EarthGlobe({
 
         const scale1 = 1.0 + phase1 * 2.2;
         const scale2 = 1.0 + phase2 * 2.2;
-        ringMesh1.scale.set(scale1, scale1, 1);
-        ringMesh2.scale.set(scale2, scale2, 1);
+        ringMesh1.scale.set(scale1, scale1, scale1);
+        ringMesh2.scale.set(scale2, scale2, scale2);
 
-        ringMesh1.material.opacity = (1 - phase1) * (isSelected ? 0.95 : 0.6);
-        ringMesh2.material.opacity = (1 - phase2) * (isSelected ? 0.95 : 0.6);
+        ringMesh1.material.opacity = (1 - phase1) * (isSelected ? 0.95 : 0.45);
+        ringMesh2.material.opacity = (1 - phase2) * (isSelected ? 0.95 : 0.45);
 
-        // Active region beacon elevation & pulse
+        // Height & pulse modulation for selected hotspot
         if (isSelected) {
-          const beaconScaleY = 1.4 + Math.sin(elapsed * 4) * 0.2 + pulse * 0.6;
-          beaconMesh.scale.set(1.4, beaconScaleY, 1.4);
-          beaconMesh.material.opacity = 0.95;
+          const bounce = 1.0 + Math.sin(elapsed * 4) * 0.25;
+          beaconMesh.scale.set(1.4, 1.4 * bounce, 1.4);
+          beaconMesh.material.opacity = 1.0;
         } else {
           beaconMesh.scale.set(1.0, 1.0, 1.0);
-          beaconMesh.material.opacity = 0.72;
+          beaconMesh.material.opacity = 0.65;
         }
       });
 
-      // Update projected 2D screen positions for active tooltip badge with frame-perfect GPU synchronization
-      const tooltipEl = tooltipRef.current;
-      if (tooltipEl && curReg) {
-        const activeHit = hitTargets.find(
-          (h) => h.userData.region.id === curReg.id ||
+      // 12. Floating Dynamic HUD Telemetry Position Tracker
+      if (curReg && tooltipRef.current && mountRef.current) {
+        const targetHit = hitTargets.find(
+          (h) =>
+            h.userData.region.id === curReg.id ||
             (h.userData.region.aliases && h.userData.region.aliases.includes(curReg.id))
         );
 
-        if (activeHit) {
-          activeHit.getWorldPosition(tempVec);
-          toCameraVec.copy(camera.position).sub(tempVec).normalize();
-          normalVec.copy(tempVec).normalize();
-          const dotVal = normalVec.dot(toCameraVec);
-          const isFacingCamera = dotVal > 0.15;
+        if (targetHit) {
+          tempVec.set(0, 0.16, 0);
+          targetHit.localToWorld(tempVec);
 
-          if (isFacingCamera) {
-            tempVec.project(camera);
-            const domW = renderer.domElement.clientWidth || container.clientWidth;
-            const domH = renderer.domElement.clientHeight || container.clientHeight;
+          tempVec.project(camera);
 
-            const screenX = (tempVec.x * 0.5 + 0.5) * domW;
-            const screenY = (-tempVec.y * 0.5 + 0.5) * domH;
+          const hw = width / 2;
+          const hh = height / 2;
+          const screenX = tempVec.x * hw + hw;
+          const screenY = -tempVec.y * hh + hh;
 
-            // Half-width of card for boundary protection
-            const cardHalfWidth = 135;
-            const clampedX = Math.max(cardHalfWidth + 12, Math.min(domW - cardHalfWidth - 12, screenX));
-            const stemOffset = Math.max(-90, Math.min(90, screenX - clampedX));
+          // Check if hotspot is facing camera (dot product of normal with camera direction)
+          targetHit.getWorldPosition(normalVec);
+          normalVec.normalize();
+          toCameraVec.subVectors(camera.position, targetHit.position).normalize();
+          const dot = normalVec.dot(toCameraVec);
 
-            // Determine vertical placement:
-            // Default: place BELOW the hotspot (stem at top, card body below),
-            // strictly ensuring it never floats above or covers the top options HUD.
-            // Only flip ABOVE if near the very bottom of the viewport where there is no room below.
-            const isNearBottom = screenY > domH - 175;
+          if (tempVec.z < 1.0 && dot > 0.15) {
+            tooltipRef.current.style.opacity = '1';
+            tooltipRef.current.style.pointerEvents = 'auto';
 
-            if (isNearBottom) {
-              if (topStemRef.current) topStemRef.current.style.display = 'none';
-              if (bottomStemRef.current) {
-                bottomStemRef.current.style.display = 'block';
-                bottomStemRef.current.style.transform = `translateX(${stemOffset}px)`;
-              }
-              tooltipEl.style.transform = `translate3d(${clampedX}px, ${screenY}px, 0) translate(-50%, -100%)`;
-            } else {
-              if (topStemRef.current) {
-                topStemRef.current.style.display = 'block';
-                topStemRef.current.style.transform = `translateX(${stemOffset}px)`;
-              }
-              if (bottomStemRef.current) bottomStemRef.current.style.display = 'none';
-              // Ensure top of stem/card never clips into the top options bar (header occupies y = 16 to 64px)
-              const safeY = Math.max(68, screenY);
-              tooltipEl.style.transform = `translate3d(${clampedX}px, ${safeY}px, 0) translate(-50%, 0)`;
+            // Place HUD card intelligently in viewport
+            const cardWidth = 260;
+            const cardHeight = 120;
+            let cardLeft = screenX + 30;
+            let cardTop = screenY - cardHeight / 2;
+
+            if (cardLeft + cardWidth > width - 20) {
+              cardLeft = screenX - cardWidth - 30;
+            }
+            if (cardTop < 70) {
+              cardTop = 70;
+            } else if (cardTop + cardHeight > height - 70) {
+              cardTop = height - cardHeight - 70;
             }
 
-            // Smooth fade near horizon boundary
-            const edgeAlpha = Math.min(1, Math.max(0, (dotVal - 0.15) / 0.15));
-            tooltipEl.style.opacity = edgeAlpha.toFixed(2);
-            tooltipEl.style.display = 'block';
+            tooltipRef.current.style.transform = `translate3d(${cardLeft}px, ${cardTop}px, 0)`;
+
+            // Adaptive stem visibility
+            if (cardLeft > screenX) {
+              if (topStemRef.current) topStemRef.current.style.display = 'block';
+              if (bottomStemRef.current) bottomStemRef.current.style.display = 'none';
+            } else {
+              if (topStemRef.current) topStemRef.current.style.display = 'none';
+              if (bottomStemRef.current) bottomStemRef.current.style.display = 'block';
+            }
           } else {
-            tooltipEl.style.display = 'none';
+            tooltipRef.current.style.opacity = '0';
+            tooltipRef.current.style.pointerEvents = 'none';
           }
-        } else {
-          tooltipEl.style.display = 'none';
         }
       }
 
@@ -954,107 +904,102 @@ export default function EarthGlobe({
 
     animate();
 
-    // 12. Responsive Resize Handling
+    // Resize Handler
     const handleResize = () => {
-      if (!container || !renderer || !camera) return;
-      const w = container.clientWidth;
-      const h = container.clientHeight;
-      if (w === 0 || h === 0) return;
-
-      camera.aspect = w / h;
+      if (!mountRef.current) return;
+      const nw = mountRef.current.clientWidth || 800;
+      const nh = mountRef.current.clientHeight || 600;
+      camera.aspect = nw / nh;
       camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
+      renderer.setSize(nw, nh);
     };
-
-    const resizeObserver = new ResizeObserver(() => handleResize());
-    resizeObserver.observe(container);
+    window.addEventListener('resize', handleResize);
 
     // 13. Component Cleanup & Unmount
     return () => {
+      isDisposed = true;
       if (animFrameIdRef.current) {
         cancelAnimationFrame(animFrameIdRef.current);
       }
-      resizeObserver.disconnect();
+      window.removeEventListener('resize', handleResize);
       renderer.domElement.removeEventListener('pointermove', handlePointerMove);
       renderer.domElement.removeEventListener('pointerdown', handlePointerDown);
 
       controls.dispose();
       renderer.dispose();
-      earthGeo.dispose();
-      earthMaterial.dispose();
-      earthTexture.dispose();
-      cloudGeo.dispose();
-      cloudMaterial.dispose();
-      cloudTexture.dispose();
-      atmosphereMaterial.dispose();
+      try {
+        earthGeo.dispose();
+        earthMaterial.dispose();
+        earthTexture.dispose();
+      } catch {}
+
+      if (loadedNasaScene) {
+        loadedNasaScene.traverse((obj) => {
+          if (obj.geometry) obj.geometry.dispose();
+          if (obj.material) {
+            if (Array.isArray(obj.material)) {
+              obj.material.forEach((m) => m.dispose());
+            } else {
+              obj.material.dispose();
+            }
+          }
+        });
+      }
+
       outerHaloMaterial.dispose();
       starGeo.dispose();
       starMaterial.dispose();
 
-      if (container.contains(renderer.domElement)) {
+      if (container && renderer.domElement && container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
     };
-  }, [regions]);
+  }, []);
 
   // Handle live theme switching for Three.js scene
   useEffect(() => {
     const isLight = theme === 'light';
-    if (!sceneRef.current || !earthMaterialRef.current) return;
+    if (!sceneRef.current) return;
 
-    const newTexture = createProceduralEarthTexture(isLight);
-    earthMaterialRef.current.map = newTexture;
-    earthMaterialRef.current.emissive = new THREE.Color(isLight ? 0x000000 : 0x040812);
-    earthMaterialRef.current.emissiveIntensity = isLight ? 0.05 : 0.35;
-    earthMaterialRef.current.needsUpdate = true;
+    if (earthMaterialRef.current && earthMaterialRef.current.map) {
+      const newTexture = createProceduralEarthTexture(isLight);
+      earthMaterialRef.current.map = newTexture;
+      earthMaterialRef.current.emissive = new THREE.Color(isLight ? 0x000000 : 0x040812);
+      earthMaterialRef.current.emissiveIntensity = isLight ? 0.05 : 0.35;
+      earthMaterialRef.current.needsUpdate = true;
+    }
 
     if (sceneRef.current) {
       sceneRef.current.background = isLight ? null : new THREE.Color(0x020408);
     }
-
     if (starPointsRef.current) {
       starPointsRef.current.visible = !isLight;
     }
 
     if (ambientLightRef.current) {
-      ambientLightRef.current.color.setHex(isLight ? 0xffffff : 0x0e1726);
-      ambientLightRef.current.intensity = isLight ? 1.4 : 0.85;
+      ambientLightRef.current.color.setHex(0xffffff);
+      ambientLightRef.current.intensity = isLight ? 2.4 : 2.2;
     }
     if (sunLightRef.current) {
-      sunLightRef.current.intensity = isLight ? 2.6 : 2.4;
+      sunLightRef.current.intensity = isLight ? 1.6 : 1.4;
     }
 
-    if (atmosphereMeshRef.current && atmosphereMeshRef.current.material) {
-      atmosphereMeshRef.current.material.uniforms.glowColor.value.setHex(isLight ? 0x0284c7 : 0x06b6d4);
-    }
     if (outerHaloMeshRef.current && outerHaloMeshRef.current.material) {
-      outerHaloMeshRef.current.material.uniforms.haloColor.value.setHex(isLight ? 0x38bdf8 : 0x0284c7);
+      outerHaloMeshRef.current.material.uniforms.haloColor.value.setHex(isLight ? 0x0284c7 : 0x38bdf8);
     }
   }, [theme]);
 
   // Reset Camera View
   const handleResetView = useCallback(() => {
-    if (!currentRegion || !earthGroupRef.current) return;
-    const pos = latLonToVector3(currentRegion.lat, currentRegion.lon, 1.0);
-    const cameraDir = new THREE.Vector3(0, 0.4, 2.85).normalize();
-    const q = new THREE.Quaternion().setFromUnitVectors(
-      pos.clone().normalize(),
-      cameraDir
-    );
-    targetQuaternionRef.current = q;
-  }, [currentRegion]);
+    if (currentRegion) {
+      focusRegion(currentRegion);
+    }
+  }, [currentRegion, focusRegion]);
 
   return (
     <div className={`relative w-full h-full min-h-[400px] overflow-hidden select-none ${theme === 'light' ? 'bg-transparent' : 'bg-black'} font-manrope ${className}`}>
       {/* 3D WebGL Canvas Container */}
       <div ref={mountRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
-
-      {/* Atmospheric Vignette Overlay */}
-      <div className={`absolute inset-0 pointer-events-none ${
-        theme === 'light' 
-          ? 'bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(241,245,249,0.7)_100%)]' 
-          : 'bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(0,0,0,0.85)_95%)]'
-      }`} />
 
       {/* Top Header HUD Telemetry - Z-30 to guarantee priority and visibility above 3D space */}
       <div className="absolute top-4 left-4 right-4 flex flex-wrap items-center justify-between gap-2 pointer-events-none z-30">
@@ -1118,48 +1063,44 @@ export default function EarthGlobe({
                   ? 'bg-white/90 border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-950'
                   : 'bg-black/80 border-zinc-800 text-zinc-300 hover:bg-zinc-900 hover:text-white hover:border-zinc-700'
               }`}
-              title="Re-Center on Active Region"
+              title="Reset View Orientation to Selected Region"
             >
-              <RotateCcw className={`w-3.5 h-3.5 ${theme === 'light' ? 'text-slate-500' : 'text-zinc-400'}`} />
+              <RotateCcw className="w-3.5 h-3.5" />
               <span>Reset View</span>
             </button>
           </div>
         )}
       </div>
 
-      {/* Screen-Space Holographic Beacon Badge (Direct GPU Transform Sync with 3D Hotspot) */}
+      {/* Floating HUD Card attached to Active Hotspot */}
       <div
         ref={tooltipRef}
-        className="absolute top-0 left-0 pointer-events-auto z-20 will-change-transform"
-        style={{ display: 'none' }}
+        className="absolute top-0 left-0 transition-opacity duration-300 pointer-events-none z-20"
+        style={{ opacity: 0 }}
       >
-        {/* Top Beacon Pointer Stem (when card is below hotspot - pointing up to hotspot) */}
         <div
           ref={topStemRef}
           className="w-0.5 h-4 mx-auto"
           style={{
+            display: 'none',
             backgroundColor: currentRegion.color || '#ef233c',
             boxShadow: `0 0 8px ${currentRegion.color || '#ef233c'}`
           }}
         />
 
-        <div className={`backdrop-blur-xl border rounded-xl p-3 shadow-2xl min-w-[210px] max-w-[270px] ${
+        <div className={`p-3 rounded-xl backdrop-blur-xl border shadow-2xl w-[260px] ${
           theme === 'light'
-            ? 'bg-white/95 border-slate-200 text-slate-900 shadow-slate-300/50'
-            : 'bg-black/95 border-white/10 text-white shadow-red-950/50'
+            ? 'bg-white/95 border-slate-200/90 text-slate-900 shadow-slate-300/60'
+            : 'bg-black/90 border-white/15 text-white shadow-black/80'
         }`}>
-          {/* Holographic Header Bar */}
-          <div className={`flex items-center justify-between gap-2 border-b pb-1.5 mb-1.5 ${
-            theme === 'light' ? 'border-slate-200' : 'border-zinc-800'
-          }`}>
+          {/* Header */}
+          <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-1.5">
               <span
                 className="w-2 h-2 rounded-full animate-ping"
                 style={{ backgroundColor: currentRegion.color || '#ef233c' }}
               />
-              <span className={`text-xs sm:text-sm font-semibold tracking-wide font-manrope ${
-                theme === 'light' ? 'text-slate-900' : 'text-white'
-              }`}>
+              <span className="text-xs font-bold font-manrope">
                 {currentRegion.name}
               </span>
             </div>
@@ -1168,10 +1109,10 @@ export default function EarthGlobe({
             </span>
           </div>
 
-          {/* Metrics Chips */}
-          <div className="grid grid-cols-2 gap-1.5 mb-2">
-            {(currentRegion.metrics || []).slice(0, 2).map((m, idx) => (
-              <div key={idx} className={`rounded-lg p-1.5 border ${
+          {/* Key Metrics Chips */}
+          <div className="grid grid-cols-3 gap-1.5 mb-2">
+            {currentRegion.metrics && currentRegion.metrics.map((m, idx) => (
+              <div key={idx} className={`p-1.5 rounded-lg border text-center ${
                 theme === 'light'
                   ? 'bg-slate-50 border-slate-200/80 text-slate-900'
                   : 'bg-zinc-900/80 border-zinc-800 text-white'
@@ -1194,7 +1135,6 @@ export default function EarthGlobe({
           </p>
         </div>
 
-        {/* Bottom Beacon Pointer Stem (when card is above hotspot - pointing down to hotspot) */}
         <div
           ref={bottomStemRef}
           className="w-0.5 h-4 mx-auto"
@@ -1222,7 +1162,12 @@ export default function EarthGlobe({
               <button
                 key={region.id}
                 type="button"
-                onClick={() => onSelectRegion(region.id)}
+                onClick={() => {
+                  setAutoRotate(false);
+                  autoRotateRef.current = false;
+                  onSelectRegion(region.id);
+                  focusRegion(region);
+                }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-manrope font-semibold transition-all border cursor-pointer ${
                   isSelected
                     ? 'bg-[#ef233c] border-[#ef233c] text-white shadow-lg shadow-red-950/60 font-semibold'
