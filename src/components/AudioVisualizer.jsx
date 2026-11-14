@@ -391,7 +391,7 @@ export default function AudioVisualizer({
   return (
     <div
       ref={containerRef}
-      className={`relative w-full rounded-xl border p-5 shadow-2xl font-inter overflow-hidden select-none transition-colors ${
+      className={`relative w-full rounded-xl border p-5 shadow-2xl font-manrope overflow-hidden select-none transition-colors ${
         isLight
           ? 'bg-white border-slate-200/90 shadow-slate-200/40 text-slate-900'
           : 'bg-black border-white/10 text-white'
@@ -417,13 +417,13 @@ export default function AudioVisualizer({
 
           <div>
             <div className="flex items-center gap-2.5">
-              <span className={`text-sm sm:text-base font-bold tracking-wider font-mono uppercase ${
+              <span className={`text-sm sm:text-base font-bold tracking-wider font-manrope uppercase ${
                 isLight ? 'text-slate-900' : 'text-white'
               }`}>
                 {title}
               </span>
               <span
-                className={`text-xs sm:text-sm font-mono px-2.5 py-0.5 rounded border font-semibold ${
+                className={`text-xs sm:text-sm font-manrope px-2.5 py-0.5 rounded border font-semibold ${
                   isAudioActive
                     ? (isLight ? 'bg-red-50 border-red-200 text-red-600 animate-pulse' : 'bg-[#ef233c]/20 border-[#ef233c]/50 text-[#ef233c] animate-pulse')
                     : (isLight ? 'bg-slate-100 border-slate-200 text-slate-500' : 'bg-zinc-900 border-zinc-800 text-zinc-400')
@@ -432,14 +432,14 @@ export default function AudioVisualizer({
                 {isAudioActive ? 'AUDIO ACTIVE' : 'IDLE STANDBY'}
               </span>
             </div>
-            <div className={`text-xs font-mono tracking-normal ${
+            <div className={`text-xs font-manrope tracking-normal ${
               isLight ? 'text-slate-500' : 'text-zinc-400'
             }`}>{subtitle}</div>
           </div>
         </div>
 
         {/* Center Live Telemetry Chips */}
-        <div className={`hidden sm:flex items-center gap-3 border rounded-xl px-3 py-1 font-mono text-xs ${
+        <div className={`hidden sm:flex items-center gap-3 border rounded-xl px-3 py-1 font-manrope text-xs ${
           isLight ? 'bg-slate-50 border-slate-200 text-slate-700' : 'bg-zinc-900/90 border-zinc-800 text-zinc-300'
         }`}>
           <div className="flex items-center gap-1.5">
@@ -467,7 +467,7 @@ export default function AudioVisualizer({
             <button
               type="button"
               onClick={() => setActiveMode('dual')}
-              className={`px-3 py-1.5 text-xs font-mono font-semibold rounded transition-all cursor-pointer ${
+              className={`px-3 py-1.5 text-xs font-manrope font-semibold rounded transition-all cursor-pointer ${
                 activeMode === 'dual'
                   ? 'bg-[#ef233c] text-white shadow'
                   : (isLight ? 'text-slate-600 hover:text-slate-950' : 'text-zinc-400 hover:text-white')
@@ -478,7 +478,7 @@ export default function AudioVisualizer({
             <button
               type="button"
               onClick={() => setActiveMode('bars')}
-              className={`px-3 py-1.5 text-xs font-mono font-semibold rounded transition-all cursor-pointer ${
+              className={`px-3 py-1.5 text-xs font-manrope font-semibold rounded transition-all cursor-pointer ${
                 activeMode === 'bars'
                   ? 'bg-[#ef233c] text-white shadow'
                   : (isLight ? 'text-slate-600 hover:text-slate-950' : 'text-zinc-400 hover:text-white')
@@ -489,7 +489,7 @@ export default function AudioVisualizer({
             <button
               type="button"
               onClick={() => setActiveMode('wave')}
-              className={`px-3 py-1.5 text-xs font-mono font-semibold rounded transition-all cursor-pointer ${
+              className={`px-3 py-1.5 text-xs font-manrope font-semibold rounded transition-all cursor-pointer ${
                 activeMode === 'wave'
                   ? 'bg-[#ef233c] text-white shadow'
                   : (isLight ? 'text-slate-600 hover:text-slate-950' : 'text-zinc-400 hover:text-white')

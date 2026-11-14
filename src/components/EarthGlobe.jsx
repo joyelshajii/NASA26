@@ -1045,7 +1045,7 @@ export default function EarthGlobe({
   }, [currentRegion]);
 
   return (
-    <div className={`relative w-full h-full min-h-[400px] overflow-hidden select-none ${theme === 'light' ? 'bg-transparent' : 'bg-black'} font-inter ${className}`}>
+    <div className={`relative w-full h-full min-h-[400px] overflow-hidden select-none ${theme === 'light' ? 'bg-transparent' : 'bg-black'} font-manrope ${className}`}>
       {/* 3D WebGL Canvas Container */}
       <div ref={mountRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
 
@@ -1074,11 +1074,11 @@ export default function EarthGlobe({
               theme === 'light' ? 'text-slate-900' : 'text-white'
             }`}>
               <span>{currentRegion.name}</span>
-              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#ef233c]/15 border border-[#ef233c]/40 text-[#ef233c] font-semibold">
+              <span className="text-[10px] font-manrope px-1.5 py-0.5 rounded bg-[#ef233c]/15 border border-[#ef233c]/40 text-[#ef233c] font-semibold">
                 {currentRegion.category}
               </span>
               {currentYear && (
-                <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded border font-bold ${
+                <span className={`text-[10px] font-manrope px-1.5 py-0.5 rounded border font-bold ${
                   theme === 'light' ? 'bg-slate-100 border-slate-300 text-slate-700' : 'bg-white/10 border-white/20 text-zinc-300'
                 }`}>
                   {Math.round(currentYear)}
@@ -1163,7 +1163,7 @@ export default function EarthGlobe({
                 {currentRegion.name}
               </span>
             </div>
-            <span className={`text-[10px] font-mono ${theme === 'light' ? 'text-slate-500' : 'text-zinc-400'}`}>
+            <span className={`text-[10px] font-manrope ${theme === 'light' ? 'text-slate-500' : 'text-zinc-400'}`}>
               {currentRegion.lat.toFixed(1)}° N, {currentRegion.lon.toFixed(1)}° E
             </span>
           </div>
@@ -1176,10 +1176,10 @@ export default function EarthGlobe({
                   ? 'bg-slate-50 border-slate-200/80 text-slate-900'
                   : 'bg-zinc-900/80 border-zinc-800 text-white'
               }`}>
-                <div className={`text-[10px] font-mono uppercase font-semibold ${
+                <div className={`text-[10px] font-manrope uppercase font-semibold ${
                   theme === 'light' ? 'text-slate-500' : 'text-zinc-400'
                 }`}>{m.label}</div>
-                <div className={`text-xs font-bold font-mono ${
+                <div className={`text-xs font-bold font-manrope ${
                   theme === 'light' ? 'text-slate-900' : 'text-white'
                 }`}>{m.value}</div>
               </div>
@@ -1187,7 +1187,7 @@ export default function EarthGlobe({
           </div>
 
           {/* Quick narrative caption */}
-          <p className={`text-[11px] leading-relaxed font-inter ${
+          <p className={`text-[11px] leading-relaxed font-manrope ${
             theme === 'light' ? 'text-slate-600' : 'text-zinc-300'
           }`}>
             {currentRegion.narrative || currentRegion.subtitle}
@@ -1223,7 +1223,7 @@ export default function EarthGlobe({
                 key={region.id}
                 type="button"
                 onClick={() => onSelectRegion(region.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-medium transition-all border cursor-pointer ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-manrope font-semibold transition-all border cursor-pointer ${
                   isSelected
                     ? 'bg-[#ef233c] border-[#ef233c] text-white shadow-lg shadow-red-950/60 font-semibold'
                     : (theme === 'light'

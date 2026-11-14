@@ -35,12 +35,12 @@ export default function CreditsModal({ isOpen, onClose, theme = 'dark' }) {
           <div className="flex items-center gap-3">
             <div className="w-2.5 h-8 bg-[#ef233c] rounded-sm shrink-0" />
             <div>
-              <h2 id="credits-modal-title" className={`text-xl sm:text-2xl font-bold tracking-tight font-serif-instrument ${
+              <h2 id="credits-modal-title" className={`text-xl sm:text-2xl font-bold tracking-tight font-manrope ${
                 isLight ? 'text-slate-900' : 'text-white'
               }`}>
                 NASA Open Data Attribution & Credits
               </h2>
-              <p className={`text-xs font-mono uppercase tracking-wider ${
+              <p className={`text-xs font-manrope uppercase tracking-wider ${
                 isLight ? 'text-slate-500' : 'text-zinc-400'
               }`}>
                 Official Space Agency Datasets and Observational Products
@@ -59,8 +59,8 @@ export default function CreditsModal({ isOpen, onClose, theme = 'dark' }) {
         </div>
 
         {/* Content */}
-        <div className={`space-y-4 text-sm font-inter ${isLight ? 'text-slate-700' : 'text-zinc-300'}`}>
-          <p className="leading-relaxed text-sm">
+        <div className={`space-y-4 text-sm font-manrope ${isLight ? 'text-slate-700' : 'text-zinc-300'}`}>
+          <p className="leading-relaxed text-sm font-manrope">
             TerraSonus is powered entirely by open data from the National Aeronautics and Space Administration (NASA) and partner space agencies. 
             All planetary metrics, satellite imagery, and atmospheric telemetry are publicly accessible under open science mandates.
           </p>
@@ -78,15 +78,15 @@ export default function CreditsModal({ isOpen, onClose, theme = 'dark' }) {
                   <span className={`font-semibold text-sm sm:text-base ${isLight ? 'text-slate-900' : 'text-white'}`}>
                     {item.name}
                   </span>
-                  <span className="text-xs text-[#ef233c] font-mono font-medium">
+                  <span className="text-xs text-[#ef233c] font-manrope font-medium">
                     {item.agency}
                   </span>
                 </div>
-                <p className={`text-xs sm:text-sm leading-relaxed font-inter ${isLight ? 'text-slate-600' : 'text-zinc-300'}`}>
+                <p className={`text-xs sm:text-sm leading-relaxed font-manrope ${isLight ? 'text-slate-600' : 'text-zinc-300'}`}>
                   {item.description}
                 </p>
                 <div className="pt-1.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-                  <span className={`font-mono ${isLight ? 'text-slate-500' : 'text-zinc-400'}`}>
+                  <span className={`font-manrope ${isLight ? 'text-slate-500' : 'text-zinc-400'}`}>
                     Product: {item.product}
                   </span>
                   <a
@@ -108,7 +108,7 @@ export default function CreditsModal({ isOpen, onClose, theme = 'dark' }) {
           <div className={`p-4 rounded-xl border text-xs sm:text-sm leading-relaxed ${
             isLight ? 'bg-red-50/60 border-[#ef233c]/30 text-slate-700' : 'bg-zinc-900/50 border-[#ef233c]/30 text-zinc-300'
           }`}>
-            <span className="font-bold text-[#ef233c] font-mono uppercase tracking-wider block mb-1 text-xs">
+            <span className="font-bold text-[#ef233c] font-manrope uppercase tracking-wider block mb-1 text-xs">
               NASA Open Science & Accessibility
             </span>
             Developed as an open-source platform providing multi-sensory Earth science accessibility, STEM education, and planetary telemetry sonification for all audiences.

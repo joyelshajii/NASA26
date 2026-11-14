@@ -74,7 +74,7 @@ export default function SoundGuideModal({
           <div className="flex items-center gap-3">
             <div className="w-2.5 h-10 bg-[#ef233c] rounded-sm shrink-0" />
             <div>
-              <div className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-[#ef233c]/10 border border-[#ef233c]/20 text-[10px] font-mono text-[#ef233c] font-bold uppercase tracking-wider mb-1">
+              <div className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-[#ef233c]/10 border border-[#ef233c]/20 text-[10px] font-manrope text-[#ef233c] font-bold uppercase tracking-wider mb-1">
                 Listener Guide &mdash; Audio Tutorial
               </div>
               <h2 id="sound-guide-title" className={`text-2xl sm:text-3xl font-bold tracking-tight font-manrope ${
@@ -99,7 +99,7 @@ export default function SoundGuideModal({
         <div className={`mb-6 p-4 rounded-xl border ${
           isLight ? 'bg-slate-50 border-slate-200 text-slate-700' : 'bg-zinc-900/60 border-zinc-800 text-zinc-300'
         }`}>
-          <p className="text-sm leading-relaxed font-inter">
+          <p className="text-sm leading-relaxed font-manrope">
             <strong className={isLight ? 'text-slate-900 font-semibold' : 'text-white font-semibold'}>
               Deterministic Sonification:
             </strong> TerraSonus transforms live NASA satellite observations into an ambient musical symphony. Four real-world planetary measurements directly shape four harmonious instruments.
@@ -121,7 +121,7 @@ export default function SoundGuideModal({
                   isLight ? 'text-slate-900' : 'text-white'
                 }`}>
                   1. Low Bass Drone
-                  <span className={`text-xs px-2 py-0.5 rounded font-mono font-normal border ${
+                  <span className={`text-xs px-2 py-0.5 rounded font-manrope font-semibold border ${
                     isLight 
                       ? 'bg-red-50 border-red-200 text-red-700' 
                       : 'bg-red-950/60 border-red-800/40 text-red-400'
@@ -132,7 +132,7 @@ export default function SoundGuideModal({
               </div>
               <button
                 onClick={() => handlePreview('drone')}
-                className={`px-3 py-1.5 rounded-lg border text-xs font-mono transition-all flex items-center gap-1.5 cursor-pointer w-fit ${
+                className={`px-3 py-1.5 rounded-lg border text-xs font-manrope font-semibold transition-all flex items-center gap-1.5 cursor-pointer w-fit ${
                   activePreview === 'drone'
                     ? 'bg-[#ef233c] border-[#ef233c] text-white animate-pulse'
                     : isLight
@@ -144,12 +144,12 @@ export default function SoundGuideModal({
                 <span>{activePreview === 'drone' ? 'Playing Sample...' : 'Sample Drone'}</span>
               </button>
             </div>
-            <p className={`text-sm leading-relaxed font-inter mb-2 ${
+            <p className={`text-sm leading-relaxed font-manrope mb-2 ${
               isLight ? 'text-slate-600' : 'text-zinc-300'
             }`}>
               A continuous, warm low-frequency hum. As global temperatures climb, this drone <strong>audibly rises to higher, tenser pitches</strong>. Scrubbing 1980 to 2026 demonstrates decades of warming.
             </p>
-            <div className={`text-[11px] font-mono flex items-center gap-2 ${
+            <div className={`text-[11px] font-manrope flex items-center gap-2 ${
               isLight ? 'text-slate-500' : 'text-zinc-500'
             }`}>
               <span className="text-[#ef233c] font-semibold">NASA GISTEMP v4</span> &bull; 
@@ -169,7 +169,7 @@ export default function SoundGuideModal({
                   isLight ? 'text-slate-900' : 'text-white'
                 }`}>
                   2. Atmospheric Wind Sweep
-                  <span className={`text-xs px-2 py-0.5 rounded font-mono font-normal border ${
+                  <span className={`text-xs px-2 py-0.5 rounded font-manrope font-semibold border ${
                     isLight 
                       ? 'bg-blue-50 border-blue-200 text-blue-700' 
                       : 'bg-blue-950/60 border-blue-800/40 text-blue-400'
@@ -180,7 +180,7 @@ export default function SoundGuideModal({
               </div>
               <button
                 onClick={() => handlePreview('wind')}
-                className={`px-3 py-1.5 rounded-lg border text-xs font-mono transition-all flex items-center gap-1.5 cursor-pointer w-fit ${
+                className={`px-3 py-1.5 rounded-lg border text-xs font-manrope font-semibold transition-all flex items-center gap-1.5 cursor-pointer w-fit ${
                   activePreview === 'wind'
                     ? 'bg-blue-600 border-blue-500 text-white animate-pulse'
                     : isLight
@@ -192,12 +192,12 @@ export default function SoundGuideModal({
                 <span>{activePreview === 'wind' ? 'Playing Sample...' : 'Sample Wind'}</span>
               </button>
             </div>
-            <p className={`text-sm leading-relaxed font-inter mb-2 ${
+            <p className={`text-sm leading-relaxed font-manrope mb-2 ${
               isLight ? 'text-slate-600' : 'text-zinc-300'
             }`}>
               A soft, ocean-like whooshing sound. Whispers quietly during gentle breezes, and <strong>sweeps open into bright, airy whistling wind</strong> during storms and high-velocity jet streams.
             </p>
-            <div className={`text-[11px] font-mono flex items-center gap-2 ${
+            <div className={`text-[11px] font-manrope flex items-center gap-2 ${
               isLight ? 'text-slate-500' : 'text-zinc-500'
             }`}>
               <span className="text-blue-500 font-semibold">NASA POWER / GEOS-FP</span> &bull; 
@@ -217,7 +217,7 @@ export default function SoundGuideModal({
                   isLight ? 'text-slate-900' : 'text-white'
                 }`}>
                   3. Biosphere Forest Chimes
-                  <span className={`text-xs px-2 py-0.5 rounded font-mono font-normal border ${
+                  <span className={`text-xs px-2 py-0.5 rounded font-manrope font-semibold border ${
                     isLight 
                       ? 'bg-emerald-50 border-emerald-200 text-emerald-700' 
                       : 'bg-emerald-950/60 border-emerald-800/40 text-emerald-400'
@@ -228,7 +228,7 @@ export default function SoundGuideModal({
               </div>
               <button
                 onClick={() => handlePreview('chime')}
-                className={`px-3 py-1.5 rounded-lg border text-xs font-mono transition-all flex items-center gap-1.5 cursor-pointer w-fit ${
+                className={`px-3 py-1.5 rounded-lg border text-xs font-manrope font-semibold transition-all flex items-center gap-1.5 cursor-pointer w-fit ${
                   activePreview === 'chime'
                     ? 'bg-emerald-600 border-emerald-500 text-white animate-pulse'
                     : isLight
@@ -240,12 +240,12 @@ export default function SoundGuideModal({
                 <span>{activePreview === 'chime' ? 'Playing Sample...' : 'Sample Chimes'}</span>
               </button>
             </div>
-            <p className={`text-sm leading-relaxed font-inter mb-2 ${
+            <p className={`text-sm leading-relaxed font-manrope mb-2 ${
               isLight ? 'text-slate-600' : 'text-zinc-300'
             }`}>
               Sparkling, bell-like chimes strictly locked to an <strong>A Minor / C Major Pentatonic scale</strong>. Lush regions (like the Amazon) ring out frequently in high octaves; barren deserts and ice caps fall quiet.
             </p>
-            <div className={`text-[11px] font-mono flex items-center gap-2 ${
+            <div className={`text-[11px] font-manrope flex items-center gap-2 ${
               isLight ? 'text-slate-500' : 'text-zinc-500'
             }`}>
               <span className="text-emerald-500 font-semibold">MODIS Terra/Aqua</span> &bull; 
@@ -265,7 +265,7 @@ export default function SoundGuideModal({
                   isLight ? 'text-slate-900' : 'text-white'
                 }`}>
                   4. Planetary Heartbeat Pulse
-                  <span className={`text-xs px-2 py-0.5 rounded font-mono font-normal border ${
+                  <span className={`text-xs px-2 py-0.5 rounded font-manrope font-semibold border ${
                     isLight 
                       ? 'bg-amber-50 border-amber-200 text-amber-700' 
                       : 'bg-amber-950/60 border-amber-800/40 text-amber-400'
@@ -276,7 +276,7 @@ export default function SoundGuideModal({
               </div>
               <button
                 onClick={() => handlePreview('pulse')}
-                className={`px-3 py-1.5 rounded-lg border text-xs font-mono transition-all flex items-center gap-1.5 cursor-pointer w-fit ${
+                className={`px-3 py-1.5 rounded-lg border text-xs font-manrope font-semibold transition-all flex items-center gap-1.5 cursor-pointer w-fit ${
                   activePreview === 'pulse'
                     ? 'bg-amber-600 border-amber-500 text-white animate-pulse'
                     : isLight
@@ -288,12 +288,12 @@ export default function SoundGuideModal({
                 <span>{activePreview === 'pulse' ? 'Playing Sample...' : 'Sample Heartbeat'}</span>
               </button>
             </div>
-            <p className={`text-sm leading-relaxed font-inter mb-2 ${
+            <p className={`text-sm leading-relaxed font-manrope mb-2 ${
               isLight ? 'text-slate-600' : 'text-zinc-300'
             }`}>
               A deep, rhythmic bass drum thump. Paces like a slow, resting planetary heartbeat under normal conditions (~2.8s intervals), but <strong>races into a rapid, urgent pounding</strong> during wildfire outbreaks.
             </p>
-            <div className={`text-[11px] font-mono flex items-center gap-2 ${
+            <div className={`text-[11px] font-manrope flex items-center gap-2 ${
               isLight ? 'text-slate-500' : 'text-zinc-500'
             }`}>
               <span className="text-amber-500 font-semibold">VIIRS Active Fire</span> &bull; 
@@ -303,10 +303,10 @@ export default function SoundGuideModal({
         </div>
 
         {/* Quick Tips */}
-        <div className={`p-4 rounded-xl border mb-6 text-xs space-y-2 font-inter ${
+        <div className={`p-4 rounded-xl border mb-6 text-xs space-y-2 font-manrope ${
           isLight ? 'bg-slate-100/70 border-slate-200 text-slate-600' : 'bg-white/[0.02] border-white/5 text-zinc-400'
         }`}>
-          <div className={`font-semibold uppercase tracking-wider text-[11px] font-mono mb-1 ${
+          <div className={`font-semibold uppercase tracking-wider text-[11px] font-manrope mb-1 ${
             isLight ? 'text-slate-800' : 'text-zinc-200'
           }`}>
             Quick Discovery Tips:
