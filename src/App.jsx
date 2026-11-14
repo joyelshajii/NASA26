@@ -510,20 +510,39 @@ export default function App() {
               {isLight ? <Moon className="w-4 h-4 text-slate-800" /> : <Sun className="w-4 h-4 text-amber-400" />}
             </button>
 
-            {/* Accessibility Speech Narration Toggle */}
+            {/* Accessibility Speech Narration Toggle - Prominent, Noticeable Pill with Name */}
             <button
+              id="header-accessibility-btn"
               onClick={toggleAccessibilityMode}
-              title={isAccessibilityMode ? 'Disable Blind & Low-Vision Access' : 'Enable Blind & Low-Vision Access'}
-              className={`p-2 rounded-full border transition-all cursor-pointer ${
+              title={isAccessibilityMode ? 'Disable Blind & Low-Vision Access (Keyboard: A)' : 'Enable Blind & Low-Vision Access (Keyboard: A)'}
+              className={`group flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 rounded-full border text-xs font-semibold font-manrope transition-all cursor-pointer shadow-sm ${
                 isAccessibilityMode 
-                  ? 'bg-[#ef233c]/20 border-[#ef233c] text-[#ef233c] shadow-[0_0_10px_rgba(239,35,60,0.4)]' 
+                  ? 'bg-[#ef233c] text-white border-[#ef233c] shadow-[0_0_16px_rgba(239,35,60,0.5)] ring-2 ring-red-400/40' 
                   : isLight
-                    ? 'bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300'
-                    : 'bg-white/5 border-white/10 text-zinc-400 hover:text-white hover:border-white/20'
+                    ? 'bg-red-50 border-red-200 text-red-800 hover:bg-red-100 hover:border-red-300 hover:text-red-950'
+                    : 'bg-red-950/40 border-red-500/40 text-red-200 hover:bg-red-900/50 hover:border-red-400 hover:text-white shadow-[0_0_12px_rgba(239,35,60,0.2)]'
               }`}
-              aria-label={isAccessibilityMode ? 'Disable Blind and Low-Vision Access' : 'Enable Blind and Low-Vision Access'}
+              aria-label={isAccessibilityMode ? 'Disable Blind and Low-Vision Access (Keyboard shortcut A)' : 'Enable Blind and Low-Vision Access (Keyboard shortcut A)'}
+              aria-pressed={isAccessibilityMode}
             >
-              <Eye className="w-4 h-4" />
+              <Eye className={`w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 transition-transform group-hover:scale-110 ${
+                isAccessibilityMode ? 'text-white' : 'text-[#ef233c]'
+              }`} />
+              <span className="hidden sm:inline font-bold whitespace-nowrap">
+                Blind Access
+              </span>
+              <span className="sm:hidden font-bold whitespace-nowrap">
+                Blind
+              </span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono font-bold uppercase transition-colors ${
+                isAccessibilityMode
+                  ? 'bg-white/25 text-white'
+                  : isLight
+                    ? 'bg-red-200/80 text-red-900'
+                    : 'bg-red-500/25 text-red-300'
+              }`}>
+                {isAccessibilityMode ? 'ON' : 'OFF'}
+              </span>
             </button>
 
             {/* Subtle Divider */}
@@ -737,6 +756,35 @@ export default function App() {
                 }`}
               >
                 <span>Scientific Math</span>
+              </button>
+            </div>
+
+            {/* Quick Blind & Low-Vision Access Hero Toggle */}
+            <div className="mt-5 flex items-center justify-center animate-fade-up" style={{ animationDelay: '0.42s' }}>
+              <button
+                id="hero-accessibility-toggle-btn"
+                onClick={toggleAccessibilityMode}
+                className={`group inline-flex items-center gap-2.5 px-4 sm:px-5 py-2.5 rounded-full border text-xs sm:text-sm font-manrope font-semibold transition-all cursor-pointer shadow-md ${
+                  isAccessibilityMode
+                    ? 'bg-[#ef233c] text-white border-[#ef233c] shadow-[0_0_22px_rgba(239,35,60,0.5)] ring-2 ring-red-400/50'
+                    : isLight
+                      ? 'bg-red-50/90 border-red-200 hover:border-red-400 text-red-900 hover:bg-red-100 shadow-xs'
+                      : 'bg-red-950/30 border-red-500/40 hover:border-red-400 text-red-200 hover:bg-red-900/50 hover:text-white shadow-[0_0_14px_rgba(239,35,60,0.2)]'
+                }`}
+                title="Toggle Web Speech Narration & High Contrast Mode (Keyboard: A)"
+                aria-pressed={isAccessibilityMode}
+              >
+                <div className={`p-1 rounded-full ${isAccessibilityMode ? 'bg-white/20' : 'bg-red-500/15'}`}>
+                  <Eye className={`w-4 h-4 transition-transform group-hover:scale-110 ${isAccessibilityMode ? 'text-white' : 'text-[#ef233c]'}`} />
+                </div>
+                <span>
+                  Blind &amp; Low-Vision Audio Narration: <strong className={isAccessibilityMode ? 'text-white underline' : 'text-[#ef233c]'}>{isAccessibilityMode ? 'ACTIVE (Speech On)' : 'Enable Speech (Key A)'}</strong>
+                </span>
+                <span className={`text-[10px] px-2 py-0.5 rounded font-mono font-bold uppercase ${
+                  isAccessibilityMode ? 'bg-white/25 text-white' : (isLight ? 'bg-red-200/80 text-red-900' : 'bg-red-500/25 text-red-300')
+                }`}>
+                  {isAccessibilityMode ? 'ON' : 'OFF'}
+                </span>
               </button>
             </div>
 
@@ -1668,6 +1716,16 @@ export default function App() {
               >
                 <span>OK</span>
               </button>
+            </div>
+
+            {/* Blind & Low-Vision Access Shortcut in Modal */}
+            <div className={`relative z-10 mt-5 pt-3.5 border-t flex items-center justify-center gap-2 text-xs font-manrope ${
+              isLight ? 'border-slate-200 text-slate-600' : 'border-white/10 text-zinc-400'
+            }`}>
+              <Eye className="w-3.5 h-3.5 text-[#ef233c] shrink-0" />
+              <span>
+                Blind &amp; Low-Vision users: Press <kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${isLight ? 'bg-slate-200 text-slate-800' : 'bg-white/10 text-white'}`}>A</kbd> or click <strong>Blind Access</strong> in header for speech narration.
+              </span>
             </div>
           </div>
         </div>

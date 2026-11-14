@@ -319,6 +319,10 @@ export default function SoundGuideModal({
             <span className="text-[#ef233c] font-bold select-none">&bull;</span>
             <span>Drag the 1980&ndash;2026 timeline slider to hear four decades of Earth&apos;s baseline drone shifting upward.</span>
           </div>
+          <div className="flex items-start gap-2">
+            <span className="text-[#ef233c] font-bold select-none">&bull;</span>
+            <span><strong>Blind &amp; Low-Vision Users:</strong> Press <kbd className="px-1 py-0.5 rounded bg-black/20 dark:bg-white/10 font-mono font-bold">A</kbd> or click <strong>Blind Access</strong> in the header to activate real-time speech narration and high-contrast visuals.</span>
+          </div>
         </div>
 
         {/* Footer Actions */}
