@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ChevronRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ChevronRight, Volume2, VolumeX } from 'lucide-react';
 
 /**
  * SoundLegendBar Component
@@ -16,6 +16,31 @@ export default function SoundLegendBar({
 }) {
   const [testingVoice, setTestingVoice] = useState(null);
   const isLight = theme === 'light';
+
+  const [masterVolume, setMasterVolume] = useState(() => {
+    try {
+      const saved = localStorage.getItem('terrasonus_volume');
+      if (saved !== null && !isNaN(Number(saved))) return Number(saved);
+    } catch {}
+    return 100;
+  });
+
+  useEffect(() => {
+    if (harmonicEngine && typeof harmonicEngine.setVolume === 'function') {
+      harmonicEngine.setVolume(masterVolume / 100);
+    }
+  }, [harmonicEngine, masterVolume]);
+
+  const handleVolumeChange = (newVal) => {
+    const val = Math.max(0, Math.min(150, Number(newVal) || 0));
+    setMasterVolume(val);
+    try {
+      localStorage.setItem('terrasonus_volume', String(val));
+    } catch {}
+    if (harmonicEngine && typeof harmonicEngine.setVolume === 'function') {
+      harmonicEngine.setVolume(val / 100);
+    }
+  };
 
   const handleQuickTest = async (e, voice) => {
     e.stopPropagation();
@@ -69,17 +94,58 @@ export default function SoundLegendBar({
           </div>
         </div>
 
-        <button
-          onClick={onOpenGuide}
-          className={`self-start sm:self-auto px-3.5 py-1.5 rounded-full border text-xs font-mono transition-all flex items-center gap-1.5 cursor-pointer font-medium ${
-            isLight
-              ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700 hover:text-slate-950'
-              : 'bg-white/5 hover:bg-white/10 border-white/10 text-zinc-300 hover:text-white'
-          }`}
-        >
-          <span>Full Sound Guide & Tutorial</span>
-          <ChevronRight className="w-3.5 h-3.5 text-zinc-500" />
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-auto">
+          {/* Master Volume & Boost Slider */}
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all ${
+            isLight ? 'bg-slate-100/90 border-slate-200' : 'bg-white/5 border-white/10'
+          }`}>
+            <button
+              onClick={() => handleVolumeChange(masterVolume === 0 ? 100 : 0)}
+              className="text-zinc-400 hover:text-white transition-colors cursor-pointer"
+              title={masterVolume === 0 ? "Unmute Audio" : "Mute Audio"}
+              aria-label="Toggle Mute"
+            >
+              {masterVolume === 0 ? (
+                <VolumeX className="w-3.5 h-3.5 text-red-500" />
+              ) : (
+                <Volume2 className={`w-3.5 h-3.5 ${masterVolume > 100 ? 'text-[#ef233c] animate-pulse' : 'text-emerald-500'}`} />
+              )}
+            </button>
+            <span className={`text-[11px] font-mono font-medium ${isLight ? 'text-slate-600' : 'text-zinc-300'}`}>
+              Volume
+            </span>
+            <input
+              type="range"
+              min="0"
+              max="150"
+              step="5"
+              value={masterVolume}
+              onChange={(e) => handleVolumeChange(e.target.value)}
+              className="w-16 sm:w-24 h-1.5 bg-zinc-700/80 rounded-lg appearance-none cursor-pointer accent-[#ef233c]"
+              title={`Master Volume: ${masterVolume}%`}
+              aria-label="Master Volume Slider"
+            />
+            <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded font-bold ${
+              masterVolume > 100
+                ? (isLight ? 'bg-red-100 text-red-700 border border-red-300' : 'bg-[#ef233c]/20 text-[#ef233c] border border-[#ef233c]/30')
+                : (isLight ? 'bg-slate-200 text-slate-700' : 'bg-zinc-800 text-zinc-300')
+            }`}>
+              {masterVolume}%{masterVolume > 100 ? ' Boost' : ''}
+            </span>
+          </div>
+
+          <button
+            onClick={onOpenGuide}
+            className={`px-3.5 py-1.5 rounded-full border text-xs font-mono transition-all flex items-center gap-1.5 cursor-pointer font-medium ${
+              isLight
+                ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700 hover:text-slate-950'
+                : 'bg-white/5 hover:bg-white/10 border-white/10 text-zinc-300 hover:text-white'
+            }`}
+          >
+            <span>Full Sound Guide & Tutorial</span>
+            <ChevronRight className="w-3.5 h-3.5 text-zinc-500" />
+          </button>
+        </div>
       </div>
 
       {/* 4 Interactive Indicator Badges */}

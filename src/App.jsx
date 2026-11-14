@@ -217,6 +217,12 @@ export default function App() {
       scrollToVisualStage();
       try {
         await harmonicEngine.init();
+        try {
+          const savedVol = localStorage.getItem('terrasonus_volume');
+          if (savedVol !== null && !isNaN(Number(savedVol))) {
+            harmonicEngine.setVolume(Number(savedVol) / 100);
+          }
+        } catch {}
         harmonicEngine.setTelemetry(currentTelemetry);
         harmonicEngine.start();
         setIsPlaying(true);

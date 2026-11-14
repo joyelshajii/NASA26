@@ -49,10 +49,13 @@ export class HarmonicEngine {
 
     // Master bus & analysis nodes
     this.masterGain = null;
+    this.userGain = null;
+    this.compressor = null;
     this.limiter = null;
     this.reverb = null;
     this.fftAnalyser = null;
     this.waveformAnalyser = null;
+    this._userVolume = 1.0;
 
     // Voice 1: Sub-Bass Ambient Drone
     this.droneGain = null;
@@ -95,11 +98,24 @@ export class HarmonicEngine {
     }
 
     // 1. Master Bus Routing
-    this.masterGain = new Tone.Gain(0.8);
-    this.limiter = new Tone.Limiter(-1);
+    // Master stage configured for maximum high-fidelity presence and loudness across all playback devices
+    this.masterGain = new Tone.Gain(1.25);
+    this.userGain = new Tone.Gain(this._userVolume);
+
+    // Dynamic processing: gently compresses to glue voices and raise average perceived loudness (LUFS)
+    this.compressor = new Tone.Compressor({
+      threshold: -12,
+      ratio: 3.0,
+      attack: 0.02,
+      release: 0.25
+    });
+
+    // Precision brickwall limiter to catch peaks at -0.1 dB and prevent digital clipping
+    this.limiter = new Tone.Limiter(-0.1);
+
     this.reverb = new Tone.Reverb({
-      decay: 3.5,
-      wet: 0.35
+      decay: 2.8,
+      wet: 0.20
     });
 
     // Real-time visualization analysers
@@ -107,10 +123,12 @@ export class HarmonicEngine {
     this.waveformAnalyser = new Tone.Analyser('waveform', 128);
 
     // Audio routing chain:
-    // masterGain -> reverb -> limiter -> destination
+    // masterGain -> userGain -> reverb -> compressor -> limiter -> destination
     // limiter -> fftAnalyser & waveformAnalyser
-    this.masterGain.connect(this.reverb);
-    this.reverb.connect(this.limiter);
+    this.masterGain.connect(this.userGain);
+    this.userGain.connect(this.reverb);
+    this.reverb.connect(this.compressor);
+    this.compressor.connect(this.limiter);
     this.limiter.toDestination();
     this.limiter.connect(this.fftAnalyser);
     this.limiter.connect(this.waveformAnalyser);
@@ -124,41 +142,44 @@ export class HarmonicEngine {
       }
     }
 
-    // 2. Voice 1: Sub-Bass Ambient Drone (Temperature Anomaly)
+    // 2. Voice 1: Sub-Bass & Warm Resonant Drone (Temperature Anomaly)
     // Formula: f = 55 * Math.pow(2, deltaTemp / 12)
-    this.droneGain = new Tone.Gain(0.65).connect(this.masterGain);
+    // Triangle carrier with FM modulation produces strong 2nd & 3rd harmonics (110 Hz - 220 Hz)
+    // so the bass is clearly audible on laptop and phone speakers (psychoacoustic missing fundamental)
+    this.droneGain = new Tone.Gain(1.0).connect(this.masterGain);
     this.droneSynth = new Tone.FMSynth({
-      harmonicity: 1.0,
-      modulationIndex: 1.0,
+      harmonicity: 2.0,
+      modulationIndex: 1.8,
       oscillator: {
-        type: 'sine'
-      },
-      envelope: {
-        attack: 2.5,
-        decay: 1.0,
-        sustain: 1.0,
-        release: 3.0
-      },
-      modulation: {
         type: 'triangle'
       },
-      modulationEnvelope: {
-        attack: 2.0,
+      envelope: {
+        attack: 1.8,
         decay: 1.0,
         sustain: 1.0,
-        release: 3.0
+        release: 2.5
       },
-      volume: -6
+      modulation: {
+        type: 'sine'
+      },
+      modulationEnvelope: {
+        attack: 1.5,
+        decay: 1.0,
+        sustain: 1.0,
+        release: 2.5
+      },
+      volume: 0
     }).connect(this.droneGain);
 
     // 3. Voice 2: Atmospheric Wind Sweeper (Wind Speed W)
-    // NoiseSynth fed into Filter with resonance Q: 2.5, cutoff 250 Hz - 3800 Hz
-    this.windGain = new Tone.Gain(0.25).connect(this.masterGain);
+    // Wide-aperture resonant filter sweeping 350 Hz - 3900 Hz with rich pink noise presence
+    // Loud and distinct on laptop & mobile speakers
+    this.windGain = new Tone.Gain(0.75).connect(this.masterGain);
     this.windFilter = new Tone.Filter({
-      frequency: 600,
+      frequency: 650,
       type: 'bandpass',
       rolloff: -12,
-      Q: 2.5
+      Q: 0.85
     }).connect(this.windGain);
 
     this.windSynth = new Tone.NoiseSynth({
@@ -166,46 +187,46 @@ export class HarmonicEngine {
         type: 'pink'
       },
       envelope: {
-        attack: 2.0,
-        decay: 0.5,
+        attack: 1.2,
+        decay: 0.4,
         sustain: 1.0,
-        release: 2.5
+        release: 1.8
       },
-      volume: -10
+      volume: 0
     }).connect(this.windFilter);
 
     // 4. Voice 3: Biosphere Chimes (Vegetation Index - NDVI)
-    // Tone.PolySynth with Tone.Synth, attack: 0.05s, decay: 1.2s, sustain: 0.1, release: 1.5s
-    this.chimeGain = new Tone.Gain(0.5).connect(this.masterGain);
+    // Tone.PolySynth with Tone.Synth, attack: 0.04s, decay: 1.4s, sustain: 0.12, release: 1.6s
+    this.chimeGain = new Tone.Gain(0.85).connect(this.masterGain);
     this.chimeSynth = new Tone.PolySynth(Tone.Synth, {
       oscillator: {
         type: 'sine'
       },
       envelope: {
-        attack: 0.05,
-        decay: 1.2,
-        sustain: 0.1,
-        release: 1.5
+        attack: 0.04,
+        decay: 1.4,
+        sustain: 0.12,
+        release: 1.6
       },
-      volume: -6
+      volume: 0
     }).connect(this.chimeGain);
 
     // 5. Voice 4: Thermal Pulse Bass (Active Fire / Thermal Anomalies)
-    // MembraneSynth pulsing with variable interval/tempo based on fireIndex
-    this.pulseGain = new Tone.Gain(0.6).connect(this.masterGain);
+    // MembraneSynth pulsing with punchy transient thump and resonant body
+    this.pulseGain = new Tone.Gain(0.85).connect(this.masterGain);
     this.pulseSynth = new Tone.MembraneSynth({
-      pitchDecay: 0.05,
-      octaves: 4,
+      pitchDecay: 0.06,
+      octaves: 3.5,
       oscillator: {
-        type: 'sine'
+        type: 'triangle'
       },
       envelope: {
-        attack: 0.005,
-        decay: 0.45,
+        attack: 0.003,
+        decay: 0.4,
         sustain: 0.01,
-        release: 0.5
+        release: 0.35
       },
-      volume: -6
+      volume: 0
     }).connect(this.pulseGain);
 
     this._isInitialized = true;
@@ -366,6 +387,30 @@ export class HarmonicEngine {
   }
 
   /**
+   * Sets master user volume scaling (0.0 to 1.5, default 1.0 = 100%)
+   * @param {number} level
+   */
+  setVolume(level) {
+    const safeLevel = Math.max(0, Math.min(1.5, typeof level === 'number' && !isNaN(level) ? level : 1.0));
+    this._userVolume = safeLevel;
+    if (this.userGain && this.userGain.gain) {
+      try {
+        this.userGain.gain.rampTo(safeLevel, 0.08);
+      } catch {
+        this.userGain.gain.value = safeLevel;
+      }
+    }
+  }
+
+  /**
+   * Retrieves current master user volume setting
+   * @returns {number}
+   */
+  getVolume() {
+    return this._userVolume ?? 1.0;
+  }
+
+  /**
    * Plays a short isolated preview sample of an individual acoustic voice.
    * Enables users to immediately connect their ears to what each instrument represents.
    * @param {'drone'|'wind'|'chime'|'pulse'} voice
@@ -385,22 +430,23 @@ export class HarmonicEngine {
     try {
       if (voice === 'drone' && this.droneSynth) {
         const freq = this._droneFreq || 55;
-        this.droneSynth.triggerAttackRelease(freq, '1.2');
+        this.droneSynth.triggerAttackRelease(freq, '1.4', undefined, 1.0);
       } else if (voice === 'wind' && this.windSynth) {
-        this.windSynth.triggerAttackRelease('1.0');
+        this.windSynth.triggerAttackRelease('1.4', undefined, 1.0);
       } else if (voice === 'chime' && this.chimeSynth) {
-        this.chimeSynth.triggerAttackRelease('C5', '8n');
+        this.chimeSynth.triggerAttackRelease('C5', '8n', undefined, 0.9);
         setTimeout(() => {
-          try { this.chimeSynth.triggerAttackRelease('E5', '8n'); } catch {}
+          try { this.chimeSynth.triggerAttackRelease('E5', '8n', undefined, 0.95); } catch {}
         }, 180);
         setTimeout(() => {
-          try { this.chimeSynth.triggerAttackRelease('G5', '8n'); } catch {}
+          try { this.chimeSynth.triggerAttackRelease('G5', '8n', undefined, 1.0); } catch {}
         }, 360);
       } else if (voice === 'pulse' && this.pulseSynth) {
-        this.pulseSynth.triggerAttackRelease('A0', '8n', undefined, 0.85);
+        // A1 (55 Hz) and D2 (73.4 Hz) with punchy transient drop audible on laptop/phone speakers
+        this.pulseSynth.triggerAttackRelease('A1', '8n', undefined, 0.95);
         setTimeout(() => {
-          try { this.pulseSynth.triggerAttackRelease('A0', '8n', undefined, 0.9); } catch {}
-        }, 420);
+          try { this.pulseSynth.triggerAttackRelease('D2', '8n', undefined, 1.0); } catch {}
+        }, 380);
       }
     } catch (err) {
       console.warn(`HarmonicEngine: Failed to preview voice ${voice}:`, err);
@@ -461,8 +507,8 @@ export class HarmonicEngine {
         ? this.telemetry.tempAnomaly
         : 0.0;
       const targetFreq = 55 * Math.pow(2, deltaTemp / 12);
-      // Defensive musical clamp: 25 Hz (A0) to 220 Hz (A3)
-      const clampedFreq = Math.max(25, Math.min(220, targetFreq));
+      // Musical clamp: 48 Hz (G1) to 220 Hz (A3) ensures full presence across micro-speakers
+      const clampedFreq = Math.max(48, Math.min(220, targetFreq));
       this._droneFreq = clampedFreq;
 
       if (this.droneSynth && this._droneActive) {
@@ -472,25 +518,25 @@ export class HarmonicEngine {
       // CO2 subtle harmonicity modulation
       if (this.droneSynth && typeof this.telemetry.co2Ppm === 'number') {
         const co2Normalized = Math.max(0, Math.min(2.0, (this.telemetry.co2Ppm - 280) / 200));
-        const modIndex = 0.8 + co2Normalized * 1.2;
+        const modIndex = 1.4 + co2Normalized * 1.8;
         this.droneSynth.modulationIndex.rampTo(modIndex, 1.0);
       }
 
       // 2. Voice 2: Wind Speed mapping
-      // Cutoff sweeps between 250 Hz and 3800 Hz
+      // Cutoff sweeps between 350 Hz and 3900 Hz for full atmospheric presence
       const speed = (typeof this.telemetry.windSpeed === 'number' && !isNaN(this.telemetry.windSpeed))
         ? Math.max(0, this.telemetry.windSpeed)
         : 8.0;
       // Normalization: nominal calm (0 m/s) to gale (35 m/s)
       const normSpeed = Math.min(1, Math.max(0, speed / 35));
-      const targetCutoff = 250 + (3800 - 250) * normSpeed;
+      const targetCutoff = 350 + (3900 - 350) * normSpeed;
 
       if (this.windFilter) {
         this.windFilter.frequency.rampTo(targetCutoff, 0.8);
       }
 
       if (this.windGain) {
-        const windVolume = 0.08 + normSpeed * 0.45;
+        const windVolume = 0.40 + normSpeed * 0.55;
         this.windGain.gain.rampTo(windVolume, 0.8);
       }
 
@@ -498,7 +544,7 @@ export class HarmonicEngine {
       const ndvi = typeof this.telemetry.ndvi === 'number' ? this.telemetry.ndvi : 0.45;
       const normNdvi = Math.max(0, Math.min(1, (ndvi + 0.1) / 0.9));
       if (this.chimeGain) {
-        const chimeVol = 0.2 + normNdvi * 0.5;
+        const chimeVol = 0.40 + normNdvi * 0.55;
         this.chimeGain.gain.rampTo(chimeVol, 0.6);
       }
 
@@ -506,7 +552,7 @@ export class HarmonicEngine {
       const fire = typeof this.telemetry.fireIndex === 'number' ? this.telemetry.fireIndex : 0.0;
       const normFire = Math.max(0, Math.min(1, fire));
       if (this.pulseGain) {
-        const pulseVol = 0.15 + normFire * 0.75;
+        const pulseVol = 0.50 + normFire * 0.50;
         this.pulseGain.gain.rampTo(pulseVol, 0.5);
       }
     } catch (err) {
@@ -526,10 +572,10 @@ export class HarmonicEngine {
     const fireVal = typeof this.telemetry.fireIndex === 'number' ? this.telemetry.fireIndex : 0.0;
     const normFire = Math.max(0, Math.min(1, fireVal));
 
-    if (normFire > 0.02 && this.pulseSynth) {
+    if (normFire > 0.01 && this.pulseSynth) {
       try {
-        const velocity = 0.35 + normFire * 0.65;
-        const note = normFire > 0.6 ? 'D1' : 'A0';
+        const velocity = 0.65 + normFire * 0.35;
+        const note = normFire > 0.6 ? 'D2' : 'A1';
         this.pulseSynth.triggerAttackRelease(note, '8n', undefined, velocity);
       } catch {
         // Defensive handle
@@ -561,7 +607,7 @@ export class HarmonicEngine {
         const maxIdx = Math.max(3, Math.min(PENTATONIC_SCALE.length, Math.floor(normNdvi * PENTATONIC_SCALE.length) + 3));
         const noteIdx = Math.floor(Math.random() * maxIdx);
         const note = PENTATONIC_SCALE[noteIdx];
-        const velocity = 0.2 + normNdvi * 0.6;
+        const velocity = 0.45 + normNdvi * 0.55;
         this.chimeSynth.triggerAttackRelease(note, '8n', undefined, velocity);
       } catch {
         // Defensive handle
@@ -586,9 +632,9 @@ export class HarmonicEngine {
       this.windSynth, this.windFilter, this.windGain,
       this.chimeSynth, this.chimeGain,
       this.pulseSynth, this.pulseGain,
-      this.reverb, this.limiter,
+      this.reverb, this.compressor, this.limiter,
       this.fftAnalyser, this.waveformAnalyser,
-      this.masterGain
+      this.masterGain, this.userGain
     ];
 
     for (const node of nodes) {
