@@ -302,11 +302,173 @@ export function interpolateYearData(fractionalYear) {
   };
 }
 
+/**
+ * Curated Historical Climate Inflection Points & Milestones (1980-2026)
+ */
+export const climateMilestones = [
+  {
+    year: 1980,
+    title: 'NASA Baseline Epoch',
+    category: 'Baseline',
+    tag: '1980 Baseline',
+    headline: 'GISTEMP surface observation network baseline',
+    description: 'Systematic global climate observation baseline established by NASA Goddard Institute for Space Studies. Atmospheric carbon stood at 338.7 ppm.',
+    color: '#38bdf8',
+    temp: 0.26,
+    co2: 338.7,
+    arctic: 7.85
+  },
+  {
+    year: 1988,
+    title: 'Hansen Senate Testimony',
+    category: 'Alert',
+    tag: '1988 Alert',
+    headline: 'NASA alerts US Congress; IPCC founded',
+    description: 'Dr. James Hansen testifies to US Senate with 99% confidence that global warming is human-driven. IPCC is formally established.',
+    color: '#60a5fa',
+    temp: 0.39,
+    co2: 351.6,
+    arctic: 7.50
+  },
+  {
+    year: 1997,
+    title: 'Kyoto Protocol Signed',
+    category: 'Treaty',
+    tag: '1997 Kyoto',
+    headline: 'First binding international treaty on emissions',
+    description: 'First international treaty adopted in Kyoto to commit industrialized economies to legally binding greenhouse gas reduction targets.',
+    color: '#818cf8',
+    temp: 0.47,
+    co2: 363.7,
+    arctic: 6.74
+  },
+  {
+    year: 2007,
+    title: 'Arctic Sea Ice Shock',
+    category: 'Cryosphere',
+    tag: '2007 Sea Ice',
+    headline: 'Unprecedented summer polar ice retreat',
+    description: 'September Arctic sea ice collapsed to 4.30 M km², breaking previous satellite records by over 1 million km² in a single melt season.',
+    color: '#f59e0b',
+    temp: 0.66,
+    co2: 383.8,
+    arctic: 4.30
+  },
+  {
+    year: 2012,
+    title: 'All-Time Record Arctic Low',
+    category: 'Record Low',
+    tag: '2012 Low',
+    headline: 'Arctic sea ice plunges to historic minimum of 3.57 M km²',
+    description: 'Lowest minimum sea ice extent in 45+ years of continuous satellite observation, down nearly 55% from the 1980 baseline.',
+    color: '#f97316',
+    temp: 0.65,
+    co2: 393.9,
+    arctic: 3.57
+  },
+  {
+    year: 2015,
+    title: 'Paris Climate Accord',
+    category: 'Accord',
+    tag: '2015 Paris',
+    headline: '196 nations pledge to limit warming to 1.5°C',
+    description: 'Global agreement adopted to hold average warming well below 2.0°C and pursue efforts toward 1.5°C. Atmospheric CO2 crosses 400 ppm.',
+    color: '#ef4444',
+    temp: 0.90,
+    co2: 401.0,
+    arctic: 4.68
+  },
+  {
+    year: 2020,
+    title: 'Global Megafire Crisis',
+    category: 'Wildfire',
+    tag: '2020 Megafire',
+    headline: 'Australian Black Summer and Siberian peat fires',
+    description: 'Unprecedented biomass burning releases 1.75 gigatons of CO2; Siberian peatlands ignite above the Arctic circle during intense heatwaves.',
+    color: '#dc2626',
+    temp: 1.02,
+    co2: 414.2,
+    arctic: 3.92
+  },
+  {
+    year: 2023,
+    title: 'Hottest Year in Human History',
+    category: 'Record Peak',
+    tag: '2023 Record',
+    headline: 'Super El Niño & ocean thermal heat spike (+1.17°C)',
+    description: 'Global mean surface temperature shatter modern records across every continent; North Atlantic ocean temperatures reach unprecedented highs.',
+    color: '#e11d48',
+    temp: 1.17,
+    co2: 421.1,
+    arctic: 4.37
+  },
+  {
+    year: 2026,
+    title: 'Present Day Observation',
+    category: 'Live Telemetry',
+    tag: '2026 Present',
+    headline: 'Active observation epoch: +1.35°C anomaly, 426.4 ppm',
+    description: 'Current real-time telemetry baseline. Arctic sea ice minimum stabilized at 4.10 M km²; ocean heat uptake exceeds 362 Zettajoules.',
+    color: '#ef233c',
+    temp: 1.35,
+    co2: 426.4,
+    arctic: 4.10
+  }
+];
+
+/**
+ * Historical Climate Epochs (Decadal narratives)
+ */
+export const climateEpochs = [
+  {
+    range: [1980, 1989],
+    epochName: 'Epoch I: Pre-Acceleration Baseline (1980–1989)',
+    color: '#38bdf8',
+    status: 'Stable Cryosphere',
+    narrative: 'High Arctic multi-year ice pack (>7.5 M km²) with stable circumpolar jet stream dynamics. Atmospheric CO2 hovered between 338 and 353 ppm.',
+    acousticNote: 'Sub-bass drone fundamental resides near 55 Hz (A1), reflecting an undisturbed, stable planetary baseline.'
+  },
+  {
+    range: [1990, 1999],
+    epochName: 'Epoch II: Early Industrial Ascent & Kyoto (1990–1999)',
+    color: '#60a5fa',
+    status: 'Emerging Thermal Anomaly',
+    narrative: 'NASA GISTEMP registers persistent positive temperature deviations. The Kyoto Protocol establishes first binding international reduction treaties.',
+    acousticNote: 'Fundamental drone experiences initial micro-tonal elevation (~56.5 Hz). Wind resonance filter begins subtle upward expansion.'
+  },
+  {
+    range: [2000, 2011],
+    epochName: 'Epoch III: Polar Destabilization & Albedo Loss (2000–2011)',
+    color: '#f59e0b',
+    status: 'Cryosphere Albedo Feedback',
+    narrative: 'Accelerating loss of polar sea ice triggers albedo feedback loop: exposed darker ocean water absorbs more solar radiation, accelerating polar warming.',
+    acousticNote: 'Drone climbs to 57.5 Hz. Active fire membrane pulses accelerate as regional drought cycles expand across the Amazon and Mediterranean.'
+  },
+  {
+    range: [2012, 2019],
+    epochName: 'Epoch IV: Threshold Breaches & Paris Accord (2012–2019)',
+    color: '#f97316',
+    status: '400 ppm Milestone Breached',
+    narrative: 'Atmospheric carbon permanently crosses the historic 400 ppm threshold. Sequential marine heatwaves trigger widespread coral bleaching.',
+    acousticNote: 'Drone tension ascends to 58.5 Hz. Canopy pentatonic harmonies show noticeable gaps in high-deforestation zones.'
+  },
+  {
+    range: [2020, 2026],
+    epochName: 'Epoch V: Anthropocene Acceleration (2020–2026)',
+    color: '#ef233c',
+    status: 'Extreme Oceanic Thermal Storage',
+    narrative: 'Consecutive record-breaking global temperatures (+1.35°C anomaly). Upper ocean heat content exceeds 362 Zettajoules, driving extreme weather severity.',
+    acousticNote: 'Drone fundamental reaches strained 59.4 Hz (A1#). Rapid fire pulses create persistent acoustic tension mirroring planetary urgency.'
+  }
+];
+
 export default {
   historicalTimeSeries,
   regionalHotspots,
   planetaryStories,
   nasaCredits,
+  climateMilestones,
+  climateEpochs,
   getDataByYear,
   interpolateYearData
 };

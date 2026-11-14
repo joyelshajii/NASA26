@@ -366,6 +366,48 @@ export class HarmonicEngine {
   }
 
   /**
+   * Plays a short isolated preview sample of an individual acoustic voice.
+   * Enables users to immediately connect their ears to what each instrument represents.
+   * @param {'drone'|'wind'|'chime'|'pulse'} voice
+   */
+  async previewVoice(voice) {
+    if (!this._isInitialized) {
+      await this.init();
+    }
+    try {
+      if (Tone.getContext().state !== 'running') {
+        await Tone.start();
+      }
+    } catch (err) {
+      console.warn('HarmonicEngine: Context resume on preview failed:', err);
+    }
+
+    try {
+      if (voice === 'drone' && this.droneSynth) {
+        const freq = this._droneFreq || 55;
+        this.droneSynth.triggerAttackRelease(freq, '1.2');
+      } else if (voice === 'wind' && this.windSynth) {
+        this.windSynth.triggerAttackRelease('1.0');
+      } else if (voice === 'chime' && this.chimeSynth) {
+        this.chimeSynth.triggerAttackRelease('C5', '8n');
+        setTimeout(() => {
+          try { this.chimeSynth.triggerAttackRelease('E5', '8n'); } catch {}
+        }, 180);
+        setTimeout(() => {
+          try { this.chimeSynth.triggerAttackRelease('G5', '8n'); } catch {}
+        }, 360);
+      } else if (voice === 'pulse' && this.pulseSynth) {
+        this.pulseSynth.triggerAttackRelease('A0', '8n', undefined, 0.85);
+        setTimeout(() => {
+          try { this.pulseSynth.triggerAttackRelease('A0', '8n', undefined, 0.9); } catch {}
+        }, 420);
+      }
+    } catch (err) {
+      console.warn(`HarmonicEngine: Failed to preview voice ${voice}:`, err);
+    }
+  }
+
+  /**
    * Retrieves real-time FFT frequency data from the master bus analyser.
    * @returns {Float32Array}
    */
