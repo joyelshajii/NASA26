@@ -7,7 +7,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Activity,
-  Sparkles,
   Thermometer,
   Droplets,
   Flame,
@@ -286,7 +285,7 @@ export default function ClimateTimeline({
                 NASA Observation Epoch (1980&ndash;2026)
               </span>
               {activeRegion && (
-                <span className={`inline-flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-md border ${
+                <span className={`inline-flex items-center gap-1 text-[11px] font-manrope px-2 py-0.5 rounded-md border ${
                   isLight ? 'bg-slate-100 text-slate-600 border-slate-200' : 'bg-white/5 text-zinc-400 border-white/10'
                 }`}>
                   <Compass className="w-3 h-3 text-[#ef233c]" />
@@ -301,10 +300,10 @@ export default function ClimateTimeline({
               }`}>
                 {Math.round(currentYear)}
               </span>
-              <span className={`text-sm font-mono ${isLight ? 'text-slate-500' : 'text-zinc-400'}`}>
+              <span className={`text-sm font-manrope ${isLight ? 'text-slate-500' : 'text-zinc-400'}`}>
                 ({currentYear.toFixed(1)} Continuous Telemetry)
               </span>
-              <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-mono ${
+              <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-manrope ${
                 isLight ? 'bg-slate-100 border-slate-200' : 'bg-white/5 border-white/10'
               }`}>
                 <span className={isLight ? 'text-slate-500' : 'text-zinc-400'}>Era Status:</span>
@@ -369,7 +368,7 @@ export default function ClimateTimeline({
             </div>
 
             {/* Speed Presets */}
-            <div className={`hidden sm:flex items-center gap-1 p-1 rounded-xl border text-[11px] font-mono ${
+            <div className={`hidden sm:flex items-center gap-1 p-1 rounded-xl border text-[11px] font-manrope ${
               isLight ? 'bg-white border-slate-200 shadow-xs' : 'bg-white/5 border-white/5'
             }`}>
               {[0.5, 1, 2, 4].map((spd) => (
@@ -391,7 +390,7 @@ export default function ClimateTimeline({
             {/* Loop Toggle */}
             <button
               onClick={() => setIsLooping(!isLooping)}
-              className={`p-2 rounded-xl transition-all cursor-pointer text-xs font-mono flex items-center gap-1 border ${
+              className={`p-2 rounded-xl transition-all cursor-pointer text-xs font-manrope flex items-center gap-1 border ${
                 isLooping
                   ? (isLight ? 'bg-white text-slate-900 border-slate-300 shadow-xs' : 'bg-white/10 text-white border-white/20')
                   : (isLight ? 'text-slate-400 border-transparent hover:text-slate-700' : 'text-zinc-500 border-transparent hover:text-zinc-300')
@@ -405,7 +404,7 @@ export default function ClimateTimeline({
             <div className="flex items-center gap-1">
               <button
                 onClick={handleResetTo1980}
-                className={`p-2 rounded-xl transition-colors cursor-pointer text-xs font-mono ${
+                className={`p-2 rounded-xl transition-colors cursor-pointer text-xs font-manrope ${
                   isLight ? 'hover:bg-slate-200 text-slate-600 hover:text-slate-950' : 'hover:bg-white/10 text-zinc-400 hover:text-white'
                 }`}
                 title="Jump to 1980 Baseline"
@@ -414,7 +413,7 @@ export default function ClimateTimeline({
               </button>
               <button
                 onClick={handleJumpTo2026}
-                className={`p-2 rounded-xl transition-colors cursor-pointer text-xs font-mono font-semibold ${
+                className={`p-2 rounded-xl transition-colors cursor-pointer text-xs font-manrope font-semibold ${
                   isLight ? 'text-[#ef233c] hover:bg-red-50' : 'text-[#ef233c] hover:bg-[#ef233c]/10'
                 }`}
                 title="Jump to 2026 Present Day"
@@ -468,19 +467,19 @@ export default function ClimateTimeline({
                 : (isLight ? 'bg-white border-slate-200/80 hover:border-slate-300 shadow-xs' : 'bg-black/40 border-white/5 hover:border-white/20')
             }`}
           >
-            <div className={`flex items-center justify-between text-xs font-mono mb-1 ${isLight ? 'text-slate-500' : 'text-zinc-400'}`}>
+            <div className={`flex items-center justify-between text-xs font-manrope mb-1 ${isLight ? 'text-slate-500' : 'text-zinc-400'}`}>
               <span className="flex items-center gap-1.5 font-medium">
                 <Thermometer className="w-3.5 h-3.5 text-[#ef233c]" />
                 TEMP ANOMALY
               </span>
-              <span className={`text-[10px] uppercase ${isLight ? 'text-slate-400' : 'text-zinc-500'}`}>GISTEMP v4</span>
+              <span className={`text-[10px] uppercase font-semibold ${isLight ? 'text-slate-400' : 'text-zinc-500'}`}>GISTEMP v4</span>
             </div>
             <div className="flex items-baseline gap-2 mb-1.5">
-              <span className={`text-2xl sm:text-3xl font-extrabold font-mono tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+              <span className={`text-2xl sm:text-3xl font-extrabold font-manrope tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
                 +{currentData.tempAnomaly.toFixed(2)}&deg;C
               </span>
             </div>
-            <div className={`flex items-center gap-1.5 text-[11px] font-mono ${isLight ? 'text-slate-500' : 'text-zinc-400'}`}>
+            <div className={`flex items-center gap-1.5 text-[11px] font-manrope ${isLight ? 'text-slate-500' : 'text-zinc-400'}`}>
               <span className="text-[#ef233c] font-semibold">
                 ▲ +{baselineDeltas.tempDelta > 0 ? baselineDeltas.tempDelta : 0}&deg;C
               </span>
@@ -497,20 +496,20 @@ export default function ClimateTimeline({
                 : (isLight ? 'bg-white border-slate-200/80 hover:border-slate-300 shadow-xs' : 'bg-black/40 border-white/5 hover:border-white/20')
             }`}
           >
-            <div className={`flex items-center justify-between text-xs font-mono mb-1 ${isLight ? 'text-slate-500' : 'text-zinc-400'}`}>
+            <div className={`flex items-center justify-between text-xs font-manrope mb-1 ${isLight ? 'text-slate-500' : 'text-zinc-400'}`}>
               <span className="flex items-center gap-1.5 font-medium">
                 <Flame className="w-3.5 h-3.5 text-[#f59e0b]" />
                 ATMOSPHERIC CO2
               </span>
-              <span className={`text-[10px] uppercase ${isLight ? 'text-slate-400' : 'text-zinc-500'}`}>Mauna Loa</span>
+              <span className={`text-[10px] uppercase font-semibold ${isLight ? 'text-slate-400' : 'text-zinc-500'}`}>Mauna Loa</span>
             </div>
             <div className="flex items-baseline gap-2 mb-1.5">
-              <span className={`text-2xl sm:text-3xl font-extrabold font-mono tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+              <span className={`text-2xl sm:text-3xl font-extrabold font-manrope tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
                 {currentData.co2Ppm.toFixed(1)}
               </span>
-              <span className={`text-xs font-mono ${isLight ? 'text-slate-400' : 'text-zinc-500'}`}>ppm</span>
+              <span className={`text-xs font-manrope ${isLight ? 'text-slate-400' : 'text-zinc-500'}`}>ppm</span>
             </div>
-            <div className={`flex items-center gap-1.5 text-[11px] font-mono ${isLight ? 'text-slate-500' : 'text-zinc-400'}`}>
+            <div className={`flex items-center gap-1.5 text-[11px] font-manrope ${isLight ? 'text-slate-500' : 'text-zinc-400'}`}>
               <span className="text-[#f59e0b] font-semibold">
                 ▲ +{baselineDeltas.co2Delta} ppm
               </span>
@@ -527,20 +526,20 @@ export default function ClimateTimeline({
                 : (isLight ? 'bg-white border-slate-200/80 hover:border-slate-300 shadow-xs' : 'bg-black/40 border-white/5 hover:border-white/20')
             }`}
           >
-            <div className={`flex items-center justify-between text-xs font-mono mb-1 ${isLight ? 'text-slate-500' : 'text-zinc-400'}`}>
+            <div className={`flex items-center justify-between text-xs font-manrope mb-1 ${isLight ? 'text-slate-500' : 'text-zinc-400'}`}>
               <span className="flex items-center gap-1.5 font-medium">
                 <Droplets className="w-3.5 h-3.5 text-[#38bdf8]" />
                 ARCTIC SEA ICE
               </span>
-              <span className={`text-[10px] uppercase ${isLight ? 'text-slate-400' : 'text-zinc-500'}`}>NSIDC Min</span>
+              <span className={`text-[10px] uppercase font-semibold ${isLight ? 'text-slate-400' : 'text-zinc-500'}`}>NSIDC Min</span>
             </div>
             <div className="flex items-baseline gap-2 mb-1.5">
-              <span className={`text-2xl sm:text-3xl font-extrabold font-mono tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+              <span className={`text-2xl sm:text-3xl font-extrabold font-manrope tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
                 {currentData.arcticIceExtent.toFixed(2)}
               </span>
-              <span className={`text-xs font-mono ${isLight ? 'text-slate-400' : 'text-zinc-500'}`}>M km&sup2;</span>
+              <span className={`text-xs font-manrope ${isLight ? 'text-slate-400' : 'text-zinc-500'}`}>M km&sup2;</span>
             </div>
-            <div className={`flex items-center gap-1.5 text-[11px] font-mono ${isLight ? 'text-slate-500' : 'text-zinc-400'}`}>
+            <div className={`flex items-center gap-1.5 text-[11px] font-manrope ${isLight ? 'text-slate-500' : 'text-zinc-400'}`}>
               <span className="text-[#0284c7] font-semibold">
                 ▼ {baselineDeltas.iceDelta} M km&sup2;
               </span>
@@ -557,20 +556,20 @@ export default function ClimateTimeline({
                 : (isLight ? 'bg-white border-slate-200/80 hover:border-slate-300 shadow-xs' : 'bg-black/40 border-white/5 hover:border-white/20')
             }`}
           >
-            <div className={`flex items-center justify-between text-xs font-mono mb-1 ${isLight ? 'text-slate-500' : 'text-zinc-400'}`}>
+            <div className={`flex items-center justify-between text-xs font-manrope mb-1 ${isLight ? 'text-slate-500' : 'text-zinc-400'}`}>
               <span className="flex items-center gap-1.5 font-medium">
                 <Waves className="w-3.5 h-3.5 text-purple-500" />
                 OCEAN HEAT
               </span>
-              <span className={`text-[10px] uppercase ${isLight ? 'text-slate-400' : 'text-zinc-500'}`}>0-2000m</span>
+              <span className={`text-[10px] uppercase font-semibold ${isLight ? 'text-slate-400' : 'text-zinc-500'}`}>0-2000m</span>
             </div>
             <div className="flex items-baseline gap-2 mb-1.5">
-              <span className={`text-2xl sm:text-3xl font-extrabold font-mono tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+              <span className={`text-2xl sm:text-3xl font-extrabold font-manrope tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
                 {currentData.oceanHeatContent > 0 ? '+' : ''}{currentData.oceanHeatContent.toFixed(1)}
               </span>
-              <span className={`text-xs font-mono ${isLight ? 'text-slate-400' : 'text-zinc-500'}`}>ZJ</span>
+              <span className={`text-xs font-manrope ${isLight ? 'text-slate-400' : 'text-zinc-500'}`}>ZJ</span>
             </div>
-            <div className={`flex items-center gap-1.5 text-[11px] font-mono ${isLight ? 'text-slate-500' : 'text-zinc-400'}`}>
+            <div className={`flex items-center gap-1.5 text-[11px] font-manrope ${isLight ? 'text-slate-500' : 'text-zinc-400'}`}>
               <span className="text-purple-600 font-semibold">
                 ▲ +{baselineDeltas.oceanDelta} ZJ
               </span>
@@ -582,7 +581,7 @@ export default function ClimateTimeline({
         {/* 3. The Centerpiece: Interactive Warming Stripes & Climate Ribbon */}
         <div className="mb-6 relative z-10">
           {/* Ribbon View Mode Toggle & Metric Badge */}
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-3 text-xs font-mono">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-3 text-xs font-manrope">
             <div className={`flex items-center gap-2 ${isLight ? 'text-slate-600' : 'text-zinc-400'}`}>
               <Activity className="w-3.5 h-3.5 text-[#ef233c]" />
               <span className={`font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>47-YEAR CLIMATE STRIPES & WAVEFORM RIBBON</span>
@@ -644,7 +643,7 @@ export default function ClimateTimeline({
             className="relative h-28 sm:h-36 w-full bg-black/80 rounded-2xl border border-white/10 overflow-hidden cursor-crosshair select-none group shadow-inner"
           >
             {/* Background Grid Lines (1980, 1990, 2000, 2010, 2020, 2026) */}
-            <div className="absolute inset-0 pointer-events-none flex justify-between px-2 text-[10px] font-mono text-zinc-600 border-b border-white/5 z-0">
+            <div className="absolute inset-0 pointer-events-none flex justify-between px-2 text-[10px] font-manrope text-zinc-600 border-b border-white/5 z-0">
               <div className="h-full border-l border-white/5 pl-1 pt-1">1980</div>
               <div className="h-full border-l border-white/5 pl-1 pt-1">1990</div>
               <div className="h-full border-l border-white/5 pl-1 pt-1">2000</div>
@@ -732,7 +731,7 @@ export default function ClimateTimeline({
             {/* Hover Tooltip HUD over chart */}
             {hoveredData && (
               <div
-                className={`absolute z-40 pointer-events-none px-3 py-2 rounded-xl text-xs font-mono shadow-2xl backdrop-blur-md transform -translate-x-1/2 -translate-y-full mb-3 border ${
+                className={`absolute z-40 pointer-events-none px-3 py-2 rounded-xl text-xs font-manrope shadow-2xl backdrop-blur-md transform -translate-x-1/2 -translate-y-full mb-3 border ${
                   isLight
                     ? 'bg-white/98 border-slate-200 text-slate-900 shadow-slate-300/60'
                     : 'bg-zinc-900/95 border-white/20 text-white'
@@ -792,7 +791,7 @@ export default function ClimateTimeline({
                   : 'translateX(-50%) translateY(-4px)'
             }}
           >
-            <div className={`border text-[11px] font-mono px-2.5 py-1 rounded-lg flex items-center gap-1.5 whitespace-nowrap ${
+            <div className={`border text-[11px] font-manrope px-2.5 py-1 rounded-lg flex items-center gap-1.5 whitespace-nowrap ${
               isLight
                 ? 'bg-white border-[#ef233c] text-slate-900 shadow-lg shadow-red-200/50'
                 : 'bg-black/95 border-[#ef233c] text-white shadow-[0_0_15px_rgba(239,35,60,0.4)]'
@@ -833,7 +832,7 @@ export default function ClimateTimeline({
           </div>
 
           {/* Precision Tick Mark Ruler */}
-          <div className={`flex justify-between text-[11px] font-mono pt-3 px-1 select-none ${
+          <div className={`flex justify-between text-[11px] font-manrope pt-3 px-1 select-none ${
             isLight ? 'text-slate-600' : 'text-zinc-400'
           }`}>
             <button 
@@ -892,9 +891,8 @@ export default function ClimateTimeline({
         <div className={`mb-6 pt-4 border-t relative z-10 ${
           isLight ? 'border-slate-200' : 'border-white/10'
         }`}>
-          <div className="flex items-center justify-between mb-3 text-xs font-mono">
-            <span className={`flex items-center gap-1.5 font-medium ${isLight ? 'text-slate-600' : 'text-zinc-400'}`}>
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+          <div className="flex items-center justify-between mb-3 text-xs font-manrope">
+            <span className={`font-semibold tracking-wider uppercase ${isLight ? 'text-slate-600' : 'text-zinc-400'}`}>
               KEY CLIMATE INFLECTION MILESTONES (CLICK TO JUMP & AUDIT)
             </span>
             <span className={`hidden sm:inline ${isLight ? 'text-slate-400' : 'text-zinc-500'}`}>NASA & IPCC Historical Benchmarks</span>
@@ -907,7 +905,7 @@ export default function ClimateTimeline({
                 <button
                   key={m.year}
                   onClick={() => handleJumpToMilestone(m)}
-                  className={`px-3 py-2 rounded-xl text-xs font-mono transition-all cursor-pointer flex items-center gap-2 border ${
+                  className={`px-3 py-2 rounded-xl text-xs font-manrope transition-all cursor-pointer flex items-center gap-2 border ${
                     isActive
                       ? (isLight
                           ? 'bg-red-50 text-slate-950 border-[#ef233c] shadow-sm ring-1 ring-[#ef233c]'
@@ -944,7 +942,7 @@ export default function ClimateTimeline({
               </button>
               <div className="flex items-center gap-2 mb-1.5">
                 <span 
-                  className="text-[10px] font-mono px-2 py-0.5 rounded uppercase font-bold"
+                  className="text-[10px] font-manrope px-2 py-0.5 rounded uppercase font-bold"
                   style={{ backgroundColor: `${activeMilestone.color}25`, color: activeMilestone.color }}
                 >
                   {activeMilestone.category} &bull; {activeMilestone.year}
@@ -956,7 +954,7 @@ export default function ClimateTimeline({
               <p className={`text-xs sm:text-sm leading-relaxed mb-3 ${isLight ? 'text-slate-600' : 'text-zinc-300'}`}>
                 {activeMilestone.description}
               </p>
-              <div className={`flex flex-wrap items-center gap-4 text-xs font-mono ${isLight ? 'text-slate-600' : 'text-zinc-400'}`}>
+              <div className={`flex flex-wrap items-center gap-4 text-xs font-manrope ${isLight ? 'text-slate-600' : 'text-zinc-400'}`}>
                 <span>Temp Anomaly: <strong className={isLight ? 'text-slate-900' : 'text-white'}>+{activeMilestone.temp}&deg;C</strong></span>
                 <span>CO2: <strong className="text-[#f59e0b]">{activeMilestone.co2} ppm</strong></span>
                 <span>Arctic Ice: <strong className="text-[#0284c7]">{activeMilestone.arctic} M km&sup2;</strong></span>
@@ -982,7 +980,7 @@ export default function ClimateTimeline({
             <p className={`text-xs sm:text-sm leading-relaxed mb-3 ${isLight ? 'text-slate-600' : 'text-zinc-300'}`}>
               {activeEpoch.narrative}
             </p>
-            <div className={`flex items-center gap-2 text-xs font-mono px-3 py-2 rounded-xl border ${
+            <div className={`flex items-center gap-2 text-xs font-manrope px-3 py-2 rounded-xl border ${
               isLight ? 'bg-white text-slate-700 border-slate-200 shadow-xs' : 'bg-white/5 text-zinc-400 border-white/5'
             }`}>
               <Waves className="w-4 h-4 text-[#ef233c] shrink-0" />
@@ -995,7 +993,7 @@ export default function ClimateTimeline({
           <div className="shrink-0 flex flex-col sm:flex-row md:flex-col gap-2.5 w-full md:w-auto">
             <button
               onClick={() => setShowScienceModal(true)}
-              className={`py-2 px-4 rounded-xl text-xs font-mono font-semibold transition-all cursor-pointer border flex items-center justify-center gap-1.5 ${
+              className={`py-2 px-4 rounded-xl text-xs font-manrope font-semibold transition-all cursor-pointer border flex items-center justify-center gap-1.5 ${
                 isLight
                   ? 'bg-white hover:bg-slate-100 text-slate-800 border-slate-200 shadow-xs'
                   : 'bg-white/10 hover:bg-white/15 text-white border-white/10'
@@ -1006,7 +1004,7 @@ export default function ClimateTimeline({
             </button>
             <button
               onClick={() => setShowCreditsModal(true)}
-              className={`py-2 px-4 rounded-xl text-xs font-mono transition-all cursor-pointer border flex items-center justify-center gap-1.5 ${
+              className={`py-2 px-4 rounded-xl text-xs font-manrope font-semibold transition-all cursor-pointer border flex items-center justify-center gap-1.5 ${
                 isLight
                   ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
                   : 'bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border-white/5'
