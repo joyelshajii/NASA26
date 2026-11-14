@@ -440,11 +440,6 @@ export default function App() {
             }`}>
               TerraSonus
             </span>
-            <span className={`hidden sm:inline-block px-2.5 py-0.5 rounded-full text-[10px] font-mono tracking-widest uppercase border ${
-              isLight ? 'bg-slate-100 border-slate-200 text-slate-600' : 'bg-white/5 border-white/10 text-zinc-400'
-            }`}>
-              NASA EIC
-            </span>
           </div>
           
           {/* Navigation Links - Single line, balanced spacing, no wrapping */}
@@ -685,7 +680,7 @@ export default function App() {
               <span className={`text-xs font-medium tracking-wide font-manrope ${
                 isLight ? 'text-slate-700' : 'text-red-100/90'
               }`}>
-                TerraSonus 2.0 &bull; NASA Earth Information Center Live
+                TerraSonus
               </span>
             </div>
 
