@@ -1057,7 +1057,7 @@ export default function EarthGlobe({
       }`} />
 
       {/* Top Header HUD Telemetry - Z-30 to guarantee priority and visibility above 3D space */}
-      <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none z-30">
+      <div className="absolute top-4 left-4 right-4 flex flex-wrap items-center justify-between gap-2 pointer-events-none z-30">
         <div className={`flex items-center gap-2.5 backdrop-blur-xl border px-3 py-2 rounded-xl shadow-xl pointer-events-auto ${
           theme === 'light'
             ? 'bg-white/90 border-slate-200/90 text-slate-900 shadow-slate-200/50'
@@ -1088,36 +1088,9 @@ export default function EarthGlobe({
           </div>
         </div>
 
-        {/* Control Badges: Start Listening, Auto-Rotate & Reset */}
+        {/* Control Badges: Auto-Rotate & Reset View */}
         {showControls && (
           <div className="flex items-center gap-2 pointer-events-auto">
-            {togglePlay && (
-              <button
-                type="button"
-                onClick={togglePlay}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold font-manrope transition-all border cursor-pointer ${
-                  isPlaying
-                    ? 'bg-[#ef233c] text-white border-[#ef233c] shadow-lg shadow-red-950/50'
-                    : (theme === 'light'
-                        ? 'bg-red-50 hover:bg-[#ef233c] text-[#ef233c] hover:text-white border-red-200'
-                        : 'bg-[#ef233c]/15 hover:bg-[#ef233c] text-[#ef233c] hover:text-white border-[#ef233c]/40')
-                }`}
-                title={isPlaying ? "Pause Acoustic Stream" : "Start Listening to Planetary Sonification"}
-              >
-                {isPlaying ? (
-                  <>
-                    <Pause className="w-3.5 h-3.5 fill-current" />
-                    <span>Pause</span>
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-3.5 h-3.5 fill-current" />
-                    <span>Start Listening</span>
-                  </>
-                )}
-              </button>
-            )}
-
             <button
               type="button"
               onClick={() => {

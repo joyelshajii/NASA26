@@ -937,28 +937,28 @@ export default function App() {
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2.5">
                       <button
                         type="button"
                         onClick={togglePlay}
-                        className={`group flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold font-manrope transition-all cursor-pointer border shadow-sm ${
+                        className={`group flex items-center gap-2 px-4 py-1.5 sm:px-5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold font-manrope transition-all cursor-pointer border shadow-md active:scale-95 ${
                           isPlaying
-                            ? 'bg-[#ef233c] text-white border-[#ef233c] shadow-red-950/40'
+                            ? 'bg-[#ef233c] text-white border-[#ef233c] shadow-red-950/50 hover:bg-[#d90429]'
                             : (isLight 
-                                ? 'bg-red-50 hover:bg-[#ef233c] text-[#ef233c] hover:text-white border-red-200' 
-                                : 'bg-[#ef233c]/15 hover:bg-[#ef233c] text-[#ef233c] hover:text-white border-[#ef233c]/40')
+                                ? 'bg-[#ef233c] hover:bg-[#d90429] text-white border-[#ef233c] shadow-md shadow-red-200' 
+                                : 'bg-[#ef233c] hover:bg-[#d90429] text-white border-[#ef233c] shadow-[0_0_16px_rgba(239,35,60,0.4)] hover:shadow-[0_0_22px_rgba(239,35,60,0.6)]')
                         }`}
-                        title={isPlaying ? 'Pause acoustic stream' : 'Start listening to planetary sonification'}
+                        title={isPlaying ? 'Pause acoustic stream' : 'Start planetary acoustic sonification'}
                       >
                         {isPlaying ? (
                           <>
-                            <Pause className="w-3 h-3 fill-current" />
+                            <Pause className="w-4 h-4 fill-current shrink-0" />
                             <span>Pause</span>
                           </>
                         ) : (
                           <>
-                            <Play className="w-3 h-3 fill-current" />
-                            <span>Start Listening</span>
+                            <Play className="w-4 h-4 fill-current shrink-0" />
+                            <span>Start</span>
                           </>
                         )}
                       </button>
@@ -1049,30 +1049,6 @@ export default function App() {
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={togglePlay}
-                        className={`group flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold font-manrope transition-all cursor-pointer border shadow-sm ${
-                          isPlaying
-                            ? 'bg-[#ef233c] text-white border-[#ef233c] shadow-red-950/40'
-                            : (isLight 
-                                ? 'bg-red-50 hover:bg-[#ef233c] text-[#ef233c] hover:text-white border-red-200' 
-                                : 'bg-[#ef233c]/15 hover:bg-[#ef233c] text-[#ef233c] hover:text-white border-[#ef233c]/40')
-                        }`}
-                        title={isPlaying ? 'Pause acoustic stream' : 'Start listening to active telemetry'}
-                      >
-                        {isPlaying ? (
-                          <>
-                            <Pause className="w-3 h-3 fill-current" />
-                            <span>Pause</span>
-                          </>
-                        ) : (
-                          <>
-                            <Play className="w-3 h-3 fill-current" />
-                            <span>Start Listening</span>
-                          </>
-                        )}
-                      </button>
                       <span className={`text-xs font-mono ${isLight ? 'text-slate-500' : 'text-zinc-500'}`}>
                         {activeRegion.coordinates[0].toFixed(2)}°N, {activeRegion.coordinates[1].toFixed(2)}°E
                       </span>
