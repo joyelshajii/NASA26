@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <circle cx="32" cy="32" r="26" fill="#020617" stroke="#1E293B" stroke-width="2"/>
+  <!-- Wave 1 -->
+  <path d="M10 32 C 18 16, 26 16, 32 32 C 38 48, 46 48, 54 32" stroke="#00F0FF" stroke-width="4" stroke-linecap="round"/>
+  <!-- Wave 2 (Phase Inverted) -->
+  <path d="M10 32 C 18 48, 26 48, 32 32 C 38 16, 46 16, 54 32" stroke="#EC4899" stroke-width="3" stroke-linecap="round" opacity="0.85"/>
+  <circle cx="32" cy="32" r="4.5" fill="#FFFFFF"/>
+</svg>

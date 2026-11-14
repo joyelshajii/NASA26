@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="ppb-core" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00F0FF"/>
+      <stop offset="100%" stop-color="#2563EB"/>
+    </linearGradient>
+  </defs>
+  <!-- Center Earth -->
+  <circle cx="32" cy="32" r="11" fill="url(#ppb-core)"/>
+  <!-- Left Sound Waves -->
+  <path d="M18 20 C 14 24, 14 40, 18 44" stroke="#00F0FF" stroke-width="4.5" stroke-linecap="round"/>
+  <path d="M10 14 C 4 22, 4 42, 10 50" stroke="#38BDF8" stroke-width="3.5" stroke-linecap="round" opacity="0.65"/>
+  <!-- Right Sound Waves -->
+  <path d="M46 20 C 50 24, 50 40, 46 44" stroke="#00F0FF" stroke-width="4.5" stroke-linecap="round"/>
+  <path d="M54 14 C 60 22, 60 42, 54 50" stroke="#38BDF8" stroke-width="3.5" stroke-linecap="round" opacity="0.65"/>
+</svg>

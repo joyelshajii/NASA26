@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="op-earth" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0284C7"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+  </defs>
+  <circle cx="26" cy="38" r="18" fill="url(#op-earth)" stroke="#0284C7" stroke-width="2"/>
+  <path d="M42 22 A 10 10 0 0 1 52 32" stroke="#00F0FF" stroke-width="3" stroke-linecap="round"/>
+  <path d="M46 16 A 16 16 0 0 1 60 30" stroke="#38BDF8" stroke-width="3" stroke-linecap="round"/>
+  <path d="M50 10 A 22 22 0 0 1 66 26" stroke="#818CF8" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+  <circle cx="38" cy="26" r="4" fill="#FFFFFF"/>
+  <path d="M14 50 C 26 42, 40 32, 50 14" stroke="#38BDF8" stroke-width="1.5" stroke-dasharray="3 3"/>
+</svg>

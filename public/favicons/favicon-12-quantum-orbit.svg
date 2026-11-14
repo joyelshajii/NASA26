@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <rect width="64" height="64" rx="16" fill="#090D16"/>
+  <circle cx="32" cy="32" r="10" fill="#00F0FF" opacity="0.25"/>
+  <circle cx="32" cy="32" r="6" fill="#00F0FF"/>
+  <!-- Infinity Sound Wave Loop -->
+  <path d="M32 32 C 24 20, 10 20, 10 32 C 10 44, 24 44, 32 32 C 40 20, 54 20, 54 32 C 54 44, 40 44, 32 32 Z" stroke="#38BDF8" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="10" cy="32" r="2.5" fill="#FFFFFF"/>
+  <circle cx="54" cy="32" r="2.5" fill="#FFFFFF"/>
+</svg>
