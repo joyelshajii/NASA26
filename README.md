@@ -94,7 +94,7 @@ Directly answers "The Earth Information Jukebox" challenge requirements from NAS
 
 ### Installation
 ```bash
-git clone https://github.com/your-team/terrasonus.git
+git clone https://github.com/joyelshajii/NASA26.git
 cd terrasonus
 npm install
 ```
