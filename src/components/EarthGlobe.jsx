@@ -346,6 +346,7 @@ export default function EarthGlobe({
   const isDraggingRef = useRef(false);
   const isCameraFocusingRef = useRef(false);
   const targetQuaternionRef = useRef(null);
+  const targetCameraPosRef = useRef(new THREE.Vector3(0, 0.4, 2.85));
   const currentAudioPulseRef = useRef(0.0);
 
   // Minimizable Hotspot Description Card State
@@ -381,16 +382,32 @@ export default function EarthGlobe({
   }, [activeRegion, regions]);
 
   // Helper to re-orient the globe directly toward the camera for any region
+  // Upright rotation matching NASA model-viewer (North Pole stays strictly +Y, zero sideways tilt)
   const focusRegion = useCallback((reg) => {
     if (!reg || !earthGroupRef.current) return;
     const coords = { lat: reg.lat, lon: reg.lon };
     const pos = latLonToVector3(coords.lat, coords.lon, 1.0);
-    const cameraDir = new THREE.Vector3(0, 0.4, 2.85).normalize();
-    const q = new THREE.Quaternion().setFromUnitVectors(
-      pos.clone().normalize(),
-      cameraDir
+    const angleY = Math.atan2(pos.x, pos.z);
+
+    // Rotate purely around vertical polar Y-axis so North Pole stays upright at +Y
+    const q = new THREE.Quaternion().setFromAxisAngle(
+      new THREE.Vector3(0, 1, 0),
+      -angleY
     );
     targetQuaternionRef.current = q;
+
+    // Set camera elevation based on target latitude while keeping camera in Y-Z plane
+    const targetY = THREE.MathUtils.clamp(
+      reg.lat >= 0
+        ? 0.38 + (reg.lat / 90) * 1.10
+        : 0.38 + (reg.lat / 90) * 0.40,
+      0.15,
+      1.55
+    );
+    const targetDist = 2.88;
+    const targetZ = Math.sqrt(Math.max(0, targetDist * targetDist - targetY * targetY));
+    targetCameraPosRef.current = new THREE.Vector3(0, targetY, targetZ);
+
     isCameraFocusingRef.current = true;
   }, []);
 
@@ -594,15 +611,15 @@ export default function EarthGlobe({
       }
       modelGroup.add(nasaScene);
 
-      // Snap orientation immediately to active region when model is attached
+      // Snap orientation immediately to active region when model is attached (pure vertical polar axis)
       const curReg = currentRegionRef.current;
       if (curReg) {
         const coords = { lat: curReg.lat, lon: curReg.lon };
         const pos = latLonToVector3(coords.lat, coords.lon, 1.0);
-        const cameraDir = new THREE.Vector3(0, 0.4, 2.85).normalize();
-        const initialQuat = new THREE.Quaternion().setFromUnitVectors(
-          pos.clone().normalize(),
-          cameraDir
+        const angleY = Math.atan2(pos.x, pos.z);
+        const initialQuat = new THREE.Quaternion().setFromAxisAngle(
+          new THREE.Vector3(0, 1, 0),
+          -angleY
         );
         earthGroup.quaternion.copy(initialQuat);
         targetQuaternionRef.current = null;
@@ -780,14 +797,14 @@ export default function EarthGlobe({
     renderer.domElement.addEventListener('pointermove', handlePointerMove);
     renderer.domElement.addEventListener('pointerdown', handlePointerDown);
 
-    // Initial camera focus on initial region directly facing camera line of sight
+    // Initial camera focus on initial region directly facing camera line of sight (pure vertical polar axis)
     const initialRegion = currentRegionRef.current;
     if (initialRegion) {
       const initialPos = latLonToVector3(initialRegion.lat, initialRegion.lon, 1.0);
-      const cameraDir = new THREE.Vector3(0, 0.4, 2.85).normalize();
-      const initialQuat = new THREE.Quaternion().setFromUnitVectors(
-        initialPos.clone().normalize(),
-        cameraDir
+      const angleY = Math.atan2(initialPos.x, initialPos.z);
+      const initialQuat = new THREE.Quaternion().setFromAxisAngle(
+        new THREE.Vector3(0, 1, 0),
+        -angleY
       );
       earthGroup.quaternion.copy(initialQuat);
     }
@@ -802,7 +819,7 @@ export default function EarthGlobe({
 
       // Smooth spherical camera return to canonical viewpoint when focusing a region
       if (isCameraFocusingRef.current && !isDraggingRef.current) {
-        const targetPos = new THREE.Vector3(0, 0.4, 2.85);
+        const targetPos = targetCameraPosRef.current || new THREE.Vector3(0, 0.4, 2.85);
         const targetCenter = new THREE.Vector3(0, 0, 0);
         const targetDist = targetPos.length();
         const targetDir = targetPos.clone().normalize();
@@ -930,7 +947,7 @@ export default function EarthGlobe({
           // Check if hotspot is facing camera (dot product of normal with camera direction)
           targetHit.getWorldPosition(normalVec);
           normalVec.normalize();
-          toCameraVec.subVectors(camera.position, targetHit.position).normalize();
+          toCameraVec.subVectors(camera.position, normalVec).normalize();
           const dot = normalVec.dot(toCameraVec);
 
           if (tempVec.z < 1.0 && dot > 0.15) {
