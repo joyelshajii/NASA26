@@ -724,37 +724,56 @@ export default function EicVisualSonifier({
       ctx.arc(usX, usY, 30, 0, Math.PI * 2);
       ctx.fill();
 
-      // 7. Scientific HUD Overlay & Unobstructed Header Legend (Top-Left Position)
+      // 7. Scientific HUD Overlay & Legend - Crystal Clear, High-Contrast Glass Panel
       ctx.save();
+      // Semi-transparent dark backing card with subtle border so text is 100% crisp and readable
+      ctx.fillStyle = 'rgba(3, 7, 18, 0.82)';
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.25)';
+      ctx.lineWidth = 1;
+      const hudW = 645;
+      const hudH = 46;
+      if (typeof ctx.roundRect === 'function') {
+        ctx.beginPath();
+        ctx.roundRect(14, 10, hudW, hudH, 8);
+        ctx.fill();
+        ctx.stroke();
+      } else {
+        ctx.fillRect(14, 10, hudW, hudH);
+        ctx.strokeRect(14, 10, hudW, hudH);
+      }
+
+      // Title - Solid, crisp, bold, crystal clear white without shadow blur
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 11px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-      ctx.shadowColor = 'rgba(6, 182, 212, 0.5)';
-      ctx.shadowBlur = 2;
-      ctx.fillText('NASA GSFC • GEOS-FP 550nm AEROSOL OPTICAL DEPTH (SVS 5669)', 16, 20);
+      ctx.font = 'bold 12px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      ctx.fillText('NASA GSFC • GEOS-FP 550nm AEROSOL OPTICAL DEPTH (SVS 5669)', 24, 27);
 
-      // Color legend chips positioned cleanly under the title (never occluded by bottom telemetry bar)
-      ctx.shadowBlur = 0;
-      ctx.font = 'bold 9px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      // Color legend chips - Crisp 10.5px font, vibrant color chips, perfectly spaced
+      ctx.font = 'bold 10.5px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 
+      // Dust
       ctx.fillStyle = '#f59e0b';
-      ctx.fillRect(16, 28, 8, 8);
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-      ctx.fillText('DUST (Saharan Air Layer)', 28, 35);
+      ctx.fillRect(24, 37, 9, 9);
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillText('DUST (Saharan Air Layer)', 38, 45);
 
+      // Smoke
       ctx.fillStyle = '#ef233c';
-      ctx.fillRect(165, 28, 8, 8);
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-      ctx.fillText('SMOKE (Biomass Fires)', 177, 35);
+      ctx.fillRect(185, 37, 9, 9);
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillText('SMOKE (Biomass Fires)', 199, 45);
 
+      // Sea Salt
       ctx.fillStyle = '#06b6d4';
-      ctx.fillRect(310, 28, 8, 8);
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-      ctx.fillText('SEA SALT (Southern Jets)', 322, 35);
+      ctx.fillRect(342, 37, 9, 9);
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillText('SEA SALT (Southern Jets)', 356, 45);
 
-      ctx.fillStyle = '#f1f5f9';
-      ctx.fillRect(470, 28, 8, 8);
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-      ctx.fillText('SULFATE (Industrial Haze)', 482, 35);
+      // Sulfate
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(510, 37, 9, 9);
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillText('SULFATE (Industrial Haze)', 524, 45);
+
       ctx.restore();
 
     } else if (type === 'lightning') {
