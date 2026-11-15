@@ -216,13 +216,15 @@ export default function App() {
     }
   }, []);
 
-  // Master Audio Toggle
-  const togglePlay = useCallback(async () => {
+  // Master Audio Toggle - only scrolls to 3D planetary stage if explicitly requested (e.g. Hero CTA)
+  const togglePlay = useCallback(async (shouldScroll = false) => {
     if (!isPlaying) {
-      // Close entrance modal if open, show listening toast, and smooth scroll to visual stage
+      // Close entrance modal if open, show listening toast
       setShowHeadphonesEntranceModal(false);
       triggerListeningHeadphonesToast();
-      scrollToVisualStage();
+      if (shouldScroll === true) {
+        scrollToVisualStage();
+      }
       try {
         await harmonicEngine.init();
         try {
@@ -243,6 +245,9 @@ export default function App() {
       }
     } else {
       harmonicEngine.stop();
+      if (typeof harmonicEngine.stopSonifier === 'function') {
+        harmonicEngine.stopSonifier();
+      }
       setIsPlaying(false);
       setScreenReaderAnnouncement('Audio playback stopped.');
     }
@@ -720,7 +725,7 @@ export default function App() {
 
       <main className="relative z-10">
         {/* Hero Section */}
-        <section className="min-h-screen flex flex-col items-center justify-center pt-32 pb-20 px-6">
+        <section className="min-h-screen flex flex-col items-center justify-center pt-28 pb-4 px-6">
           <div className="text-center max-w-5xl mx-auto">
             <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full border backdrop-blur-md mb-8 animate-fade-up ${
               isLight ? 'bg-white/80 border-slate-200 text-slate-800 shadow-xs' : 'bg-white/5 border-white/10 text-red-100/90'
@@ -761,7 +766,7 @@ export default function App() {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 animate-fade-up" style={{ animationDelay: '0.4s' }}>
-              <button id="hero-cta-btn" onClick={togglePlay} className="shiny-cta group cursor-pointer w-full sm:w-auto text-sm">
+              <button id="hero-cta-btn" onClick={() => togglePlay(true)} className="shiny-cta group cursor-pointer w-full sm:w-auto text-sm">
                 <span className="relative z-10 flex items-center justify-center gap-2 text-white font-medium font-manrope">
                   {isPlaying ? 'Pause Acoustic Stream' : 'Start Acoustic Stream'} <ArrowRight className="transition-transform group-hover:translate-x-1 w-4 h-4 text-[#ef233c]" />
                 </span>
@@ -936,7 +941,7 @@ export default function App() {
           </div>
 
           {/* Hero Bottom Interactive Scroll Down Prompt */}
-          <div className="w-full flex flex-col items-center justify-center pt-8 pb-4 animate-fade-up" style={{ animationDelay: '0.55s' }}>
+          <div className="w-full flex flex-col items-center justify-center pt-2 pb-1 animate-fade-up" style={{ animationDelay: '0.55s' }}>
             <button
               onClick={scrollToVisualStage}
               className={`group flex flex-col items-center gap-2 transition-all cursor-pointer focus:outline-none ${
@@ -974,9 +979,9 @@ export default function App() {
         </section>
 
         {/* Features Bento Grid */}
-        <section id="interactive-stage" className="scroll-mt-24 py-24 px-6 relative">
+        <section id="interactive-stage" className="scroll-mt-20 pt-6 sm:pt-8 pb-16 px-6 relative">
           <div className="max-w-7xl mx-auto">
-            <div className="mb-14 text-center max-w-2xl mx-auto animate-fade-up">
+            <div className="mb-8 text-center max-w-2xl mx-auto animate-fade-up">
               <h2 className={`text-3xl sm:text-4xl font-semibold tracking-tight font-manrope mb-3 ${
                 isLight ? 'text-slate-900' : 'text-white'
               }`}>
@@ -1601,7 +1606,7 @@ export default function App() {
                 isPlaying={isPlaying}
                 audioLevel={audioLevel}
                 height={140}
-                theme={isLight ? 'cyan' : 'crimson'}
+                theme="hybrid"
                 appTheme={theme}
                 title="ACOUSTIC FREQUENCY SPECTRUM"
                 subtitle="Real-time Tone.js FFT Analysis & Waveform Oscilloscope"

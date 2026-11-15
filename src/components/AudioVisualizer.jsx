@@ -30,7 +30,7 @@ export default function AudioVisualizer({
   isPlaying = false,
   audioLevel = 0.0,
   mode = 'dual', // 'dual' | 'bars' | 'wave'
-  theme = 'crimson', // 'crimson' | 'hybrid' | 'cyan' | 'amber'
+  theme = 'hybrid', // 'hybrid' | 'crimson' | 'cyan' | 'amber'
   appTheme = 'dark',
   title = 'SPECTRAL HARMONICS',
   subtitle = 'NASA Earth Observation Acoustic FFT & Oscilloscope',
@@ -43,7 +43,7 @@ export default function AudioVisualizer({
 
   const isLight = appTheme === 'light';
 
-  // User interactive display states
+  // User interactive display states - default to 'hybrid' radiant spectrum
   const [activeMode, setActiveMode] = useState(mode);
   const [activeTheme, setActiveTheme] = useState(theme);
 
@@ -68,7 +68,24 @@ export default function AudioVisualizer({
     return false;
   }, [isPlaying, harmonicEngine]);
 
-  // Main Canvas Render Loop
+  // Synchronized mutable refs to avoid tearing down the 2D canvas render loop on audio ticks
+  const harmonicEngineRef = useRef(harmonicEngine);
+  const frequencyDataRef = useRef(frequencyData);
+  const waveformDataRef = useRef(waveformData);
+  const audioLevelRef = useRef(audioLevel);
+  const isAudioActiveRef = useRef(isAudioActive);
+  const activeModeRef = useRef(activeMode);
+  const activeThemeRef = useRef(activeTheme);
+
+  useEffect(() => { harmonicEngineRef.current = harmonicEngine; }, [harmonicEngine]);
+  useEffect(() => { frequencyDataRef.current = frequencyData; }, [frequencyData]);
+  useEffect(() => { waveformDataRef.current = waveformData; }, [waveformData]);
+  useEffect(() => { audioLevelRef.current = audioLevel; }, [audioLevel]);
+  useEffect(() => { isAudioActiveRef.current = isAudioActive; }, [isAudioActive]);
+  useEffect(() => { activeModeRef.current = activeMode; }, [activeMode]);
+  useEffect(() => { activeThemeRef.current = activeTheme; }, [activeTheme]);
+
+  // Main Canvas Render Loop - persistent 60fps animation without canvas resets
   useEffect(() => {
     const canvas = canvasRef.current;
     const container = containerRef.current;
@@ -83,12 +100,18 @@ export default function AudioVisualizer({
 
     const updateCanvasDimensions = () => {
       dpr = window.devicePixelRatio || 1;
-      width = container.clientWidth || 600;
-      canvasHeight = height;
-      canvas.width = Math.floor(width * dpr);
-      canvas.height = Math.floor(canvasHeight * dpr);
-      canvas.style.width = `${width}px`;
-      canvas.style.height = `${canvasHeight}px`;
+      const newWidth = container.clientWidth || 600;
+      const newHeight = height;
+      const targetPixelWidth = Math.floor(newWidth * dpr);
+      const targetPixelHeight = Math.floor(newHeight * dpr);
+      if (canvas.width !== targetPixelWidth || canvas.height !== targetPixelHeight) {
+        canvas.width = targetPixelWidth;
+        canvas.height = targetPixelHeight;
+        canvas.style.width = `${newWidth}px`;
+        canvas.style.height = `${newHeight}px`;
+      }
+      width = newWidth;
+      canvasHeight = newHeight;
     };
 
     updateCanvasDimensions();
@@ -165,20 +188,23 @@ export default function AudioVisualizer({
         ctx.fillText(marker.label, x, canvasHeight - 8);
       }
 
-      // 3. Audio Data Retrieval
+      // 3. Audio Data Retrieval from mutable refs (zero tear-down overhead)
       let rawFft = null;
       let rawWave = null;
 
-      if (frequencyData && frequencyData.length > 0) {
-        rawFft = frequencyData;
-      } else if (harmonicEngine && typeof harmonicEngine.getFrequencyData === 'function') {
-        rawFft = harmonicEngine.getFrequencyData();
+      const curFft = frequencyDataRef.current;
+      const curEngine = harmonicEngineRef.current;
+      if (curFft && curFft.length > 0) {
+        rawFft = curFft;
+      } else if (curEngine && typeof curEngine.getFrequencyData === 'function') {
+        rawFft = curEngine.getFrequencyData();
       }
 
-      if (waveformData && waveformData.length > 0) {
-        rawWave = waveformData;
-      } else if (harmonicEngine && typeof harmonicEngine.getWaveformData === 'function') {
-        rawWave = harmonicEngine.getWaveformData();
+      const curWave = waveformDataRef.current;
+      if (curWave && curWave.length > 0) {
+        rawWave = curWave;
+      } else if (curEngine && typeof curEngine.getWaveformData === 'function') {
+        rawWave = curEngine.getWaveformData();
       }
 
       const barCount = 64;
@@ -190,20 +216,25 @@ export default function AudioVisualizer({
       let maxBinIndex = 0;
       let sumEnergy = 0;
 
+      const activeAudio = isAudioActiveRef.current;
+      const curAudioLvl = audioLevelRef.current;
+      const activeMode = activeModeRef.current;
+      const activeTheme = activeThemeRef.current;
+
       // 4. Update Bars (Active or Idle Ambient Breath)
       for (let i = 0; i < barCount; i++) {
         let val = 0;
-        if (isAudioActive && rawFft && rawFft.length > 0) {
+        if (activeAudio && rawFft && rawFft.length > 0) {
           const sampleIdx = Math.min(
             rawFft.length - 1,
             Math.floor((i / barCount) * rawFft.length)
           );
           val = normalizeFftValue(rawFft[sampleIdx]);
-          if (typeof audioLevel === 'number' && audioLevel > 0) {
-            val = Math.min(1, val * (0.8 + audioLevel * 0.4));
+          if (typeof curAudioLvl === 'number' && curAudioLvl > 0) {
+            val = Math.min(1, val * (0.8 + curAudioLvl * 0.4));
           }
-        } else if (isAudioActive && typeof audioLevel === 'number' && audioLevel > 0) {
-          val = audioLevel * (0.4 + 0.6 * Math.abs(Math.sin(idlePhase * 2 + i * 0.15)));
+        } else if (activeAudio && typeof curAudioLvl === 'number' && curAudioLvl > 0) {
+          val = curAudioLvl * (0.4 + 0.6 * Math.abs(Math.sin(idlePhase * 2 + i * 0.15)));
         } else {
           // Ambient resting wave when standby
           val = 0.05 + 0.04 * Math.sin(idlePhase + i * 0.18);
@@ -236,8 +267,7 @@ export default function AudioVisualizer({
 
       // Update Telemetry readout every 12 frames
       if (frameCount % 12 === 0) {
-        if (isAudioActive && sumEnergy > 0.5) {
-          // Estimate frequency based on bin index
+        if (activeAudio && sumEnergy > 0.5) {
           const approxFreq = Math.round(55 * Math.pow(2, (maxBinIndex / barCount) * 7.5));
           const rmsDb = (20 * Math.log10(Math.max(0.001, sumEnergy / barCount))).toFixed(1);
           let band = 'MID-RANGE';
@@ -301,7 +331,7 @@ export default function AudioVisualizer({
 
           // Peak Hold Cap (Floating Neon Chip)
           const peakY = baselineY - Math.max(2, peakHold[i] * barAreaHeight);
-          ctx.fillStyle = activeTheme === 'crimson' ? '#f43f5e' : '#38bdf8';
+          ctx.fillStyle = activeTheme === 'crimson' ? '#f43f5e' : (activeTheme === 'amber' ? '#fbbf24' : '#38bdf8');
           ctx.fillRect(x, peakY - 2, barWidth, 1.8);
 
           // Liquid-Glass Floor Reflection below baseline
@@ -342,7 +372,7 @@ export default function AudioVisualizer({
 
         for (let i = 0; i < waveLength; i++) {
           let sample = 0;
-          if (isAudioActive && rawWave && rawWave.length > 0) {
+          if (activeAudio && rawWave && rawWave.length > 0) {
             sample = rawWave[i];
             if (sample > 1.0) sample = (sample / 128) - 1.0;
           } else {
@@ -356,7 +386,7 @@ export default function AudioVisualizer({
           if (i === 0) {
             ctx.moveTo(wx, wy);
           } else {
-            const prevSample = isAudioActive && rawWave ? rawWave[i - 1] : 0;
+            const prevSample = activeAudio && rawWave ? rawWave[i - 1] : 0;
             const prevWx = startX + (i - 1) * stepX;
             const prevWy = waveCenterY + prevSample * waveAmplitude;
             const midX = (prevWx + wx) / 2;
@@ -367,8 +397,8 @@ export default function AudioVisualizer({
 
         // Luminous Glow
         ctx.shadowBlur = 10;
-        ctx.shadowColor = activeTheme === 'crimson' ? '#ef233c' : '#06b6d4';
-        ctx.strokeStyle = activeTheme === 'crimson' ? '#fda4af' : '#67e8f9';
+        ctx.shadowColor = activeTheme === 'crimson' ? '#ef233c' : (activeTheme === 'amber' ? '#f59e0b' : '#06b6d4');
+        ctx.strokeStyle = activeTheme === 'crimson' ? '#fda4af' : (activeTheme === 'amber' ? '#fef08a' : '#67e8f9');
         ctx.lineWidth = activeMode === 'wave' ? 2.4 : 1.8;
         ctx.stroke();
 
@@ -386,7 +416,7 @@ export default function AudioVisualizer({
       }
       resizeObserver.disconnect();
     };
-  }, [activeMode, activeTheme, isAudioActive, height, frequencyData, waveformData, harmonicEngine, audioLevel]);
+  }, [height]);
 
   return (
     <div
