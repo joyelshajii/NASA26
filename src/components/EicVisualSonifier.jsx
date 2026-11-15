@@ -441,25 +441,29 @@ export default function EicVisualSonifier({
       }
 
     } else if (type === 'aerosols') {
-      // SVS 5669: Authentic NASA GEOS-FP Aerosol Optical Depth (AOD) Plumes
-      // Deep space / ocean background
-      ctx.fillStyle = '#060a14';
+      // SVS 5669: Authentic NASA GEOS-FP Aerosol Optical Depth (AOD) Multi-Spectral Simulation
+      // Deep space / ocean gradient
+      const oceanGrad = ctx.createLinearGradient(0, 0, 0, height);
+      oceanGrad.addColorStop(0, '#030611');
+      oceanGrad.addColorStop(0.5, '#060e22');
+      oceanGrad.addColorStop(1, '#030611');
+      ctx.fillStyle = oceanGrad;
       ctx.fillRect(0, 0, width, height);
 
-      // 1. Latitude and Longitude Graticule (Equirectangular standard)
+      // 1. Latitude and Longitude Graticule (Equirectangular Standard)
       ctx.lineWidth = 1;
-      ctx.strokeStyle = 'rgba(56, 189, 248, 0.1)';
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.08)';
       ctx.setLineDash([4, 4]);
 
-      // Latitudes (-60, -30, Equator, +30, +60)
+      // Latitudes (-60°, -30°, Equator 0°, +30°, +60°)
       for (let lat = -60; lat <= 60; lat += 30) {
         const y = ((90 - lat) / 180) * height;
         ctx.beginPath();
         if (lat === 0) {
-          ctx.strokeStyle = 'rgba(56, 189, 248, 0.28)';
-          ctx.lineWidth = 1.4;
+          ctx.strokeStyle = 'rgba(56, 189, 248, 0.25)';
+          ctx.lineWidth = 1.3;
         } else {
-          ctx.strokeStyle = 'rgba(56, 189, 248, 0.1)';
+          ctx.strokeStyle = 'rgba(56, 189, 248, 0.08)';
           ctx.lineWidth = 1;
         }
         ctx.moveTo(0, y);
@@ -467,15 +471,15 @@ export default function EicVisualSonifier({
         ctx.stroke();
       }
 
-      // Longitudes (-120, -60, Prime Meridian, +60, +120)
+      // Longitudes (-120°, -60°, Prime Meridian 0°, +60°, +120°)
       for (let lon = -120; lon <= 120; lon += 60) {
         const x = ((lon + 180) / 360) * width;
         ctx.beginPath();
         if (lon === 0) {
-          ctx.strokeStyle = 'rgba(56, 189, 248, 0.28)';
-          ctx.lineWidth = 1.4;
+          ctx.strokeStyle = 'rgba(56, 189, 248, 0.25)';
+          ctx.lineWidth = 1.3;
         } else {
-          ctx.strokeStyle = 'rgba(56, 189, 248, 0.1)';
+          ctx.strokeStyle = 'rgba(56, 189, 248, 0.08)';
           ctx.lineWidth = 1;
         }
         ctx.moveTo(x, 0);
@@ -484,7 +488,7 @@ export default function EicVisualSonifier({
       }
       ctx.setLineDash([]);
 
-      // 2. Authentic Global Continents from CONTINENT_POLYGONS (Exact Coastlines)
+      // 2. Mathematically Exact Geographic Continents from CONTINENT_POLYGONS
       for (const continent of CONTINENT_POLYGONS) {
         if (!continent.pts || continent.pts.length < 3) continue;
 
@@ -497,151 +501,209 @@ export default function EicVisualSonifier({
         }
         ctx.closePath();
 
-        // Dark terrain fill
-        ctx.fillStyle = '#0f172a';
+        // Dark NASA satellite landmass terrain
+        ctx.fillStyle = '#0b162a';
         ctx.fill();
 
         // Glowing cyan coastline contour
         ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
-        ctx.lineWidth = 1.2;
+        ctx.lineWidth = 1.1;
         ctx.lineJoin = 'round';
         ctx.stroke();
       }
 
-      // 3. Species A: Saharan Mineral Dust (Golden Amber / Orange, SVS AOD ~0.75)
-      // Flows West from Sahara (lon -17..+25, lat 14..24) across the Atlantic to Caribbean/Amazon (lon -65, lat 12..18)
-      // Natural fluid billowing plumes (no geometric bars)
-      for (let i = 0; i < 9; i++) {
-        const flowProg = (t * 0.25 + i * 0.11) % 1.0;
-        // Lon sweeps from +20 (Sahara) westward to -75 (Caribbean/Amazon)
-        const dustLon = 20 - flowProg * 95;
-        const dustLat = 17 + Math.sin(dustLon * 0.05 + t * 3 + i) * 5;
-        const cx = ((dustLon + 180) / 360) * width;
-        const cy = ((90 - dustLat) / 180) * height;
-        const radX = 38 + (i % 3) * 16;
-        const radY = 20 + (i % 2) * 10;
+      // 3. Species A: Saharan Mineral Dust Plumes (Golden Amber / Orange, SVS 5669 AOD ~0.75)
+      // Arcs west-southwest from Sahara (lon -15°..+25°, lat 14°..24°) across Atlantic to Caribbean & Amazon (lon -65°, lat 10°..18°)
+      // Multi-layered fluid streamlines with natural turbulent dispersion
+      for (let ribbon = 0; ribbon < 6; ribbon++) {
+        const rOffset = ribbon * 0.16;
+        const wavePhase = t * 3.5 + ribbon * 1.2;
 
-        const dGrad = ctx.createRadialGradient(cx, cy, 2, cx, cy, radX);
-        dGrad.addColorStop(0, 'rgba(251, 191, 36, 0.9)');
-        dGrad.addColorStop(0.35, 'rgba(245, 158, 11, 0.65)');
-        dGrad.addColorStop(0.7, 'rgba(217, 119, 6, 0.25)');
+        ctx.beginPath();
+        const startLon = 22;
+        const startLat = 22 - ribbon * 1.8;
+        const startX = ((startLon + 180) / 360) * width;
+        const startY = ((90 - startLat) / 180) * height;
+
+        ctx.moveTo(startX, startY);
+
+        for (let lon = startLon; lon >= -68; lon -= 3) {
+          const normX = (startLon - lon) / (startLon - (-68));
+          const lat = startLat - normX * 8 + Math.sin(lon * 0.08 + wavePhase) * (4 + normX * 6);
+          const px = ((lon + 180) / 360) * width;
+          const py = ((90 - lat) / 180) * height;
+          ctx.lineTo(px, py);
+        }
+
+        ctx.lineWidth = 8 + ribbon * 4;
+        ctx.strokeStyle = `rgba(245, 158, 11, ${0.12 + (1 - rOffset) * 0.18})`;
+        ctx.stroke();
+      }
+
+      // Billowing dust cloud puffs along the transatlantic corridor
+      for (let p = 0; p < 14; p++) {
+        const drift = (t * 0.22 + p * 0.075) % 1.0;
+        const pLon = 22 - drift * 88;
+        const pLat = 20 - drift * 8 + Math.sin(pLon * 0.09 + t * 4 + p) * 4;
+        const cx = ((pLon + 180) / 360) * width;
+        const cy = ((90 - pLat) / 180) * height;
+        const rX = 28 + (p % 4) * 12;
+        const rY = 16 + (p % 3) * 8;
+
+        const dGrad = ctx.createRadialGradient(cx, cy, 2, cx, cy, rX);
+        dGrad.addColorStop(0, 'rgba(251, 191, 36, 0.85)');
+        dGrad.addColorStop(0.4, 'rgba(245, 158, 11, 0.45)');
+        dGrad.addColorStop(0.75, 'rgba(217, 119, 6, 0.15)');
         dGrad.addColorStop(1, 'transparent');
 
         ctx.fillStyle = dGrad;
         ctx.beginPath();
-        ctx.ellipse(cx, cy, radX, radY, -0.15, 0, Math.PI * 2);
+        ctx.ellipse(cx, cy, rX, rY, -0.12, 0, Math.PI * 2);
         ctx.fill();
       }
 
-      // Continuous fluid dust streamlines
-      for (let s = 0; s < 3; s++) {
-        ctx.beginPath();
-        ctx.lineWidth = 12 + s * 6;
-        const startX = ((15 + 180) / 360) * width;
-        const startY = ((90 - (19 - s * 3)) / 180) * height;
-        ctx.moveTo(startX, startY);
+      // 4. Species B: Biomass Burning Smoke (Fiery Crimson Red `#ef233c`, SVS 5669 AOD ~0.92)
+      // Plume 1: Amazon Basin Wildfire Belt (lon -65°..-48°, lat -15°..-3°)
+      const amazonFires = [
+        { lon: -62, lat: -6, driftLon: -52, driftLat: -14 },
+        { lon: -56, lat: -10, driftLon: -46, driftLat: -18 },
+        { lon: -50, lat: -4, driftLon: -42, driftLat: -12 }
+      ];
 
-        for (let x = startX; x >= ((-65 + 180) / 360) * width; x -= 20) {
-          const normProg = (startX - x) / (startX - ((-65 + 180) / 360) * width);
-          const waveY = startY + normProg * 25 + Math.sin(x * 0.02 + t * 4 + s) * 9;
-          ctx.lineTo(x, waveY);
+      amazonFires.forEach((fire, idx) => {
+        // Fire hotspot core
+        const fx = ((fire.lon + 180) / 360) * width;
+        const fy = ((90 - fire.lat) / 180) * height;
+        ctx.fillStyle = 'rgba(255, 120, 120, 0.95)';
+        ctx.beginPath();
+        ctx.arc(fx, fy, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Trailing smoke streamers drifting downwind
+        for (let s = 0; s < 4; s++) {
+          const prog = (t * 0.2 + s * 0.25 + idx * 0.3) % 1.0;
+          const sLon = fire.lon + (fire.driftLon - fire.lon) * prog + Math.sin(prog * 6 + idx) * 2;
+          const sLat = fire.lat + (fire.driftLat - fire.lat) * prog + Math.cos(prog * 5) * 1.5;
+          const sx = ((sLon + 180) / 360) * width;
+          const sy = ((90 - sLat) / 180) * height;
+          const sRad = 16 + prog * 20;
+
+          const sGrad = ctx.createRadialGradient(sx, sy, 1, sx, sy, sRad);
+          sGrad.addColorStop(0, 'rgba(239, 35, 60, 0.88)');
+          sGrad.addColorStop(0.5, 'rgba(185, 28, 28, 0.45)');
+          sGrad.addColorStop(0.85, 'rgba(127, 29, 29, 0.12)');
+          sGrad.addColorStop(1, 'transparent');
+
+          ctx.fillStyle = sGrad;
+          ctx.beginPath();
+          ctx.ellipse(sx, sy, sRad * 1.3, sRad * 0.8, -0.35, 0, Math.PI * 2);
+          ctx.fill();
         }
-        ctx.strokeStyle = `rgba(245, 158, 11, ${0.18 + s * 0.08})`;
+      });
+
+      // Plume 2: Central & Southern Africa Savanna Burning (lon 14°..30°, lat -18°..-6°)
+      const africaFires = [
+        { lon: 20, lat: -8 },
+        { lon: 26, lat: -13 }
+      ];
+
+      africaFires.forEach((fire, idx) => {
+        const fx = ((fire.lon + 180) / 360) * width;
+        const fy = ((90 - fire.lat) / 180) * height;
+        ctx.fillStyle = 'rgba(255, 120, 120, 0.95)';
+        ctx.beginPath();
+        ctx.arc(fx, fy, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        for (let s = 0; s < 4; s++) {
+          const prog = (t * 0.18 + s * 0.25 + idx * 0.4) % 1.0;
+          // Smoke drifts westward out over the Atlantic
+          const sLon = fire.lon - prog * 22 + Math.sin(prog * 5) * 2;
+          const sLat = fire.lat - prog * 3 + Math.cos(prog * 4) * 2;
+          const sx = ((sLon + 180) / 360) * width;
+          const sy = ((90 - sLat) / 180) * height;
+          const sRad = 15 + prog * 18;
+
+          const sGrad = ctx.createRadialGradient(sx, sy, 1, sx, sy, sRad);
+          sGrad.addColorStop(0, 'rgba(239, 35, 60, 0.85)');
+          sGrad.addColorStop(0.5, 'rgba(153, 27, 27, 0.4)');
+          sGrad.addColorStop(1, 'transparent');
+
+          ctx.fillStyle = sGrad;
+          ctx.beginPath();
+          ctx.ellipse(sx, sy, sRad * 1.3, sRad * 0.75, 0.15, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+
+      // 5. Species C: Marine Sea Salt Aerosols (Bright Cyan `#06b6d4`, SVS 5669 AOD ~0.45)
+      // Southern Ocean Circumpolar Roaring Forties (-45° to -65° latitude)
+      // Fluid wavy storm bands spanning full globe width
+      for (let wave = 0; wave < 3; wave++) {
+        const baseLat = -52 - wave * 4;
+        const waveY = ((90 - baseLat) / 180) * height;
+        ctx.beginPath();
+        ctx.lineWidth = 14 + wave * 6;
+        ctx.moveTo(0, waveY);
+
+        for (let x = 0; x <= width; x += 20) {
+          const cy = waveY + Math.sin(x * 0.014 + t * 4 + wave * 1.5) * (10 + wave * 4);
+          ctx.lineTo(x, cy);
+        }
+        ctx.strokeStyle = `rgba(6, 182, 212, ${0.16 + wave * 0.06})`;
         ctx.stroke();
       }
 
-      // 4. Species B: Biomass Burning Smoke (Fiery Crimson `#ef233c`, SVS AOD ~0.92)
-      // Plume 1: Amazon Basin (lon -62..-48, lat -14..-3)
-      for (let k = 0; k < 6; k++) {
-        const smkOffset = (t * 0.2 + k * 0.16) % 1.0;
-        const smkLon = -58 + smkOffset * 15;
-        const smkLat = -8 - smkOffset * 8 + Math.sin(k + t * 3) * 3;
-        const sx = ((smkLon + 180) / 360) * width;
-        const sy = ((90 - smkLat) / 180) * height;
-        const sRad = 26 + (k % 3) * 12;
+      // Realistic Rotating Extratropical Cyclonic Spirals (4 Major Low-Pressure Eddies)
+      for (let cyc = 0; cyc < 4; cyc++) {
+        const stormProg = (t * 0.15 + cyc * 0.25) % 1.0;
+        const stormLon = -180 + stormProg * 360;
+        const stormLat = -54 + Math.sin(cyc * 2 + t * 3) * 5;
+        const scx = ((stormLon + 180) / 360) * width;
+        const scy = ((90 - stormLat) / 180) * height;
+        const stormRad = 24 + (cyc % 2) * 8;
 
-        const sGrad = ctx.createRadialGradient(sx, sy, 2, sx, sy, sRad);
-        sGrad.addColorStop(0, 'rgba(239, 35, 60, 0.95)');
-        sGrad.addColorStop(0.45, 'rgba(185, 28, 28, 0.6)');
-        sGrad.addColorStop(0.8, 'rgba(127, 29, 29, 0.2)');
-        sGrad.addColorStop(1, 'transparent');
-
-        ctx.fillStyle = sGrad;
-        ctx.beginPath();
-        ctx.ellipse(sx, sy, sRad * 1.3, sRad * 0.85, -0.3, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      // Plume 2: Southern Africa agricultural burning (lon 15..32, lat -18..-6)
-      for (let af = 0; af < 6; af++) {
-        const afOffset = (t * 0.18 + af * 0.16) % 1.0;
-        const afLon = 26 - afOffset * 22;
-        const afLat = -12 + Math.sin(afOffset * 4) * 3;
-        const ax = ((afLon + 180) / 360) * width;
-        const ay = ((90 - afLat) / 180) * height;
-        const aRad = 24 + (af % 3) * 10;
-
-        const aGrad = ctx.createRadialGradient(ax, ay, 2, ax, ay, aRad);
-        aGrad.addColorStop(0, 'rgba(239, 35, 60, 0.9)');
-        aGrad.addColorStop(0.5, 'rgba(153, 27, 27, 0.5)');
-        aGrad.addColorStop(1, 'transparent');
-
-        ctx.fillStyle = aGrad;
-        ctx.beginPath();
-        ctx.ellipse(ax, ay, aRad * 1.4, aRad * 0.8, 0.1, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      // 5. Species C: Marine Sea Salt Aerosols (Bright Cyan `#06b6d4`, SVS AOD ~0.45)
-      // Southern Ocean Circumpolar Jet (-48° to -62° latitude across full globe)
-      const seaY = ((90 - (-55)) / 180) * height;
-      ctx.beginPath();
-      ctx.lineWidth = 26;
-      ctx.moveTo(0, seaY);
-      for (let x = 0; x <= width; x += 25) {
-        const cy = seaY + Math.sin(x * 0.015 + t * 4) * 14;
-        ctx.lineTo(x, cy);
-      }
-      ctx.strokeStyle = 'rgba(6, 182, 212, 0.28)';
-      ctx.stroke();
-
-      // Cyclonic swirls along the southern belt
-      for (let ss = 0; ss < 8; ss++) {
-        const ssX = ((ss * 0.125 + t * 0.18) % 1.0) * width;
-        const ssY = seaY + Math.sin(ss * 1.5 + t * 3) * 12;
-        const ssRad = 24 + (ss % 3) * 8;
-
-        const cGrad = ctx.createRadialGradient(ssX, ssY, 2, ssX, ssY, ssRad);
+        // Core spray glow
+        const cGrad = ctx.createRadialGradient(scx, scy, 2, scx, scy, stormRad);
         cGrad.addColorStop(0, 'rgba(6, 182, 212, 0.85)');
-        cGrad.addColorStop(0.5, 'rgba(14, 116, 144, 0.4)');
+        cGrad.addColorStop(0.5, 'rgba(14, 116, 144, 0.35)');
         cGrad.addColorStop(1, 'transparent');
-
         ctx.fillStyle = cGrad;
         ctx.beginPath();
-        ctx.arc(ssX, ssY, ssRad, 0, Math.PI * 2);
+        ctx.arc(scx, scy, stormRad, 0, Math.PI * 2);
         ctx.fill();
 
-        // Cyclonic eddy spiral curl
-        ctx.strokeStyle = 'rgba(125, 211, 252, 0.6)';
-        ctx.lineWidth = 1.8;
+        // Realistic spiral cyclone arm curl
+        ctx.save();
+        ctx.strokeStyle = 'rgba(125, 211, 252, 0.65)';
+        ctx.lineWidth = 1.6;
         ctx.beginPath();
-        ctx.arc(ssX, ssY, ssRad * 0.55, 0, Math.PI * 1.6);
+        const baseAngle = t * 4 + cyc * 1.5;
+        for (let a = 0; a < Math.PI * 2.2; a += 0.2) {
+          const r = (a / (Math.PI * 2)) * stormRad;
+          const ax = scx + Math.cos(baseAngle + a) * r;
+          const ay = scy + Math.sin(baseAngle + a) * r * 0.7;
+          if (a === 0) ctx.moveTo(ax, ay);
+          else ctx.lineTo(ax, ay);
+        }
         ctx.stroke();
+        ctx.restore();
       }
 
-      // 6. Species D: Industrial Sulfate Haze (Luminous Pale White `#f8fafc`, SVS AOD ~0.55)
-      // East Asia (lon 112..138, lat 28..42)
+      // 6. Species D: Industrial Sulfate Haze (Luminous Pale White `#f8fafc`, SVS 5669 AOD ~0.55)
+      // East Asia Coastal Industrial Corridor (lon 110°..138°, lat 26°..42°)
       for (let sf = 0; sf < 4; sf++) {
-        const sfLon = 118 + sf * 6;
-        const sfLat = 34 + Math.sin(t * 3 + sf) * 3;
+        const sfProg = (t * 0.12 + sf * 0.25) % 1.0;
+        const sfLon = 114 + sfProg * 22;
+        const sfLat = 32 + Math.sin(sf * 1.5 + t * 2) * 4;
         const fx = ((sfLon + 180) / 360) * width;
         const fy = ((90 - sfLat) / 180) * height;
-        const fRad = 32 + sf * 8;
+        const fRad = 26 + sf * 8;
 
         const fGrad = ctx.createRadialGradient(fx, fy, 2, fx, fy, fRad);
-        fGrad.addColorStop(0, 'rgba(248, 250, 252, 0.9)');
-        fGrad.addColorStop(0.45, 'rgba(203, 213, 225, 0.5)');
-        fGrad.addColorStop(0.8, 'rgba(148, 163, 184, 0.18)');
+        fGrad.addColorStop(0, 'rgba(248, 250, 252, 0.8)');
+        fGrad.addColorStop(0.45, 'rgba(203, 213, 225, 0.35)');
+        fGrad.addColorStop(0.85, 'rgba(148, 163, 184, 0.1)');
         fGrad.addColorStop(1, 'transparent');
 
         ctx.fillStyle = fGrad;
@@ -650,37 +712,49 @@ export default function EicVisualSonifier({
         ctx.fill();
       }
 
-      // 7. Scientific HUD Overlay (Crystal Clear Bold Typography)
+      // Secondary subtle sulfate over Eastern North America
+      const usX = ((-82 + 180) / 360) * width;
+      const usY = ((90 - 38) / 180) * height;
+      const usGrad = ctx.createRadialGradient(usX, usY, 2, usX, usY, 30);
+      usGrad.addColorStop(0, 'rgba(248, 250, 252, 0.5)');
+      usGrad.addColorStop(0.6, 'rgba(203, 213, 225, 0.2)');
+      usGrad.addColorStop(1, 'transparent');
+      ctx.fillStyle = usGrad;
+      ctx.beginPath();
+      ctx.arc(usX, usY, 30, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 7. Scientific HUD Overlay & Unobstructed Header Legend (Top-Left Position)
       ctx.save();
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 11px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
       ctx.shadowColor = 'rgba(6, 182, 212, 0.5)';
       ctx.shadowBlur = 2;
-      ctx.fillText('NASA GSFC • GEOS-FP 550nm AEROSOL OPTICAL DEPTH (SVS 5669)', 16, 22);
+      ctx.fillText('NASA GSFC • GEOS-FP 550nm AEROSOL OPTICAL DEPTH (SVS 5669)', 16, 20);
 
-      // Color legend chips
+      // Color legend chips positioned cleanly under the title (never occluded by bottom telemetry bar)
       ctx.shadowBlur = 0;
-      ctx.font = 'bold 10px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      ctx.font = 'bold 9px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 
       ctx.fillStyle = '#f59e0b';
-      ctx.fillRect(16, height - 18, 10, 10);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText('DUST (Saharan Air Layer)', 32, height - 9);
+      ctx.fillRect(16, 28, 8, 8);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+      ctx.fillText('DUST (Saharan Air Layer)', 28, 35);
 
       ctx.fillStyle = '#ef233c';
-      ctx.fillRect(200, height - 18, 10, 10);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText('SMOKE (Biomass Fires)', 216, height - 9);
+      ctx.fillRect(165, 28, 8, 8);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+      ctx.fillText('SMOKE (Biomass Fires)', 177, 35);
 
       ctx.fillStyle = '#06b6d4';
-      ctx.fillRect(380, height - 18, 10, 10);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText('SEA SALT (Southern Jets)', 396, height - 9);
+      ctx.fillRect(310, 28, 8, 8);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+      ctx.fillText('SEA SALT (Southern Jets)', 322, 35);
 
       ctx.fillStyle = '#f1f5f9';
-      ctx.fillRect(560, height - 18, 10, 10);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText('SULFATE (East Asia)', 576, height - 9);
+      ctx.fillRect(470, 28, 8, 8);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+      ctx.fillText('SULFATE (Industrial Haze)', 482, 35);
       ctx.restore();
 
     } else if (type === 'lightning') {
