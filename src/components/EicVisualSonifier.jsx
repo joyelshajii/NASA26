@@ -12,6 +12,8 @@ import {
   Tv
 } from 'lucide-react';
 
+import { CONTINENT_POLYGONS } from '../utils/geoUtils.js';
+
 const PENTATONIC_SCALE = ['A3', 'C4', 'D4', 'E4', 'G4', 'A4', 'C5', 'D5', 'E5', 'G5'];
 
 /**
@@ -441,188 +443,205 @@ export default function EicVisualSonifier({
     } else if (type === 'aerosols') {
       // SVS 5669: Authentic NASA GEOS-FP Aerosol Optical Depth (AOD) Plumes
       // Deep space / ocean background
-      ctx.fillStyle = '#070b14';
+      ctx.fillStyle = '#060a14';
       ctx.fillRect(0, 0, width, height);
 
-      // 1. Subtle latitude and longitude coordinates
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+      // 1. Latitude and Longitude Graticule (Equirectangular standard)
       ctx.lineWidth = 1;
-      ctx.beginPath();
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.1)';
       ctx.setLineDash([4, 4]);
-      // Equator
-      ctx.moveTo(0, height * 0.5);
-      ctx.lineTo(width, height * 0.5);
-      // Tropics
-      ctx.moveTo(0, height * 0.35);
-      ctx.lineTo(width, height * 0.35);
-      ctx.moveTo(0, height * 0.65);
-      ctx.lineTo(width, height * 0.65);
-      // Prime Meridian
-      ctx.moveTo(width * 0.5, 0);
-      ctx.lineTo(width * 0.5, height);
-      ctx.stroke();
+
+      // Latitudes (-60, -30, Equator, +30, +60)
+      for (let lat = -60; lat <= 60; lat += 30) {
+        const y = ((90 - lat) / 180) * height;
+        ctx.beginPath();
+        if (lat === 0) {
+          ctx.strokeStyle = 'rgba(56, 189, 248, 0.28)';
+          ctx.lineWidth = 1.4;
+        } else {
+          ctx.strokeStyle = 'rgba(56, 189, 248, 0.1)';
+          ctx.lineWidth = 1;
+        }
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      }
+
+      // Longitudes (-120, -60, Prime Meridian, +60, +120)
+      for (let lon = -120; lon <= 120; lon += 60) {
+        const x = ((lon + 180) / 360) * width;
+        ctx.beginPath();
+        if (lon === 0) {
+          ctx.strokeStyle = 'rgba(56, 189, 248, 0.28)';
+          ctx.lineWidth = 1.4;
+        } else {
+          ctx.strokeStyle = 'rgba(56, 189, 248, 0.1)';
+          ctx.lineWidth = 1;
+        }
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+      }
       ctx.setLineDash([]);
 
-      // 2. Realistic Continental Landmasses
-      const drawContinent = (pts) => {
-        if (!pts || pts.length < 3) return;
+      // 2. Authentic Global Continents from CONTINENT_POLYGONS (Exact Coastlines)
+      for (const continent of CONTINENT_POLYGONS) {
+        if (!continent.pts || continent.pts.length < 3) continue;
+
         ctx.beginPath();
-        ctx.moveTo(pts[0][0] * width, pts[0][1] * height);
-        for (let i = 1; i < pts.length; i++) {
-          ctx.lineTo(pts[i][0] * width, pts[i][1] * height);
+        const p0 = continent.pts[0];
+        ctx.moveTo(((p0[0] + 180) / 360) * width, ((90 - p0[1]) / 180) * height);
+        for (let i = 1; i < continent.pts.length; i++) {
+          const pt = continent.pts[i];
+          ctx.lineTo(((pt[0] + 180) / 360) * width, ((90 - pt[1]) / 180) * height);
         }
         ctx.closePath();
-        ctx.fillStyle = '#111827';
+
+        // Dark terrain fill
+        ctx.fillStyle = '#0f172a';
         ctx.fill();
-        ctx.strokeStyle = 'rgba(75, 85, 99, 0.45)';
+
+        // Glowing cyan coastline contour
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
         ctx.lineWidth = 1.2;
+        ctx.lineJoin = 'round';
         ctx.stroke();
-      };
+      }
 
-      // North America
-      drawContinent([
-        [0.05, 0.18], [0.10, 0.14], [0.16, 0.13], [0.22, 0.15], [0.26, 0.18],
-        [0.25, 0.25], [0.22, 0.30], [0.23, 0.36], [0.25, 0.38], [0.20, 0.42],
-        [0.17, 0.45], [0.14, 0.38], [0.11, 0.34], [0.08, 0.28], [0.04, 0.22]
-      ]);
-      // Greenland
-      drawContinent([
-        [0.31, 0.08], [0.37, 0.07], [0.39, 0.14], [0.34, 0.18], [0.30, 0.14]
-      ]);
-      // South America
-      drawContinent([
-        [0.21, 0.46], [0.26, 0.45], [0.32, 0.49], [0.34, 0.56], [0.30, 0.66],
-        [0.27, 0.76], [0.24, 0.84], [0.22, 0.82], [0.21, 0.70], [0.19, 0.56],
-        [0.19, 0.49]
-      ]);
-      // Europe
-      drawContinent([
-        [0.44, 0.22], [0.48, 0.17], [0.53, 0.17], [0.54, 0.23], [0.51, 0.30],
-        [0.47, 0.32], [0.44, 0.29]
-      ]);
-      // Africa
-      drawContinent([
-        [0.42, 0.34], [0.52, 0.32], [0.57, 0.37], [0.57, 0.48], [0.55, 0.62],
-        [0.51, 0.74], [0.47, 0.72], [0.44, 0.58], [0.41, 0.46], [0.39, 0.38]
-      ]);
-      // Asia
-      drawContinent([
-        [0.55, 0.18], [0.66, 0.14], [0.78, 0.15], [0.88, 0.18], [0.86, 0.28],
-        [0.82, 0.36], [0.76, 0.42], [0.71, 0.40], [0.65, 0.42], [0.60, 0.36],
-        [0.56, 0.26]
-      ]);
-      // Australia
-      drawContinent([
-        [0.78, 0.62], [0.85, 0.58], [0.90, 0.63], [0.89, 0.73], [0.82, 0.76],
-        [0.76, 0.70]
-      ]);
-      // Antarctica Ice Shelf
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(0, height * 0.90, width, height * 0.10);
+      // 3. Species A: Saharan Mineral Dust (Golden Amber / Orange, SVS AOD ~0.75)
+      // Flows West from Sahara (lon -17..+25, lat 14..24) across the Atlantic to Caribbean/Amazon (lon -65, lat 12..18)
+      // Natural fluid billowing plumes (no geometric bars)
+      for (let i = 0; i < 9; i++) {
+        const flowProg = (t * 0.25 + i * 0.11) % 1.0;
+        // Lon sweeps from +20 (Sahara) westward to -75 (Caribbean/Amazon)
+        const dustLon = 20 - flowProg * 95;
+        const dustLat = 17 + Math.sin(dustLon * 0.05 + t * 3 + i) * 5;
+        const cx = ((dustLon + 180) / 360) * width;
+        const cy = ((90 - dustLat) / 180) * height;
+        const radX = 38 + (i % 3) * 16;
+        const radY = 20 + (i % 2) * 10;
 
-      // 3. Species A: Saharan Mineral Dust Plumes (Golden Amber / Yellow, AOD ~0.75)
-      // Flows West from West Africa (Mauritania/Senegal) across the Atlantic to Caribbean & Amazon
-      const dustFlow = (t * 0.22) % 1.0;
-      for (let arc = 0; arc < 5; arc++) {
-        const offset = (dustFlow + arc * 0.2) % 1.0;
-        const startX = width * (0.54 - offset * 0.32);
-        const startY = height * (0.34 + offset * 0.10 + Math.sin(offset * Math.PI * 2 + arc) * 0.04);
-        const dustRad = 35 + arc * 14;
-
-        const dGrad = ctx.createRadialGradient(startX, startY, 4, startX, startY, dustRad);
-        dGrad.addColorStop(0, 'rgba(251, 191, 36, 0.95)');
-        dGrad.addColorStop(0.4, 'rgba(245, 158, 11, 0.65)');
-        dGrad.addColorStop(0.75, 'rgba(217, 119, 6, 0.3)');
+        const dGrad = ctx.createRadialGradient(cx, cy, 2, cx, cy, radX);
+        dGrad.addColorStop(0, 'rgba(251, 191, 36, 0.9)');
+        dGrad.addColorStop(0.35, 'rgba(245, 158, 11, 0.65)');
+        dGrad.addColorStop(0.7, 'rgba(217, 119, 6, 0.25)');
         dGrad.addColorStop(1, 'transparent');
 
         ctx.fillStyle = dGrad;
         ctx.beginPath();
-        ctx.ellipse(startX, startY, dustRad * 1.5, dustRad * 0.7, -0.15, 0, Math.PI * 2);
+        ctx.ellipse(cx, cy, radX, radY, -0.15, 0, Math.PI * 2);
         ctx.fill();
       }
 
-      // Continuous Saharan dust streamline arc
-      ctx.save();
-      ctx.strokeStyle = 'rgba(251, 191, 36, 0.45)';
-      ctx.lineWidth = 14;
-      ctx.beginPath();
-      ctx.moveTo(width * 0.55, height * 0.35);
-      ctx.quadraticCurveTo(width * 0.38, height * 0.38 + Math.sin(t * 3) * 6, width * 0.22, height * 0.44);
-      ctx.stroke();
-      ctx.restore();
+      // Continuous fluid dust streamlines
+      for (let s = 0; s < 3; s++) {
+        ctx.beginPath();
+        ctx.lineWidth = 12 + s * 6;
+        const startX = ((15 + 180) / 360) * width;
+        const startY = ((90 - (19 - s * 3)) / 180) * height;
+        ctx.moveTo(startX, startY);
 
-      // 4. Species B: Biomass Burning Smoke (Fiery Crimson Red `#ef233c`, AOD ~0.92)
-      // Plume 1: Amazon Basin (South America)
-      for (let smk = 0; smk < 4; smk++) {
-        const smkOffset = (t * 0.18 + smk * 0.25) % 1.0;
-        const sx = width * (0.24 + smkOffset * 0.08);
-        const sy = height * (0.54 + Math.sin(smkOffset * Math.PI + smk) * 0.06);
-        const sRad = 28 + smk * 10;
+        for (let x = startX; x >= ((-65 + 180) / 360) * width; x -= 20) {
+          const normProg = (startX - x) / (startX - ((-65 + 180) / 360) * width);
+          const waveY = startY + normProg * 25 + Math.sin(x * 0.02 + t * 4 + s) * 9;
+          ctx.lineTo(x, waveY);
+        }
+        ctx.strokeStyle = `rgba(245, 158, 11, ${0.18 + s * 0.08})`;
+        ctx.stroke();
+      }
 
-        const sGrad = ctx.createRadialGradient(sx, sy, 3, sx, sy, sRad);
-        sGrad.addColorStop(0, 'rgba(239, 35, 60, 0.92)');
-        sGrad.addColorStop(0.5, 'rgba(185, 28, 28, 0.6)');
+      // 4. Species B: Biomass Burning Smoke (Fiery Crimson `#ef233c`, SVS AOD ~0.92)
+      // Plume 1: Amazon Basin (lon -62..-48, lat -14..-3)
+      for (let k = 0; k < 6; k++) {
+        const smkOffset = (t * 0.2 + k * 0.16) % 1.0;
+        const smkLon = -58 + smkOffset * 15;
+        const smkLat = -8 - smkOffset * 8 + Math.sin(k + t * 3) * 3;
+        const sx = ((smkLon + 180) / 360) * width;
+        const sy = ((90 - smkLat) / 180) * height;
+        const sRad = 26 + (k % 3) * 12;
+
+        const sGrad = ctx.createRadialGradient(sx, sy, 2, sx, sy, sRad);
+        sGrad.addColorStop(0, 'rgba(239, 35, 60, 0.95)');
+        sGrad.addColorStop(0.45, 'rgba(185, 28, 28, 0.6)');
+        sGrad.addColorStop(0.8, 'rgba(127, 29, 29, 0.2)');
         sGrad.addColorStop(1, 'transparent');
 
         ctx.fillStyle = sGrad;
         ctx.beginPath();
-        ctx.ellipse(sx, sy, sRad * 1.3, sRad * 0.8, -0.3, 0, Math.PI * 2);
+        ctx.ellipse(sx, sy, sRad * 1.3, sRad * 0.85, -0.3, 0, Math.PI * 2);
         ctx.fill();
       }
 
-      // Plume 2: Central/Southern Africa (Angola/Zambia agricultural fires)
-      for (let af = 0; af < 4; af++) {
-        const afOffset = (t * 0.16 + af * 0.25) % 1.0;
-        const ax = width * (0.54 - afOffset * 0.12);
-        const ay = height * (0.58 + Math.sin(afOffset * 3) * 0.04);
-        const aRad = 26 + af * 8;
+      // Plume 2: Southern Africa agricultural burning (lon 15..32, lat -18..-6)
+      for (let af = 0; af < 6; af++) {
+        const afOffset = (t * 0.18 + af * 0.16) % 1.0;
+        const afLon = 26 - afOffset * 22;
+        const afLat = -12 + Math.sin(afOffset * 4) * 3;
+        const ax = ((afLon + 180) / 360) * width;
+        const ay = ((90 - afLat) / 180) * height;
+        const aRad = 24 + (af % 3) * 10;
 
         const aGrad = ctx.createRadialGradient(ax, ay, 2, ax, ay, aRad);
-        aGrad.addColorStop(0, 'rgba(239, 35, 60, 0.88)');
-        aGrad.addColorStop(0.6, 'rgba(153, 27, 27, 0.45)');
+        aGrad.addColorStop(0, 'rgba(239, 35, 60, 0.9)');
+        aGrad.addColorStop(0.5, 'rgba(153, 27, 27, 0.5)');
         aGrad.addColorStop(1, 'transparent');
 
         ctx.fillStyle = aGrad;
         ctx.beginPath();
-        ctx.ellipse(ax, ay, aRad * 1.4, aRad * 0.75, 0.2, 0, Math.PI * 2);
+        ctx.ellipse(ax, ay, aRad * 1.4, aRad * 0.8, 0.1, 0, Math.PI * 2);
         ctx.fill();
       }
 
-      // 5. Species C: Marine Sea Salt Aerosols (Bright Cyan `#06b6d4`, AOD ~0.45)
-      // Southern Ocean Circumpolar Storm Track (Roaring Forties)
-      for (let ss = 0; ss < 7; ss++) {
-        const ssX = ((ss * 0.15 + t * 0.25) % 1.0) * width;
-        const ssY = height * (0.78 + Math.sin(ss + t * 4) * 0.05);
-        const ssRad = 32 + (ss % 3) * 12;
+      // 5. Species C: Marine Sea Salt Aerosols (Bright Cyan `#06b6d4`, SVS AOD ~0.45)
+      // Southern Ocean Circumpolar Jet (-48° to -62° latitude across full globe)
+      const seaY = ((90 - (-55)) / 180) * height;
+      ctx.beginPath();
+      ctx.lineWidth = 26;
+      ctx.moveTo(0, seaY);
+      for (let x = 0; x <= width; x += 25) {
+        const cy = seaY + Math.sin(x * 0.015 + t * 4) * 14;
+        ctx.lineTo(x, cy);
+      }
+      ctx.strokeStyle = 'rgba(6, 182, 212, 0.28)';
+      ctx.stroke();
 
-        const cGrad = ctx.createRadialGradient(ssX, ssY, 4, ssX, ssY, ssRad);
+      // Cyclonic swirls along the southern belt
+      for (let ss = 0; ss < 8; ss++) {
+        const ssX = ((ss * 0.125 + t * 0.18) % 1.0) * width;
+        const ssY = seaY + Math.sin(ss * 1.5 + t * 3) * 12;
+        const ssRad = 24 + (ss % 3) * 8;
+
+        const cGrad = ctx.createRadialGradient(ssX, ssY, 2, ssX, ssY, ssRad);
         cGrad.addColorStop(0, 'rgba(6, 182, 212, 0.85)');
-        cGrad.addColorStop(0.5, 'rgba(14, 116, 144, 0.45)');
+        cGrad.addColorStop(0.5, 'rgba(14, 116, 144, 0.4)');
         cGrad.addColorStop(1, 'transparent');
 
         ctx.fillStyle = cGrad;
         ctx.beginPath();
-        ctx.ellipse(ssX, ssY, ssRad * 1.8, ssRad * 0.6, 0.05, 0, Math.PI * 2);
+        ctx.arc(ssX, ssY, ssRad, 0, Math.PI * 2);
         ctx.fill();
 
-        // Cyclonic eddy curl
-        ctx.strokeStyle = 'rgba(6, 182, 212, 0.5)';
-        ctx.lineWidth = 2;
+        // Cyclonic eddy spiral curl
+        ctx.strokeStyle = 'rgba(125, 211, 252, 0.6)';
+        ctx.lineWidth = 1.8;
         ctx.beginPath();
-        ctx.arc(ssX, ssY, ssRad * 0.6, 0, Math.PI * 1.5);
+        ctx.arc(ssX, ssY, ssRad * 0.55, 0, Math.PI * 1.6);
         ctx.stroke();
       }
 
-      // 6. Species D: Industrial Sulfate Haze (Luminous Pale White, AOD ~0.55)
-      // East Asia (Eastern China & Sea of Japan)
-      for (let sf = 0; sf < 3; sf++) {
-        const fx = width * (0.76 + sf * 0.04);
-        const fy = height * (0.32 + Math.sin(t * 3 + sf) * 0.03);
-        const fRad = 30 + sf * 12;
+      // 6. Species D: Industrial Sulfate Haze (Luminous Pale White `#f8fafc`, SVS AOD ~0.55)
+      // East Asia (lon 112..138, lat 28..42)
+      for (let sf = 0; sf < 4; sf++) {
+        const sfLon = 118 + sf * 6;
+        const sfLat = 34 + Math.sin(t * 3 + sf) * 3;
+        const fx = ((sfLon + 180) / 360) * width;
+        const fy = ((90 - sfLat) / 180) * height;
+        const fRad = 32 + sf * 8;
 
         const fGrad = ctx.createRadialGradient(fx, fy, 2, fx, fy, fRad);
-        fGrad.addColorStop(0, 'rgba(248, 250, 252, 0.85)');
-        fGrad.addColorStop(0.5, 'rgba(203, 213, 225, 0.4)');
+        fGrad.addColorStop(0, 'rgba(248, 250, 252, 0.9)');
+        fGrad.addColorStop(0.45, 'rgba(203, 213, 225, 0.5)');
+        fGrad.addColorStop(0.8, 'rgba(148, 163, 184, 0.18)');
         fGrad.addColorStop(1, 'transparent');
 
         ctx.fillStyle = fGrad;
@@ -631,31 +650,38 @@ export default function EicVisualSonifier({
         ctx.fill();
       }
 
-      // 7. NASA SVS 5669 Scientific HUD Watermark & Legend
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-      ctx.font = 'bold 10px "Courier New", monospace';
+      // 7. Scientific HUD Overlay (Crystal Clear Bold Typography)
+      ctx.save();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 11px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      ctx.shadowColor = 'rgba(6, 182, 212, 0.5)';
+      ctx.shadowBlur = 2;
       ctx.fillText('NASA GSFC • GEOS-FP 550nm AEROSOL OPTICAL DEPTH (SVS 5669)', 16, 22);
 
-      // Color legend chips matching official NASA Goddard SVS visualization
+      // Color legend chips
+      ctx.shadowBlur = 0;
+      ctx.font = 'bold 10px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+
       ctx.fillStyle = '#f59e0b';
-      ctx.fillRect(16, height - 20, 10, 10);
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-      ctx.fillText('DUST (Sahara SAL)', 32, height - 12);
+      ctx.fillRect(16, height - 18, 10, 10);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText('DUST (Saharan Air Layer)', 32, height - 9);
 
       ctx.fillStyle = '#ef233c';
-      ctx.fillRect(175, height - 20, 10, 10);
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-      ctx.fillText('SMOKE (Biomass Fires)', 191, height - 12);
+      ctx.fillRect(200, height - 18, 10, 10);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText('SMOKE (Biomass Fires)', 216, height - 9);
 
       ctx.fillStyle = '#06b6d4';
-      ctx.fillRect(360, height - 20, 10, 10);
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-      ctx.fillText('SEA SALT (Southern Jets)', 376, height - 12);
+      ctx.fillRect(380, height - 18, 10, 10);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText('SEA SALT (Southern Jets)', 396, height - 9);
 
-      ctx.fillStyle = '#e2e8f0';
-      ctx.fillRect(560, height - 20, 10, 10);
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-      ctx.fillText('SULFATE (East Asia)', 576, height - 12);
+      ctx.fillStyle = '#f1f5f9';
+      ctx.fillRect(560, height - 18, 10, 10);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText('SULFATE (East Asia)', 576, height - 9);
+      ctx.restore();
 
     } else if (type === 'lightning') {
       // SVS 5011: Lightning events detected from ISS - Orbital view with bursts
