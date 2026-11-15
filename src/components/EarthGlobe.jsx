@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react'
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { Globe, RotateCcw, Play, Pause, ChevronDown, ChevronUp } from 'lucide-react';
+import { Globe, RotateCcw, Play, Pause, ChevronDown, ChevronUp, Maximize2, Minimize2 } from 'lucide-react';
 import { DEFAULT_REGIONS, CONTINENT_POLYGONS, latLonToVector3 } from '../utils/geoUtils.js';
 
 // Module-level GLTF cache so model starts downloading and parsing immediately on script load
@@ -354,6 +354,29 @@ export default function EarthGlobe({
   useEffect(() => {
     isCardMinimizedRef.current = isCardMinimized;
   }, [isCardMinimized]);
+
+  // Full Screen Maximize Mode State (^ Option)
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const handleToggleFullscreen = useCallback(() => {
+    setIsFullscreen((prev) => !prev);
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 50);
+  }, []);
+
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setIsFullscreen(false);
+        setTimeout(() => {
+          window.dispatchEvent(new Event('resize'));
+        }, 50);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isFullscreen]);
 
   // Dynamic props & state refs to avoid tearing down the WebGL scene on state changes
   const audioLevelRef = useRef(audioLevel);
@@ -1067,7 +1090,11 @@ export default function EarthGlobe({
   }, [currentRegion, focusRegion]);
 
   return (
-    <div className={`relative w-full h-full min-h-[400px] overflow-hidden select-none ${theme === 'light' ? 'bg-transparent' : 'bg-black'} font-manrope ${className}`}>
+    <div className={`select-none font-manrope transition-all duration-300 ${
+      isFullscreen
+        ? 'fixed inset-0 z-50 w-screen h-screen bg-black'
+        : `relative w-full h-full min-h-[400px] overflow-hidden ${theme === 'light' ? 'bg-transparent' : 'bg-black'} ${className}`
+    }`}>
       {/* 3D WebGL Canvas Container */}
       <div ref={mountRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
 
@@ -1137,6 +1164,32 @@ export default function EarthGlobe({
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Reset View</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleToggleFullscreen}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer ${
+                isFullscreen
+                  ? 'bg-[#ef233c] text-white border-[#ef233c] shadow-lg shadow-red-950/60'
+                  : (theme === 'light'
+                      ? 'bg-white/90 border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-950'
+                      : 'bg-black/80 border-zinc-800 text-zinc-300 hover:bg-zinc-900 hover:text-white hover:border-zinc-700')
+              }`}
+              title={isFullscreen ? 'Exit Full Screen (Esc)' : 'Maximize Full Screen (^)'}
+              aria-label={isFullscreen ? 'Exit Full Screen' : 'Maximize Full Screen'}
+            >
+              {isFullscreen ? (
+                <>
+                  <Minimize2 className="w-3.5 h-3.5" />
+                  <span>Minimize</span>
+                </>
+              ) : (
+                <>
+                  <Maximize2 className="w-3.5 h-3.5" />
+                  <span>Maximize ^</span>
+                </>
+              )}
             </button>
           </div>
         )}

@@ -79,6 +79,7 @@ export const regionalHotspots = [
   {
     id: 'amazon',
     name: 'Amazon Rainforest',
+    color: '#10b981',
     coordinates: [-3.4653, -62.2159],
     tempAnomaly: 1.15,
     windSpeed: 2.8,
@@ -89,6 +90,7 @@ export const regionalHotspots = [
   {
     id: 'sahara',
     name: 'Sahara Desert',
+    color: '#f59e0b',
     coordinates: [23.4162, 25.6628],
     tempAnomaly: 1.85,
     windSpeed: 8.5,
@@ -99,6 +101,7 @@ export const regionalHotspots = [
   {
     id: 'arctic',
     name: 'Arctic Ocean (Svalbard)',
+    color: '#38bdf8',
     coordinates: [78.2232, 15.6267],
     tempAnomaly: 2.80,
     windSpeed: 6.2,
@@ -109,6 +112,7 @@ export const regionalHotspots = [
   {
     id: 'great-barrier-reef',
     name: 'Great Barrier Reef',
+    color: '#06b6d4',
     coordinates: [-18.2871, 147.6992],
     tempAnomaly: 1.42,
     windSpeed: 5.1,
@@ -119,6 +123,7 @@ export const regionalHotspots = [
   {
     id: 'indus-gangetic',
     name: 'Indo-Gangetic Basin',
+    color: '#ef233c',
     coordinates: [28.6139, 77.2090],
     tempAnomaly: 1.38,
     windSpeed: 3.4,

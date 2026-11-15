@@ -74,6 +74,7 @@ export default function App() {
   // Planetary Exploration States
   const [currentYear, setCurrentYear] = useState(2026);
   const [activeRegionId, setActiveRegionId] = useState('amazon');
+  const [hoveredRegionId, setHoveredRegionId] = useState(null);
   const [regionSelectionTrigger, setRegionSelectionTrigger] = useState(0);
   const [activeStoryId, setActiveStoryId] = useState(null);
 
@@ -997,9 +998,9 @@ export default function App() {
               togglePlay={togglePlay}
             />
 
-            <div id="bento-stage" className="scroll-mt-24 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 h-auto">
+            <div id="bento-stage" className="scroll-mt-24 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 h-auto">
               {/* Main Feature Card: 3D Earth Globe */}
-              <div className={`lg:col-span-2 lg:row-span-2 group relative overflow-hidden p-6 sm:p-7 border transition-all rounded-2xl flex flex-col min-h-[560px] ${
+              <div className={`lg:col-span-3 lg:row-span-2 group relative overflow-hidden p-6 sm:p-7 border transition-all rounded-2xl flex flex-col min-h-[560px] ${
                 isPlaying 
                   ? isLight 
                     ? 'border-[#ef233c]/40 bg-white shadow-xl shadow-red-500/10 ring-1 ring-[#ef233c]/30'
@@ -1082,25 +1083,45 @@ export default function App() {
                     />
                   </div>
 
-                  <div className={`mt-4 pt-3 border-t flex flex-wrap items-center justify-between gap-2 ${
+                  <div className={`mt-2 pt-2 border-t flex flex-wrap items-center justify-between gap-2 ${
                     isLight ? 'border-slate-200' : 'border-white/10'
                   }`}>
                     <div className="flex flex-wrap items-center gap-1.5">
-                      {regionalHotspots.map((r, idx) => (
-                        <button
-                          key={r.id}
-                          onClick={() => handleSelectRegion(r.id)}
-                          className={`px-3 py-1 rounded-full text-xs font-manrope tracking-wider uppercase transition-all cursor-pointer ${
-                            activeRegionId === r.id 
-                              ? 'bg-[#ef233c] text-white font-bold' 
-                              : isLight 
-                                ? 'bg-slate-100 border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-200' 
-                                : 'bg-white/5 border border-white/10 text-zinc-400 hover:text-white'
-                          }`}
-                        >
-                          {idx + 1}. {r.name.split(' ')[0]}
-                        </button>
-                      ))}
+                      {regionalHotspots.map((r) => {
+                        const isHovered = hoveredRegionId === r.id;
+                        const isSelected = activeRegionId === r.id;
+                        return (
+                          <div key={r.id} className="relative">
+                            <button
+                              onClick={() => handleSelectRegion(r.id)}
+                              onMouseEnter={() => setHoveredRegionId(r.id)}
+                              onMouseLeave={() => setHoveredRegionId(null)}
+                              title={r.name}
+                              className={`group flex items-center gap-2 px-3 py-1 rounded-full text-xs font-manrope font-semibold transition-all cursor-pointer ${
+                                isSelected 
+                                  ? 'bg-[#ef233c] text-white shadow-md shadow-red-950/40' 
+                                  : isLight 
+                                    ? 'bg-slate-100 border border-slate-200 text-slate-700 hover:text-slate-950 hover:bg-slate-200' 
+                                    : 'bg-white/5 border border-white/10 text-zinc-300 hover:text-white hover:bg-white/10'
+                              }`}
+                            >
+                              <span
+                                className="w-2 h-2 rounded-full shrink-0 shadow-xs transition-transform group-hover:scale-125"
+                                style={{ backgroundColor: r.color }}
+                              />
+                              <span>{isHovered ? r.name : (r.name.split(' ')[0])}</span>
+                            </button>
+
+                            {/* Hover tooltip providing full region name */}
+                            {isHovered && (
+                              <div className="absolute -top-9 left-1/2 -translate-x-1/2 px-2.5 py-1 bg-zinc-950 text-white text-[11px] font-semibold font-manrope rounded-lg shadow-xl border border-white/20 whitespace-nowrap pointer-events-none z-30 flex items-center gap-1.5 animate-fade-in">
+                                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: r.color }} />
+                                <span>{r.name}</span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                     <div className="flex items-center gap-1 text-xs font-manrope text-[#ef233c]">
                       <span>EXPLORE</span>
@@ -1255,7 +1276,7 @@ export default function App() {
               {/* Feature 3: Curated Track 1 */}
               <div 
                 onClick={() => handleSelectStory('arctic-retreat')}
-                className={`group relative overflow-hidden p-6 sm:p-7 border transition-all rounded-xl cursor-pointer ${
+                className={`lg:col-span-1 group relative overflow-hidden p-6 sm:p-7 border transition-all rounded-xl cursor-pointer ${
                   activeStoryId === 'arctic-retreat' 
                     ? isLight 
                       ? 'border-[#ef233c] bg-white shadow-xl shadow-red-500/15 ring-1 ring-[#ef233c]/30' 
@@ -1308,7 +1329,7 @@ export default function App() {
               {/* Feature 4: Curated Track 2 */}
               <div 
                 onClick={() => handleSelectStory('amazon-pulse')}
-                className={`group relative overflow-hidden p-6 sm:p-7 border transition-all rounded-xl cursor-pointer ${
+                className={`lg:col-span-1 group relative overflow-hidden p-6 sm:p-7 border transition-all rounded-xl cursor-pointer ${
                   activeStoryId === 'amazon-pulse' 
                     ? isLight 
                       ? 'border-[#ef233c] bg-white shadow-xl shadow-red-500/15 ring-1 ring-[#ef233c]/30' 
@@ -1823,13 +1844,15 @@ export default function App() {
             </div>
 
             {/* Blind & Low-Vision Access Shortcut in Modal */}
-            <div className={`relative z-10 mt-5 pt-3.5 border-t flex items-center justify-center gap-2 text-xs font-manrope ${
+            <div className={`relative z-10 mt-5 pt-3.5 border-t text-xs font-manrope ${
               isLight ? 'border-slate-200 text-slate-600' : 'border-white/10 text-zinc-400'
             }`}>
-              <Eye className="w-3.5 h-3.5 text-[#ef233c] shrink-0" />
-              <span>
-                Blind &amp; Low-Vision users: Press <kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${isLight ? 'bg-slate-200 text-slate-800' : 'bg-white/10 text-white'}`}>A</kbd> or click <strong>Blind Access</strong> in header for speech narration.
-              </span>
+              <p className="flex items-start sm:items-center justify-center gap-2 text-left sm:text-center leading-relaxed">
+                <Eye className="w-4 h-4 text-[#ef233c] shrink-0 mt-0.5 sm:mt-0" />
+                <span>
+                  Blind &amp; Low-Vision users: Press <kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${isLight ? 'bg-slate-200 text-slate-800' : 'bg-white/10 text-white'}`}>A</kbd> or click <strong>Blind Access</strong> in header for speech narration.
+                </span>
+              </p>
             </div>
           </div>
         </div>
