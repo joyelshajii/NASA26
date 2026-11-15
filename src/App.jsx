@@ -91,23 +91,6 @@ export default function App() {
   const [screenReaderAnnouncement, setScreenReaderAnnouncement] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Floating scroll-down invitation cue (auto-hides once the user scrolls)
-  const [showFloatingScrollCue, setShowFloatingScrollCue] = useState(true);
-
-  useEffect(() => {
-    let prev = true;
-    const handleScroll = () => {
-      const isVisible = window.scrollY <= 150;
-      if (isVisible !== prev) {
-        prev = isVisible;
-        setShowFloatingScrollCue(isVisible);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
   // Headphones Recommendation States
   // Centered entrance announcement modal (displays on entering)
   const [showHeadphonesEntranceModal, setShowHeadphonesEntranceModal] = useState(true);
@@ -235,23 +218,57 @@ export default function App() {
     }
   }, []);
 
-  // Master Audio Toggle - only scrolls to 3D planetary stage if explicitly requested (e.g. Hero CTA)
-  const togglePlay = useCallback(async (shouldScroll = false) => {
-    if (!isPlaying) {
-      // Close entrance modal if open, show listening toast
+  // Active Audio Source Mode: 'planetary' (3D Earth Globe) | 'visual' (EIC Visual Frame Sonifier) | 'timeline' (Climate Time Machine)
+  const [activeAudioSource, setActiveAudioSource] = useState('planetary');
+  const activeAudioSourceRef = useRef('planetary');
+  useEffect(() => {
+    activeAudioSourceRef.current = activeAudioSource;
+  }, [activeAudioSource]);
+
+  // Dedicated Audio Resumption Handler for each unique mode
+  const resumeAudioSource = useCallback(async (targetMode) => {
+    try {
       setShowHeadphonesEntranceModal(false);
       triggerListeningHeadphonesToast();
-      if (shouldScroll === true) {
-        scrollToVisualStage();
-      }
+
+      await harmonicEngine.init();
       try {
-        await harmonicEngine.init();
-        try {
-          const savedVol = localStorage.getItem('terrasonus_volume');
-          if (savedVol !== null && !isNaN(Number(savedVol))) {
-            harmonicEngine.setVolume(Number(savedVol) / 100);
-          }
-        } catch {}
+        const savedVol = localStorage.getItem('terrasonus_volume');
+        if (savedVol !== null && !isNaN(Number(savedVol))) {
+          harmonicEngine.setVolume(Number(savedVol) / 100);
+        }
+      } catch {}
+
+      setActiveAudioSource(targetMode);
+      activeAudioSourceRef.current = targetMode;
+
+      if (targetMode === 'visual') {
+        // Cut planetary audio so visual sonification carrier is completely clean
+        harmonicEngine.stop();
+        if (typeof harmonicEngine.startSonifier === 'function') {
+          harmonicEngine.startSonifier();
+        }
+        setIsPlaying(true);
+        setHasStartedListening(true);
+        const msg = `Resumed Visual Frame Sonifier.`;
+        setScreenReaderAnnouncement(msg);
+        speakText(msg);
+      } else if (targetMode === 'timeline') {
+        if (typeof harmonicEngine.stopSonifier === 'function') {
+          harmonicEngine.stopSonifier();
+        }
+        harmonicEngine.setTelemetry(currentTelemetry);
+        harmonicEngine.start();
+        setIsPlaying(true);
+        setHasStartedListening(true);
+        const msg = `Resumed Climate Time Machine at Year ${Math.round(currentYear)}.`;
+        setScreenReaderAnnouncement(msg);
+        speakText(msg);
+      } else {
+        // targetMode === 'planetary'
+        if (typeof harmonicEngine.stopSonifier === 'function') {
+          harmonicEngine.stopSonifier();
+        }
         harmonicEngine.setTelemetry(currentTelemetry);
         harmonicEngine.start();
         setIsPlaying(true);
@@ -259,25 +276,94 @@ export default function App() {
         const msg = `Audio playback started. Headphones recommended for full spatial clarity. Year: ${Math.round(currentYear)}. Region: ${activeRegion.name}. Surface temperature anomaly: ${currentTelemetry.tempAnomaly} degrees Celsius.`;
         setScreenReaderAnnouncement(msg);
         speakText(msg);
-      } catch (err) {
-        console.error('Failed to start audio engine:', err);
       }
-    } else {
+    } catch (err) {
+      console.error('Failed to resume audio source:', err);
+    }
+  }, [harmonicEngine, currentTelemetry, currentYear, activeRegion, speakText, triggerListeningHeadphonesToast]);
+
+  // Derived states separating the two distinct audio experiences:
+  // 1. Planetary Sonification Platform & Climate Time Machine (connected together)
+  const isPlanetaryPlaying = isPlaying && (activeAudioSource === 'planetary' || activeAudioSource === 'timeline');
+  // 2. Visual Frame Sonifier & CRT Monitor (completely independent experience)
+  const isVisualPlaying = isPlaying && activeAudioSource === 'visual';
+
+  // Toggle Planetary Sonification Platform & Climate Time Machine (connected together)
+  const togglePlanetary = useCallback(async () => {
+    if (isPlanetaryPlaying) {
+      // Pause Planetary stream
       harmonicEngine.stop();
       if (typeof harmonicEngine.stopSonifier === 'function') {
         harmonicEngine.stopSonifier();
       }
       setIsPlaying(false);
-      setScreenReaderAnnouncement('Audio playback stopped.');
+      setScreenReaderAnnouncement('Planetary acoustic sonification paused.');
+    } else {
+      // Start or switch to Planetary Sonification (ensuring Visual Sonifier is silenced)
+      if (typeof harmonicEngine.stopSonifier === 'function') {
+        harmonicEngine.stopSonifier();
+      }
+      await resumeAudioSource('planetary');
     }
-  }, [isPlaying, currentTelemetry, currentYear, activeRegion, speakText, scrollToVisualStage, triggerListeningHeadphonesToast]);
+  }, [isPlanetaryPlaying, harmonicEngine, resumeAudioSource]);
 
-  // Synchronize telemetry with harmonic engine whenever state changes
-  useEffect(() => {
+  // Toggle Visual Frame Sonifier & CRT Monitor (completely independent)
+  const toggleVisual = useCallback(async () => {
+    if (isVisualPlaying) {
+      // Pause Visual Sonifier
+      if (typeof harmonicEngine.stopSonifier === 'function') {
+        harmonicEngine.stopSonifier();
+      }
+      setIsPlaying(false);
+      setScreenReaderAnnouncement('Visual sonification paused.');
+    } else {
+      // Start or switch to Visual Sonifier (ensuring Planetary audio is silenced)
+      harmonicEngine.stop();
+      await resumeAudioSource('visual');
+    }
+  }, [isVisualPlaying, harmonicEngine, resumeAudioSource]);
+
+  // Master Audio Toggle - used by Header Listen/Pause button, floating button, and keyboard shortcuts
+  const togglePlay = useCallback(async (forcedMode = null, shouldScroll = false) => {
+    if (forcedMode === 'visual') {
+      await toggleVisual();
+      return;
+    }
+    if (forcedMode === 'planetary' || forcedMode === 'timeline') {
+      await togglePlanetary();
+      return;
+    }
+
     if (isPlaying) {
+      // Pause whichever mode is actively playing
+      if (activeAudioSourceRef.current === 'visual') {
+        if (typeof harmonicEngine.stopSonifier === 'function') {
+          harmonicEngine.stopSonifier();
+        }
+      } else {
+        harmonicEngine.stop();
+        if (typeof harmonicEngine.stopSonifier === 'function') {
+          harmonicEngine.stopSonifier();
+        }
+      }
+      setIsPlaying(false);
+      setScreenReaderAnnouncement('Audio playback stopped.');
+    } else {
+      // Resume whichever mode was active
+      const target = activeAudioSourceRef.current || 'planetary';
+      if (shouldScroll === true && target === 'planetary') {
+        scrollToVisualStage();
+      }
+      await resumeAudioSource(target);
+    }
+  }, [isPlaying, toggleVisual, togglePlanetary, harmonicEngine, resumeAudioSource, scrollToVisualStage]);
+
+  // Synchronize telemetry with harmonic engine whenever state changes (only for planetary / timeline)
+  useEffect(() => {
+    if (isPlaying && activeAudioSource !== 'visual') {
       harmonicEngine.setTelemetry(currentTelemetry);
     }
-  }, [currentTelemetry, isPlaying]);
+  }, [currentTelemetry, isPlaying, activeAudioSource, harmonicEngine]);
 
   // Audio level polling for 3D atmospheric reactivity (runs only during active playback)
   useEffect(() => {
@@ -590,8 +676,9 @@ export default function App() {
 
             {/* Primary Action Button (Listen/Pause) */}
             <button 
-              id="nav-get-access-btn" 
-              onClick={togglePlay}
+              id="header-listen-btn" 
+              data-testid="nav-get-access-btn"
+              onClick={() => togglePlay()}
               className={`group relative inline-flex items-center justify-center overflow-hidden rounded-full px-4 sm:px-5 py-2 transition-transform active:scale-95 cursor-pointer whitespace-nowrap shadow-sm ${
                 isLight ? 'bg-slate-900 text-white' : 'bg-white/5'
               }`}
@@ -741,7 +828,7 @@ export default function App() {
 
       <main className="relative z-10">
         {/* Hero Section */}
-        <section className="min-h-screen flex flex-col items-center justify-center pt-28 pb-4 px-6">
+        <section className="min-h-[calc(100vh-5rem)] flex flex-col items-center justify-center pt-28 sm:pt-32 pb-16 sm:pb-20 px-4 sm:px-6">
           <div className="text-center max-w-5xl mx-auto">
             <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full border backdrop-blur-md mb-8 animate-fade-up ${
               isLight ? 'bg-white/80 border-slate-200 text-slate-800 shadow-xs' : 'bg-white/5 border-white/10 text-red-100/90'
@@ -782,9 +869,9 @@ export default function App() {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 animate-fade-up" style={{ animationDelay: '0.4s' }}>
-              <button id="hero-cta-btn" onClick={() => togglePlay(true)} className="shiny-cta group cursor-pointer w-full sm:w-auto text-sm">
+              <button id="hero-cta-btn" onClick={() => togglePlanetary()} className="shiny-cta group cursor-pointer w-full sm:w-auto text-sm">
                 <span className="relative z-10 flex items-center justify-center gap-2 text-white font-medium font-manrope">
-                  {isPlaying ? 'Pause Acoustic Stream' : 'Start Acoustic Stream'} <ArrowRight className="transition-transform group-hover:translate-x-1 w-4 h-4 text-[#ef233c]" />
+                  {isPlanetaryPlaying ? 'Pause Acoustic Stream' : 'Start Acoustic Stream'} <ArrowRight className="transition-transform group-hover:translate-x-1 w-4 h-4 text-[#ef233c]" />
                 </span>
               </button>
 
@@ -843,7 +930,7 @@ export default function App() {
             </div>
 
             {/* Direct Stage Navigation Chips for First-Time Explorers */}
-            <div className={`mt-8 pt-6 border-t flex flex-wrap items-center justify-center gap-2.5 sm:gap-3.5 animate-fade-up ${
+            <div id="hero-explore-nav" className={`mt-8 pt-6 border-t flex flex-wrap items-center justify-center gap-2.5 sm:gap-3.5 animate-fade-up ${
               isLight ? 'border-slate-200' : 'border-white/10'
             }`} style={{ animationDelay: '0.45s' }}>
               <span className={`text-xs font-medium mr-1 ${isLight ? 'text-slate-500' : 'text-zinc-400'}`}>
@@ -871,6 +958,18 @@ export default function App() {
                 }`}
               >
                 <span>Sensor Telemetry</span>
+                <span className={isLight ? 'text-slate-400 text-xs' : 'text-zinc-500 text-xs'}>&darr;</span>
+              </button>
+
+              <button
+                onClick={scrollToVisualSonifier}
+                className={`px-3.5 py-1.5 rounded-full border text-xs transition-all flex items-center gap-1.5 cursor-pointer ${
+                  isLight 
+                    ? 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700 hover:text-slate-900 shadow-xs' 
+                    : 'bg-white/5 hover:bg-white/10 border-white/10 hover:border-white/30 text-zinc-300 hover:text-white'
+                }`}
+              >
+                <span>Visual Sonifier</span>
                 <span className={isLight ? 'text-slate-400 text-xs' : 'text-zinc-500 text-xs'}>&darr;</span>
               </button>
 
@@ -906,96 +1005,12 @@ export default function App() {
               </button>
             </div>
           </div>
-
-          {/* Logo Strip */}
-          <div className={`w-full mt-20 border-y py-7 transition-all ${
-            isLight 
-              ? 'border-slate-200 bg-white/80 backdrop-blur-sm shadow-xs' 
-              : 'border-white/5 bg-white/[0.02] backdrop-blur-sm opacity-70 hover:opacity-100'
-          }`}>
-            <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center gap-6 md:gap-12">
-              <p className={`text-xs font-bold tracking-widest uppercase shrink-0 font-manrope ${
-                isLight ? 'text-slate-500' : 'text-zinc-500'
-              }`}>
-                Open NASA Telemetry:
-              </p>
-              <div className={`flex flex-wrap justify-center gap-6 md:gap-10 items-center w-full text-xs sm:text-sm ${
-                isLight ? 'text-slate-700' : 'text-zinc-300'
-              }`}>
-                <div className="flex items-center gap-2 font-manrope font-semibold">
-                  <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold ${
-                    isLight ? 'bg-slate-200 text-slate-800' : 'bg-white/20 text-white'
-                  }`}>GI</div>
-                  NASA GISS
-                </div>
-                <div className="flex items-center gap-2 font-manrope font-semibold">
-                  <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold ${
-                    isLight ? 'bg-slate-200 text-slate-800' : 'bg-white/20 text-white'
-                  }`}>MO</div>
-                  MODIS Terra/Aqua
-                </div>
-                <div className="flex items-center gap-2 font-manrope font-semibold">
-                  <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold ${
-                    isLight ? 'bg-slate-200 text-slate-800' : 'bg-white/20 text-white'
-                  }`}>VI</div>
-                  VIIRS Active Fire
-                </div>
-                <div className="flex items-center gap-2 font-manrope font-semibold">
-                  <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold ${
-                    isLight ? 'bg-slate-200 text-slate-800' : 'bg-white/20 text-white'
-                  }`}>PO</div>
-                  NASA POWER
-                </div>
-                <div className="flex items-center gap-2 font-manrope font-semibold">
-                  <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold ${
-                    isLight ? 'bg-slate-200 text-slate-800' : 'bg-white/20 text-white'
-                  }`}>EI</div>
-                  Earth Info Center
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Hero Bottom Interactive Scroll Down Prompt */}
-          <div className="w-full flex flex-col items-center justify-center pt-2 pb-1 animate-fade-up" style={{ animationDelay: '0.55s' }}>
-            <button
-              onClick={scrollToVisualStage}
-              className={`group flex flex-col items-center gap-2 transition-all cursor-pointer focus:outline-none ${
-                isLight ? 'text-slate-600 hover:text-slate-900' : 'text-zinc-400 hover:text-white'
-              }`}
-              aria-label="Scroll down to interactive 3D Globe and telemetry stage"
-            >
-              <div className={`flex items-center gap-2.5 px-4 py-1.5 rounded-full border transition-all backdrop-blur-md shadow-lg ${
-                isLight 
-                  ? 'bg-white/95 border-slate-200 group-hover:border-[#ef233c]/50 group-hover:bg-red-50/50 shadow-slate-200/50' 
-                  : 'bg-white/[0.04] border-white/10 group-hover:border-[#ef233c]/50 group-hover:bg-[#ef233c]/10'
-              }`}>
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#ef233c]"></span>
-                </span>
-                <span className={`text-[11px] font-manrope tracking-widest uppercase font-medium ${
-                  isLight ? 'text-slate-700 group-hover:text-slate-900' : 'text-zinc-300 group-hover:text-white'
-                }`}>
-                  Scroll To Explore 3D Globe & Soundscapes
-                </span>
-                <ChevronDown className="w-3.5 h-3.5 text-[#ef233c] group-hover:translate-y-1 transition-transform" />
-              </div>
-
-              {/* Animated Futuristic Mouse Wheel Indicator */}
-              <div className={`w-5 h-8 rounded-full border flex items-start justify-center p-1 transition-colors shadow-sm ${
-                isLight 
-                  ? 'border-slate-300 group-hover:border-[#ef233c] bg-white' 
-                  : 'border-white/20 group-hover:border-[#ef233c] bg-black/40 shadow-[0_0_15px_rgba(239,35,60,0.15)]'
-              }`}>
-                <div className="w-1.5 h-2 rounded-full bg-[#ef233c] animate-scroll-wheel" />
-              </div>
-            </button>
-          </div>
         </section>
 
         {/* Features Bento Grid */}
-        <section id="interactive-stage" className="scroll-mt-20 pt-6 sm:pt-8 pb-16 px-6 relative">
+        <section id="interactive-stage" className={`scroll-mt-20 pt-12 sm:pt-16 pb-16 px-4 sm:px-6 relative border-t transition-colors ${
+          isLight ? 'border-slate-200/80' : 'border-white/5'
+        }`}>
           <div className="max-w-7xl mx-auto">
             <div className="mb-8 text-center max-w-2xl mx-auto animate-fade-up">
               <h2 className={`text-3xl sm:text-4xl font-semibold tracking-tight font-manrope mb-3 ${
@@ -1013,17 +1028,17 @@ export default function App() {
             {/* Live Acoustic Legend Bar - What you are hearing */}
             <SoundLegendBar
               currentTelemetry={currentTelemetry}
-              isPlaying={isPlaying}
+              isPlaying={isPlanetaryPlaying}
               onOpenGuide={() => setShowSoundGuideModal(true)}
               harmonicEngine={harmonicEngine}
               theme={theme}
-              togglePlay={togglePlay}
+              togglePlay={togglePlanetary}
             />
 
             <div id="bento-stage" className="scroll-mt-24 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 h-auto">
               {/* Main Feature Card: 3D Earth Globe */}
               <div className={`lg:col-span-3 lg:row-span-2 group relative overflow-hidden p-6 sm:p-7 border transition-all rounded-2xl flex flex-col min-h-[560px] ${
-                isPlaying 
+                isPlanetaryPlaying 
                   ? isLight 
                     ? 'border-[#ef233c]/40 bg-white shadow-xl shadow-red-500/10 ring-1 ring-[#ef233c]/30'
                     : 'border-[#ef233c]/40 bg-gradient-to-b from-zinc-900/60 via-black to-black shadow-[0_0_50px_rgba(239,35,60,0.18)] ring-1 ring-[#ef233c]/30' 
@@ -1048,18 +1063,19 @@ export default function App() {
 
                     <div className="flex items-center gap-2.5">
                       <button
+                        id="globe-play-toggle-btn"
                         type="button"
-                        onClick={togglePlay}
+                        onClick={togglePlanetary}
                         className={`group flex items-center gap-2 px-4 py-1.5 sm:px-5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold font-manrope transition-all cursor-pointer border shadow-md active:scale-95 ${
-                          isPlaying
+                          isPlanetaryPlaying
                             ? 'bg-[#ef233c] text-white border-[#ef233c] shadow-red-950/50 hover:bg-[#d90429]'
                             : (isLight 
                                 ? 'bg-[#ef233c] hover:bg-[#d90429] text-white border-[#ef233c] shadow-md shadow-red-200' 
                                 : 'bg-[#ef233c] hover:bg-[#d90429] text-white border-[#ef233c] shadow-[0_0_16px_rgba(239,35,60,0.4)] hover:shadow-[0_0_22px_rgba(239,35,60,0.6)]')
                         }`}
-                        title={isPlaying ? 'Pause acoustic stream' : 'Start planetary acoustic sonification'}
+                        title={isPlanetaryPlaying ? 'Pause planetary acoustic stream' : 'Start planetary acoustic sonification'}
                       >
-                        {isPlaying ? (
+                        {isPlanetaryPlaying ? (
                           <>
                             <Pause className="w-4 h-4 fill-current shrink-0" />
                             <span>Pause</span>
@@ -1072,7 +1088,7 @@ export default function App() {
                         )}
                       </button>
                       <span className="text-xs font-manrope text-[#ef233c] font-semibold">
-                        {isPlaying ? 'Audio Active' : 'Offline Topology'}
+                        {isPlanetaryPlaying ? 'Audio Active' : 'Offline Topology'}
                       </span>
                     </div>
                   </div>
@@ -1096,11 +1112,11 @@ export default function App() {
                       regionSelectionTrigger={regionSelectionTrigger}
                       onSelectRegion={handleSelectRegion}
                       audioLevel={audioLevel}
-                      autoRotateDefault={!isPlaying}
+                      autoRotateDefault={!isPlanetaryPlaying}
                       className="w-full h-full min-h-[340px]"
                       theme={theme}
-                      isPlaying={isPlaying}
-                      togglePlay={togglePlay}
+                      isPlaying={isPlanetaryPlaying}
+                      togglePlay={togglePlanetary}
                       currentYear={currentYear}
                     />
                   </div>
@@ -1147,7 +1163,7 @@ export default function App() {
 
               {/* Feature 2: Telemetry Matrix */}
               <div className={`lg:col-span-2 group relative overflow-hidden p-6 sm:p-7 border transition-all rounded-xl flex flex-col justify-between ${
-                isPlaying 
+                isPlanetaryPlaying 
                   ? isLight 
                     ? 'border-[#ef233c]/40 bg-white shadow-xl shadow-red-500/10 ring-1 ring-[#ef233c]/30'
                     : 'border-[#ef233c]/40 bg-gradient-to-b from-zinc-900/60 via-black to-black shadow-[0_0_50px_rgba(239,35,60,0.18)] ring-1 ring-[#ef233c]/30' 
@@ -1266,11 +1282,11 @@ export default function App() {
                     <span className={`text-xs font-manrope ${isLight ? 'text-slate-500' : 'text-zinc-500'}`}>Trigger harmonic chord:</span>
                     <button
                       onClick={() => {
-                        if (isPlaying) {
+                        if (isPlanetaryPlaying) {
                           const randIdx = Math.floor(Math.random() * 8);
                           harmonicEngine.triggerChime(randIdx);
                         } else {
-                          togglePlay();
+                          togglePlanetary();
                         }
                       }}
                       className={`px-4 py-2 rounded-full border text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer font-manrope ${
@@ -1438,8 +1454,57 @@ export default function App() {
           </div>
         </section>
 
+        {/* Dedicated EIC Visual Frame Sonifier & CRT Monitor Section */}
+        <section id="visual-sonifier" className={`pt-16 pb-16 sm:pt-20 sm:pb-20 px-4 sm:px-6 relative z-10 scroll-mt-20 border-t transition-colors ${
+          isLight ? 'bg-slate-50/50 border-slate-200' : 'bg-black border-white/5'
+        }`}>
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-6 sm:mb-8 max-w-3xl mx-auto">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#ef233c]/10 border border-[#ef233c]/30 text-[#ef233c] text-xs font-mono font-bold mb-3 shadow-[0_0_15px_rgba(239,35,60,0.2)]">
+                <Activity className="w-3.5 h-3.5 text-[#ef233c]" />
+                <span>EARTH INFORMATION JUKEMODAL &bull; SVS DATASET SONIFICATION</span>
+              </div>
+              <h2 className={`text-3xl sm:text-4xl font-extrabold font-manrope mb-3 tracking-tight ${
+                isLight ? 'text-slate-900' : 'text-white'
+              }`}>
+                Visual Frame Sonifier & CRT Monitor
+              </h2>
+              <p className={`text-sm sm:text-base max-w-xl mx-auto leading-relaxed ${
+                isLight ? 'text-slate-600' : 'text-zinc-400'
+              }`}>
+                Real-time computer vision frame scanner inspired by NASA's Caldwell 73 benchmark. Converts pixel coordinate, luminosity, and multi-spectral satellite imagery into live harmonic sound and authentic scientific telemetry.
+              </p>
+            </div>
+
+            {/* Live Interactive EicVisualSonifier Engine */}
+            <EicVisualSonifier
+              datasets={eicVisualDatasets}
+              activeDatasetId={activeEicDatasetId}
+              onSelectDataset={(datasetId) => {
+                setActiveEicDatasetId(datasetId);
+                const ds = eicVisualDatasets.find(d => d.id === datasetId);
+                if (ds) {
+                  const msg = `Selected NASA dataset: ${ds.title}. ${ds.audioDescription || ''}`;
+                  setScreenReaderAnnouncement(msg);
+                  speakText(msg);
+                }
+                const el = document.getElementById('visual-sonifier');
+                if (el) {
+                  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+              }}
+              isPlaying={isVisualPlaying}
+              togglePlay={toggleVisual}
+              harmonicEngine={harmonicEngine}
+              theme={theme}
+              isAccessibilityMode={isAccessibilityMode}
+              speakText={speakText}
+            />
+          </div>
+        </section>
+
         {/* Climate Time Machine & Sonification Grid Section */}
-        <section id="timeline-section" className={`pt-16 pb-8 sm:pt-20 sm:pb-10 px-4 sm:px-6 relative border-t transition-colors ${
+        <section id="timeline-section" className={`pt-16 pb-16 sm:pt-20 sm:pb-20 px-4 sm:px-6 relative border-t transition-colors ${
           isLight ? 'bg-slate-100/70 border-slate-200' : 'bg-black border-white/5'
         }`}>
           <div className="max-w-7xl mx-auto">
@@ -1462,8 +1527,8 @@ export default function App() {
               setCurrentYear={setCurrentYear}
               currentData={currentData}
               currentTelemetry={currentTelemetry}
-              isPlaying={isPlaying}
-              togglePlay={togglePlay}
+              isPlaying={isPlanetaryPlaying}
+              togglePlay={togglePlanetary}
               audioLevel={audioLevel}
               harmonicEngine={harmonicEngine}
               setShowScienceModal={setShowScienceModal}
@@ -1472,8 +1537,24 @@ export default function App() {
               theme={theme}
             />
 
+            {/* Real-time Spectrum Visualizer */}
+            <div className={`mt-8 mb-10 border rounded-2xl overflow-hidden shadow-2xl ${
+              isLight ? 'border-slate-200 bg-white shadow-slate-200/50' : 'border-white/10 bg-black'
+            }`}>
+              <AudioVisualizer
+                harmonicEngine={harmonicEngine}
+                isPlaying={isPlaying}
+                audioLevel={audioLevel}
+                height={240}
+                theme="hybrid"
+                appTheme={theme}
+                title="ACOUSTIC FREQUENCY SPECTRUM"
+                subtitle="Real-time Tone.js FFT Analysis & Waveform Oscilloscope"
+              />
+            </div>
+
             {/* 3 Sonification Voice Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               {/* Voice 1: Thermal Drone */}
               <div className={`p-6 sm:p-7 border transition-all rounded-2xl flex flex-col ${
                 isLight 
@@ -1555,11 +1636,11 @@ export default function App() {
                 <button 
                   id="voice-canopy-btn" 
                   onClick={() => {
-                    if (isPlaying) {
+                    if (isPlanetaryPlaying) {
                       const randIdx = Math.floor(Math.random() * 8);
                       harmonicEngine.triggerChime(randIdx);
                     } else {
-                      togglePlay();
+                      togglePlanetary();
                     }
                   }}
                   className="w-full py-2.5 px-4 bg-[#ef233c] hover:bg-red-700 text-white rounded-lg text-xs font-bold uppercase tracking-wider transition-all font-manrope cursor-pointer shadow-lg shadow-red-950/60"
@@ -1612,69 +1693,6 @@ export default function App() {
                 </button>
               </div>
             </div>
-
-            {/* Real-time Spectrum Visualizer */}
-            <div className={`border rounded-2xl overflow-hidden shadow-2xl ${
-              isLight ? 'border-slate-200 bg-white shadow-slate-200/50' : 'border-white/10 bg-black'
-            }`}>
-              <AudioVisualizer
-                harmonicEngine={harmonicEngine}
-                isPlaying={isPlaying}
-                audioLevel={audioLevel}
-                height={140}
-                theme="hybrid"
-                appTheme={theme}
-                title="ACOUSTIC FREQUENCY SPECTRUM"
-                subtitle="Real-time Tone.js FFT Analysis & Waveform Oscilloscope"
-              />
-            </div>
-          </div>
-        </section>
-
-        {/* Dedicated EIC Visual Frame Sonifier & CRT Monitor Section */}
-        <section id="visual-sonifier" className="pt-2 pb-16 sm:pt-4 sm:pb-20 px-4 sm:px-6 relative z-10 scroll-mt-20 transition-colors">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-6 sm:mb-8 max-w-3xl mx-auto">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#ef233c]/10 border border-[#ef233c]/30 text-[#ef233c] text-xs font-mono font-bold mb-3 shadow-[0_0_15px_rgba(239,35,60,0.2)]">
-                <Activity className="w-3.5 h-3.5 text-[#ef233c]" />
-                <span>EARTH INFORMATION JUKEMODAL &bull; SVS DATASET SONIFICATION</span>
-              </div>
-              <h2 className={`text-3xl sm:text-4xl font-extrabold font-manrope mb-3 tracking-tight ${
-                isLight ? 'text-slate-900' : 'text-white'
-              }`}>
-                Visual Frame Sonifier & CRT Monitor
-              </h2>
-              <p className={`text-sm sm:text-base max-w-xl mx-auto leading-relaxed ${
-                isLight ? 'text-slate-600' : 'text-zinc-400'
-              }`}>
-                Real-time computer vision frame scanner inspired by NASA's Caldwell 73 benchmark. Converts pixel coordinate, luminosity, and multi-spectral satellite imagery into live harmonic sound and authentic scientific telemetry.
-              </p>
-            </div>
-
-            {/* Live Interactive EicVisualSonifier Engine */}
-            <EicVisualSonifier
-              datasets={eicVisualDatasets}
-              activeDatasetId={activeEicDatasetId}
-              onSelectDataset={(datasetId) => {
-                setActiveEicDatasetId(datasetId);
-                const ds = eicVisualDatasets.find(d => d.id === datasetId);
-                if (ds) {
-                  const msg = `Selected NASA dataset: ${ds.title}. ${ds.audioDescription || ''}`;
-                  setScreenReaderAnnouncement(msg);
-                  speakText(msg);
-                }
-                const el = document.getElementById('visual-sonifier');
-                if (el) {
-                  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-              }}
-              isPlaying={isPlaying}
-              togglePlay={togglePlay}
-              harmonicEngine={harmonicEngine}
-              theme={theme}
-              isAccessibilityMode={isAccessibilityMode}
-              speakText={speakText}
-            />
           </div>
         </section>
 
@@ -1697,14 +1715,14 @@ export default function App() {
             <form 
               onSubmit={(e) => {
                 e.preventDefault();
-                togglePlay();
+                togglePlanetary();
               }}
               className="max-w-md mx-auto flex flex-col sm:flex-row gap-3"
             >
               <input 
                 type="text" 
                 readOnly
-                value={isPlaying ? `Playing: ${activeRegion.name}` : `Ready: ${activeRegion.name} (${Math.round(currentYear)})`} 
+                value={isPlanetaryPlaying ? `Playing: ${activeRegion.name}` : `Ready: ${activeRegion.name} (${Math.round(currentYear)})`} 
                 className={`flex-1 rounded-full px-5 py-3 transition-all text-xs font-manrope border ${
                   isLight 
                     ? 'bg-slate-50 border-slate-300 text-slate-800 focus:outline-none focus:border-[#ef233c]' 
@@ -1716,7 +1734,7 @@ export default function App() {
                 type="submit"
                 className="bg-[#ef233c] hover:bg-red-700 text-white font-semibold rounded-full px-7 py-3 transition-all cursor-pointer font-manrope shadow-lg shadow-red-950/60 text-xs sm:text-sm"
               >
-                {isPlaying ? 'Pause Audio' : 'Start Stream'}
+                {isPlanetaryPlaying ? 'Pause Audio' : 'Start Stream'}
               </button>
             </form>
           </div>
@@ -1749,6 +1767,7 @@ export default function App() {
               <li><button onClick={() => setShowJukeboxModal(true)} id="footer-jukebox-link" className="hover:text-white transition-colors cursor-pointer flex items-center gap-1.5"><Disc className="w-3.5 h-3.5 text-[#ef233c]" /><span>Earth Jukebox Vault (6 Tracks)</span></button></li>
               <li><button onClick={() => setShowScienceModal(true)} id="footer-feat-link" className="hover:text-white transition-colors cursor-pointer">Science Methodology</button></li>
               <li><button onClick={() => setShowCreditsModal(true)} id="footer-int-link" className="hover:text-white transition-colors cursor-pointer">NASA Open Data</button></li>
+              <li><button onClick={scrollToVisualSonifier} id="footer-visual-sonifier-link" className="hover:text-cyan-400 transition-colors cursor-pointer flex items-center gap-1.5"><Activity className="w-3.5 h-3.5 text-cyan-400" /><span>Visual Sonifier</span></button></li>
               <li><a href="#timeline-section" id="footer-timeline-link" className="hover:text-white transition-colors">Time Machine</a></li>
               <li><a href="https://science.nasa.gov/earth/earth-information-center/" target="_blank" rel="noopener noreferrer" id="footer-docs-link" className="hover:text-white transition-colors">Earth Info Center</a></li>
             </ul>
@@ -1918,34 +1937,6 @@ export default function App() {
         </div>
       )}
 
-      {/* Floating Non-Intrusive Scroll-Down Invitation Pill */}
-      <div 
-        className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-40 transition-all duration-500 pointer-events-auto ${
-          showFloatingScrollCue 
-            ? 'opacity-100 translate-y-0 scale-100' 
-            : 'opacity-0 translate-y-6 scale-95 pointer-events-none'
-        }`}
-      >
-        <button
-          onClick={scrollToVisualStage}
-          className={`group flex items-center gap-2.5 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full backdrop-blur-xl border text-xs font-manrope transition-all cursor-pointer hover:scale-105 active:scale-95 ${
-            isLight 
-              ? 'bg-white/95 border-slate-300 hover:border-[#ef233c] shadow-xl shadow-slate-300/60 text-slate-800 hover:text-slate-950 ring-1 ring-slate-200' 
-              : 'bg-black/90 border-white/20 hover:border-[#ef233c] shadow-[0_10px_35px_rgba(0,0,0,0.9)] hover:shadow-[0_0_30px_rgba(239,35,60,0.4)] text-zinc-200 hover:text-white ring-1 ring-white/10'
-          }`}
-          aria-label="Scroll down to 3D Globe and sensory telemetry"
-        >
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#ef233c]"></span>
-          </span>
-          <span className="font-semibold tracking-wide">Explore 3D Globe & Data Below</span>
-          <div className="flex items-center text-[#ef233c] group-hover:translate-y-0.5 transition-transform">
-            <ChevronDown className="w-3.5 h-3.5 animate-bounce" />
-          </div>
-        </button>
-      </div>
-
       {/* Floating Persistent Play/Pause Button on Bottom Right Corner (Starts only after listening has started) */}
       {hasStartedListening && (
         <aside 
@@ -1955,7 +1946,7 @@ export default function App() {
           <button
             id="floating-playback-toggle-btn"
             type="button"
-            onClick={togglePlay}
+            onClick={() => togglePlay()}
             className={`group flex items-center gap-2.5 px-4 sm:px-5 py-2.5 sm:py-3 rounded-full backdrop-blur-2xl border transition-all cursor-pointer shadow-2xl hover:scale-105 active:scale-95 ${
               isPlaying
                 ? isLight

@@ -427,6 +427,7 @@ export default function ClimateTimeline({
               isLight ? 'border-slate-300' : 'border-white/10'
             }`}>
               <button
+                id="timeline-play-toggle-btn"
                 type="button"
                 onClick={togglePlay}
                 className={`flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold font-manrope transition-all cursor-pointer border shadow-md active:scale-95 ${

@@ -34,3 +34,11 @@ token.json
 *.sln
 *.sw?
 
+# Presentation, screenshots & scratch capture scripts
+screenshots/
+*.cjs
+capture_*.cjs
+upload_to_canva.cjs
+presentation/
+
+

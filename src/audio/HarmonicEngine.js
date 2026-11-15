@@ -91,26 +91,31 @@ export class HarmonicEngine {
   }
 
   /**
+   * Resumes or starts the Tone audio context with a non-blocking timeout fallback
+   */
+  async _startToneContext() {
+    try {
+      if (Tone.getContext().state !== 'running') {
+        await Promise.race([
+          Tone.start(),
+          new Promise(resolve => setTimeout(resolve, 300))
+        ]);
+      }
+    } catch (err) {
+      console.warn('HarmonicEngine: Tone context start notice:', err);
+    }
+  }
+
+  /**
    * Initializes audio synthesis graph and starts Tone audio context on user gesture.
    */
   async init() {
     if (this._isInitialized) {
-      if (Tone.getContext().state !== 'running') {
-        try {
-          await Tone.start();
-        } catch (err) {
-          console.warn('HarmonicEngine: Context resume on init failed:', err);
-        }
-      }
+      await this._startToneContext();
       return;
     }
 
-    try {
-      // Browsers require a user gesture to activate audio context
-      await Tone.start();
-    } catch (err) {
-      console.warn('HarmonicEngine: Tone.start awaiting user gesture:', err);
-    }
+    await this._startToneContext();
 
     // 1. Master Bus Routing
     // Master stage configured for maximum high-fidelity presence and loudness across all playback devices
@@ -310,13 +315,7 @@ export class HarmonicEngine {
       await this.init();
     }
 
-    try {
-      if (Tone.getContext().state !== 'running') {
-        await Tone.start();
-      }
-    } catch (err) {
-      console.warn('HarmonicEngine: Failed to start audio context:', err);
-    }
+    await this._startToneContext();
 
     this._isPlaying = true;
 
@@ -785,13 +784,7 @@ export class HarmonicEngine {
     if (!this._isInitialized) {
       await this.init();
     }
-    try {
-      if (Tone.getContext().state !== 'running') {
-        await Tone.start();
-      }
-    } catch (err) {
-      console.warn('HarmonicEngine: Context resume on preview failed:', err);
-    }
+    await this._startToneContext();
 
     try {
       if (voice === 'drone' && this.droneSynth) {
