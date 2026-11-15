@@ -206,7 +206,7 @@ export default function AudioVisualizer({
           val = audioLevel * (0.4 + 0.6 * Math.abs(Math.sin(idlePhase * 2 + i * 0.15)));
         } else {
           // Ambient resting wave when standby
-          val = 0; // Flat resting baseline when standby
+          val = 0.05 + 0.04 * Math.sin(idlePhase + i * 0.18);
         }
 
         if (val > maxBinVal) {
@@ -347,7 +347,7 @@ export default function AudioVisualizer({
             if (sample > 1.0) sample = (sample / 128) - 1.0;
           } else {
             // Idle gentle harmonic oscillation
-            sample = 0; // Flat resting oscilloscope baseline when standby
+            sample = 0.15 * Math.sin(idlePhase * 1.5 + (i / waveLength) * Math.PI * 4);
           }
 
           const wx = startX + i * stepX;
@@ -499,7 +499,52 @@ export default function AudioVisualizer({
             </button>
           </div>
 
+          {/* Color Theme Switcher */}
+          <div className={`flex items-center border rounded-lg p-1 gap-1 ${
+            isLight ? 'bg-slate-100 border-slate-200' : 'bg-zinc-900 border-zinc-800'
+          }`}>
+            <button
+              type="button"
+              onClick={() => setActiveTheme('crimson')}
+              className={`w-7 h-7 rounded flex items-center justify-center transition-all cursor-pointer ${
+                activeTheme === 'crimson' ? 'ring-2 ring-[#ef233c] scale-105' : 'opacity-70 hover:opacity-100'
+              }`}
+              title="Warm Crimson Palette"
+            >
+              <div className="w-4 h-4 rounded-full bg-[#ef233c]" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTheme('hybrid')}
+              className={`w-7 h-7 rounded flex items-center justify-center transition-all cursor-pointer ${
+                activeTheme === 'hybrid' ? 'ring-2 ring-sky-400 scale-105' : 'opacity-70 hover:opacity-100'
+              }`}
+              title="Hybrid Radiant Spectrum"
+            >
+              <div className="w-4 h-4 rounded-full bg-gradient-to-r from-rose-500 via-amber-400 to-cyan-400" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTheme('cyan')}
+              className={`w-7 h-7 rounded flex items-center justify-center transition-all cursor-pointer ${
+                activeTheme === 'cyan' ? 'ring-2 ring-cyan-400 scale-105' : 'opacity-70 hover:opacity-100'
+              }`}
+              title="Electric Cyan Palette"
+            >
+              <div className="w-4 h-4 rounded-full bg-[#06b6d4]" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTheme('amber')}
+              className={`w-7 h-7 rounded flex items-center justify-center transition-all cursor-pointer ${
+                activeTheme === 'amber' ? 'ring-2 ring-amber-400 scale-105' : 'opacity-70 hover:opacity-100'
+              }`}
+              title="Solar Amber Palette"
+            >
+              <div className="w-4 h-4 rounded-full bg-[#ffb347]" />
+            </button>
           </div>
+        </div>
       </div>
 
       {/* Main High-DPI Visualizer Canvas */}
