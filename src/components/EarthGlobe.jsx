@@ -383,31 +383,46 @@ export default function EarthGlobe({
 
   // Helper to re-orient the globe directly toward the camera for any region
   // Upright rotation matching NASA model-viewer (North Pole stays strictly +Y, zero sideways tilt)
-  const focusRegion = useCallback((reg) => {
-    if (!reg || !earthGroupRef.current) return;
+  const focusRegion = useCallback((reg, resetToFront = false) => {
+    if (!reg) return;
+    currentRegionRef.current = reg;
+    if (!earthGroupRef.current) return;
+
     const coords = { lat: reg.lat, lon: reg.lon };
     const pos = latLonToVector3(coords.lat, coords.lon, 1.0);
-    const angleY = Math.atan2(pos.x, pos.z);
+    const posAngleY = Math.atan2(pos.x, pos.z);
+
+    // Camera current horizontal azimuth or 0 if resetting to canonical front view
+    const curCam = cameraRef.current;
+    let camAzimuth = 0;
+    if (curCam && !resetToFront) {
+      camAzimuth = Math.atan2(curCam.position.x, curCam.position.z);
+    }
 
     // Rotate purely around vertical polar Y-axis so North Pole stays upright at +Y
+    // Aligning the region's meridian directly with the camera's line of sight
+    const targetAngleY = camAzimuth - posAngleY;
     const q = new THREE.Quaternion().setFromAxisAngle(
       new THREE.Vector3(0, 1, 0),
-      -angleY
+      targetAngleY
     );
     targetQuaternionRef.current = q;
 
-    // Set camera elevation based on target latitude while keeping camera in Y-Z plane
-    const targetY = THREE.MathUtils.clamp(
-      reg.lat >= 0
-        ? 0.38 + (reg.lat / 90) * 1.10
-        : 0.38 + (reg.lat / 90) * 0.40,
-      0.15,
-      1.55
-    );
-    const targetDist = 2.88;
-    const targetZ = Math.sqrt(Math.max(0, targetDist * targetDist - targetY * targetY));
-    targetCameraPosRef.current = new THREE.Vector3(0, targetY, targetZ);
+    // Pitch elevation angle matching region latitude (Arctic ~72°-75°, Sahara/India ~22°-28°, Equator ~0°)
+    const pitchDeg = reg.lat >= 0
+      ? Math.max(8.0, Math.min(74.0, reg.lat * 0.95))
+      : Math.max(-25.0, Math.min(8.0, reg.lat * 0.85));
+    const pitchRad = pitchDeg * (Math.PI / 180);
+    const targetDist = 2.85;
+    const targetY = targetDist * Math.sin(pitchRad);
+    const rxz = targetDist * Math.cos(pitchRad);
+    const targetX = rxz * Math.sin(camAzimuth);
+    const targetZ = rxz * Math.cos(camAzimuth);
+    targetCameraPosRef.current = new THREE.Vector3(targetX, targetY, targetZ);
 
+    if (controlsRef.current && controlsRef.current._sphericalDelta) {
+      controlsRef.current._sphericalDelta.set(0, 0, 0);
+    }
     isCameraFocusingRef.current = true;
   }, []);
 
@@ -831,6 +846,7 @@ export default function EarthGlobe({
         if (curPos.distanceTo(targetPos) < 0.005 && controls.target.lengthSq() < 0.0001) {
           camera.position.copy(targetPos);
           controls.target.set(0, 0, 0);
+          if (controls._sphericalDelta) controls._sphericalDelta.set(0, 0, 0);
           controls.update();
           isCameraFocusingRef.current = false;
         } else {
@@ -842,6 +858,7 @@ export default function EarthGlobe({
           camera.position.copy(newDir.multiplyScalar(newDist));
 
           controls.target.lerp(targetCenter, 0.09);
+          if (controls._sphericalDelta) controls._sphericalDelta.set(0, 0, 0);
           controls.update();
         }
       } else {
@@ -1079,7 +1096,7 @@ export default function EarthGlobe({
   // Reset Camera View
   const handleResetView = useCallback(() => {
     if (currentRegion) {
-      focusRegion(currentRegion);
+      focusRegion(currentRegion, true);
     }
   }, [currentRegion, focusRegion]);
 
