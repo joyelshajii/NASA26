@@ -310,6 +310,7 @@ function createProceduralStarTexture() {
  */
 export default function EarthGlobe({
   activeRegion = 'amazon',
+  regionSelectionTrigger = 0,
   onSelectRegion = () => {},
   audioLevel = 0.0,
   frequencyData = null,
@@ -330,6 +331,8 @@ export default function EarthGlobe({
 
   // Three.js object references for real-time manipulation
   const sceneRef = useRef(null);
+  const cameraRef = useRef(null);
+  const controlsRef = useRef(null);
   const earthMaterialRef = useRef(null);
   const starPointsRef = useRef(null);
   const ambientLightRef = useRef(null);
@@ -341,6 +344,7 @@ export default function EarthGlobe({
   const [autoRotate, setAutoRotate] = useState(autoRotateDefault);
   const autoRotateRef = useRef(autoRotateDefault);
   const isDraggingRef = useRef(false);
+  const isCameraFocusingRef = useRef(false);
   const targetQuaternionRef = useRef(null);
   const currentAudioPulseRef = useRef(0.0);
 
@@ -387,6 +391,7 @@ export default function EarthGlobe({
       cameraDir
     );
     targetQuaternionRef.current = q;
+    isCameraFocusingRef.current = true;
   }, []);
 
   // Synchronize mutable refs
@@ -423,7 +428,7 @@ export default function EarthGlobe({
 
   const hasMountedRef = useRef(false);
 
-  // Synchronize target orientation when activeRegion prop changes
+  // Synchronize target orientation when activeRegion or regionSelectionTrigger changes
   useEffect(() => {
     if (!hasMountedRef.current) {
       hasMountedRef.current = true;
@@ -434,7 +439,7 @@ export default function EarthGlobe({
       autoRotateRef.current = false;
       focusRegion(currentRegion);
     }
-  }, [currentRegion, focusRegion]);
+  }, [currentRegion, regionSelectionTrigger, focusRegion]);
 
   // Main Three.js Scene Setup & Render Loop
   useEffect(() => {
@@ -458,6 +463,7 @@ export default function EarthGlobe({
     // 2. Perspective Camera
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
     camera.position.set(0, 0.4, 2.85);
+    cameraRef.current = camera;
 
     // 3. WebGL Renderer with High-DPI support
     const renderer = new THREE.WebGLRenderer({
@@ -480,10 +486,12 @@ export default function EarthGlobe({
     controls.minDistance = 1.6;
     controls.maxDistance = 5.2;
     controls.enablePan = false;
+    controlsRef.current = controls;
 
     controls.addEventListener('start', () => {
       isDraggingRef.current = true;
       targetQuaternionRef.current = null;
+      isCameraFocusingRef.current = false;
     });
     controls.addEventListener('end', () => {
       isDraggingRef.current = false;
@@ -792,8 +800,36 @@ export default function EarthGlobe({
 
       const elapsed = clock.getElapsedTime();
 
-      // Controls update with damping
-      controls.update();
+      // Smooth spherical camera return to canonical viewpoint when focusing a region
+      if (isCameraFocusingRef.current && !isDraggingRef.current) {
+        const targetPos = new THREE.Vector3(0, 0.4, 2.85);
+        const targetCenter = new THREE.Vector3(0, 0, 0);
+        const targetDist = targetPos.length();
+        const targetDir = targetPos.clone().normalize();
+
+        const curPos = camera.position.clone();
+        const curDist = curPos.length();
+        const curDir = curPos.clone().normalize();
+
+        if (curPos.distanceTo(targetPos) < 0.005 && controls.target.lengthSq() < 0.0001) {
+          camera.position.copy(targetPos);
+          controls.target.set(0, 0, 0);
+          controls.update();
+          isCameraFocusingRef.current = false;
+        } else {
+          const qStep = new THREE.Quaternion().setFromUnitVectors(curDir, targetDir);
+          const idQuat = new THREE.Quaternion();
+          idQuat.slerp(qStep, 0.09);
+          const newDir = curDir.applyQuaternion(idQuat).normalize();
+          const newDist = THREE.MathUtils.lerp(curDist, targetDist, 0.09);
+          camera.position.copy(newDir.multiplyScalar(newDist));
+
+          controls.target.lerp(targetCenter, 0.09);
+          controls.update();
+        }
+      } else {
+        controls.update();
+      }
 
       // Audio-reactive calculation using mutable refs without restarting the WebGL loop
       let rawAudio = 0;
@@ -833,9 +869,10 @@ export default function EarthGlobe({
       if (targetQuaternionRef.current && !isDraggingRef.current) {
         earthGroup.quaternion.slerp(targetQuaternionRef.current, 0.06);
         if (earthGroup.quaternion.angleTo(targetQuaternionRef.current) < 0.002) {
+          earthGroup.quaternion.copy(targetQuaternionRef.current);
           targetQuaternionRef.current = null;
         }
-      } else if (autoRotateRef.current && !isDraggingRef.current) {
+      } else if (autoRotateRef.current && !isDraggingRef.current && !isCameraFocusingRef.current) {
         // Gentle planetary idle rotation
         earthGroup.rotateY(0.0009);
       }
@@ -1205,47 +1242,6 @@ export default function EarthGlobe({
             boxShadow: `0 0 8px ${currentRegion.color || '#ef233c'}`
           }}
         />
-      </div>
-
-      {/* Bottom Region Quick Selector Rail */}
-      <div className="absolute bottom-4 left-4 right-4 flex items-center justify-center pointer-events-none z-30">
-        <div className={`flex flex-wrap items-center justify-center gap-1.5 p-1.5 rounded-2xl backdrop-blur-xl border shadow-2xl pointer-events-auto ${
-          theme === 'light'
-            ? 'bg-white/90 border-slate-200/90 shadow-slate-200/50'
-            : 'bg-black/85 border-white/10'
-        }`}>
-          {regions.map((region) => {
-            const isSelected =
-              currentRegion &&
-              (region.id === currentRegion.id || (region.aliases && region.aliases.includes(currentRegion.id)));
-
-            return (
-              <button
-                key={region.id}
-                type="button"
-                onClick={() => {
-                  setAutoRotate(false);
-                  autoRotateRef.current = false;
-                  onSelectRegion(region.id);
-                  focusRegion(region);
-                }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-manrope font-semibold transition-all border cursor-pointer ${
-                  isSelected
-                    ? 'bg-[#ef233c] border-[#ef233c] text-white shadow-lg shadow-red-950/60 font-semibold'
-                    : (theme === 'light'
-                        ? 'bg-slate-100 border-slate-200 text-slate-700 hover:text-slate-950 hover:bg-slate-200'
-                        : 'bg-white/5 border-transparent text-zinc-300 hover:text-white hover:bg-white/10')
-                }`}
-              >
-                <span
-                  className="w-2 h-2 rounded-full"
-                  style={{ backgroundColor: region.color }}
-                />
-                <span>{region.name}</span>
-              </button>
-            );
-          })}
-        </div>
       </div>
     </div>
   );

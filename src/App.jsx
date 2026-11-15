@@ -74,6 +74,7 @@ export default function App() {
   // Planetary Exploration States
   const [currentYear, setCurrentYear] = useState(2026);
   const [activeRegionId, setActiveRegionId] = useState('amazon');
+  const [regionSelectionTrigger, setRegionSelectionTrigger] = useState(0);
   const [activeStoryId, setActiveStoryId] = useState(null);
 
   // Modals & Accessibility States
@@ -284,6 +285,7 @@ export default function App() {
   // Handle Region Selection
   const handleSelectRegion = useCallback((regionId) => {
     setActiveRegionId(regionId);
+    setRegionSelectionTrigger((prev) => prev + 1);
     setActiveStoryId(null);
     const region = regionalHotspots.find((r) => r.id === regionId);
     if (region) {
@@ -306,6 +308,7 @@ export default function App() {
     if (!story) return;
 
     setActiveStoryId(storyId);
+    setRegionSelectionTrigger((prev) => prev + 1);
 
     // Map story to relevant hotspot
     if (story.hotspotId) {
@@ -1067,6 +1070,7 @@ export default function App() {
                   }`}>
                     <EarthGlobe
                       activeRegion={activeRegionId}
+                      regionSelectionTrigger={regionSelectionTrigger}
                       onSelectRegion={handleSelectRegion}
                       audioLevel={audioLevel}
                       autoRotateDefault={!isPlaying}
