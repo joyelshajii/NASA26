@@ -91,11 +91,12 @@ export default function App() {
   const [showFloatingScrollCue, setShowFloatingScrollCue] = useState(true);
 
   useEffect(() => {
+    let prev = true;
     const handleScroll = () => {
-      if (window.scrollY > 150) {
-        setShowFloatingScrollCue(false);
-      } else {
-        setShowFloatingScrollCue(true);
+      const isVisible = window.scrollY <= 150;
+      if (isVisible !== prev) {
+        prev = isVisible;
+        setShowFloatingScrollCue(isVisible);
       }
     };
 
@@ -254,24 +255,24 @@ export default function App() {
     }
   }, [currentTelemetry, isPlaying]);
 
-  // Audio level polling for 3D atmospheric reactivity
+  // Audio level polling for 3D atmospheric reactivity (runs only during active playback)
   useEffect(() => {
+    if (!isPlaying) {
+      setAudioLevel(0.0);
+      return;
+    }
     let isRunning = true;
     const updateLevel = () => {
       if (!isRunning) return;
-      if (isPlaying) {
-        const freqData = harmonicEngine.getFrequencyData();
-        if (freqData && freqData.length > 0) {
-          let sum = 0;
-          for (let i = 0; i < 16; i++) {
-            const val = Math.max(0, (freqData[i] + 90) / 80);
-            sum += val;
-          }
-          const avg = sum / 16;
-          setAudioLevel(Math.min(1.0, avg * 1.4));
+      const freqData = harmonicEngine.getFrequencyData();
+      if (freqData && freqData.length > 0) {
+        let sum = 0;
+        for (let i = 0; i < 16; i++) {
+          const val = Math.max(0, (freqData[i] + 90) / 80);
+          sum += val;
         }
-      } else {
-        setAudioLevel(0.0);
+        const avg = sum / 16;
+        setAudioLevel(Math.min(1.0, avg * 1.4));
       }
       animFrameRef.current = requestAnimationFrame(updateLevel);
     };
@@ -1096,7 +1097,6 @@ export default function App() {
                               onClick={() => handleSelectRegion(r.id)}
                               onMouseEnter={() => setHoveredRegionId(r.id)}
                               onMouseLeave={() => setHoveredRegionId(null)}
-                              title={r.name}
                               className={`group flex items-center gap-2 px-3 py-1 rounded-full text-xs font-manrope font-semibold transition-all cursor-pointer ${
                                 isSelected 
                                   ? 'bg-[#ef233c] text-white shadow-md shadow-red-950/40' 
@@ -1111,14 +1111,6 @@ export default function App() {
                               />
                               <span>{isHovered ? r.name : (r.name.split(' ')[0])}</span>
                             </button>
-
-                            {/* Hover tooltip providing full region name */}
-                            {isHovered && (
-                              <div className="absolute -top-9 left-1/2 -translate-x-1/2 px-2.5 py-1 bg-zinc-950 text-white text-[11px] font-semibold font-manrope rounded-lg shadow-xl border border-white/20 whitespace-nowrap pointer-events-none z-30 flex items-center gap-1.5 animate-fade-in">
-                                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: r.color }} />
-                                <span>{r.name}</span>
-                              </div>
-                            )}
                           </div>
                         );
                       })}
@@ -1752,7 +1744,7 @@ export default function App() {
       {/* Prominent Center-Stage Headphones Entrance Modal */}
       {showHeadphonesEntranceModal && (
         <div 
-          className={`fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-2xl animate-fade-up ${
+          className={`fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md animate-fade-up ${
             isLight ? 'bg-slate-900/50' : 'bg-black/85'
           }`}
           role="dialog"
@@ -1844,11 +1836,11 @@ export default function App() {
             </div>
 
             {/* Blind & Low-Vision Access Shortcut in Modal */}
-            <div className={`relative z-10 mt-5 pt-3.5 border-t text-xs font-manrope ${
+            <div className={`relative z-10 mt-5 pt-3.5 border-t text-xs font-manrope text-center ${
               isLight ? 'border-slate-200 text-slate-600' : 'border-white/10 text-zinc-400'
             }`}>
-              <p className="flex items-start sm:items-center justify-center gap-2 text-left sm:text-center leading-relaxed">
-                <Eye className="w-4 h-4 text-[#ef233c] shrink-0 mt-0.5 sm:mt-0" />
+              <p className="inline-block text-center leading-relaxed">
+                <Eye className="w-4 h-4 text-[#ef233c] inline-block align-text-bottom mr-1.5 shrink-0" />
                 <span>
                   Blind &amp; Low-Vision users: Press <kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${isLight ? 'bg-slate-200 text-slate-800' : 'bg-white/10 text-white'}`}>A</kbd> or click <strong>Blind Access</strong> in header for speech narration.
                 </span>
