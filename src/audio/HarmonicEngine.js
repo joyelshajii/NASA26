@@ -73,6 +73,21 @@ export class HarmonicEngine {
     // Voice 4: Thermal Pulse Bass
     this.pulseGain = null;
     this.pulseSynth = null;
+
+    // Voice 5: EIC Visual Frame Scan-line Synth (Continuous Computer Vision Sonification)
+    this.scanGain = null;
+    this.scanSynth = null;
+    this.scanCarrierOsc = null;
+    this.scanCarrierGain = null;
+    this.scanFilter = null;
+    this.scanVoices = [];
+    this._isSonifierActive = false;
+
+    // MediaRecorder Audio Export Stream
+    this.mediaStreamDestination = null;
+    this.mediaRecorder = null;
+    this._recordedChunks = [];
+    this._isRecording = false;
   }
 
   /**
@@ -133,10 +148,21 @@ export class HarmonicEngine {
     this.limiter.connect(this.fftAnalyser);
     this.limiter.connect(this.waveformAnalyser);
 
-    // Ensure reverb impulse response is generated
+    // Audio recording destination stream setup
+    try {
+      const rawCtx = Tone.getContext().rawContext;
+      if (rawCtx && typeof rawCtx.createMediaStreamDestination === 'function') {
+        this.mediaStreamDestination = rawCtx.createMediaStreamDestination();
+        this.limiter.connect(this.mediaStreamDestination);
+      }
+    } catch (e) {
+      console.warn('HarmonicEngine: MediaStreamDestination setup notice:', e);
+    }
+
+    // Ensure reverb impulse response is generated in the background without blocking audio startup
     if (this.reverb.ready) {
       try {
-        await this.reverb.ready;
+        this.reverb.ready.catch(() => {});
       } catch (err) {
         console.warn('HarmonicEngine: Reverb IR generation notice:', err);
       }
@@ -229,6 +255,45 @@ export class HarmonicEngine {
       volume: 0
     }).connect(this.pulseGain);
 
+    // 6. Voice 5: EIC Visual Frame Scan-line Synth (Continuous Computer Vision Sonification)
+    this.scanGain = new Tone.Gain(0).connect(this.masterGain);
+
+    this.scanFilter = new Tone.Filter({
+      frequency: 1800,
+      type: 'lowpass',
+      rolloff: -12,
+      Q: 1.2
+    }).connect(this.scanGain);
+
+    this.scanCarrierGain = new Tone.Gain(0).connect(this.scanFilter);
+    this.scanCarrierOsc = new Tone.FatOscillator({
+      frequency: 220,
+      type: 'triangle',
+      count: 3,
+      spread: 18
+    }).connect(this.scanCarrierGain);
+
+    // Dedicated Monophonic synths for harmonic intervals
+    this.scanVoices = [
+      new Tone.Synth({
+        oscillator: { type: 'sine' },
+        envelope: { attack: 0.02, decay: 0.15, sustain: 0.1, release: 0.15 },
+        volume: -2
+      }).connect(this.scanGain),
+      new Tone.Synth({
+        oscillator: { type: 'triangle' },
+        envelope: { attack: 0.02, decay: 0.15, sustain: 0.1, release: 0.15 },
+        volume: -3
+      }).connect(this.scanGain),
+      new Tone.Synth({
+        oscillator: { type: 'sine' },
+        envelope: { attack: 0.02, decay: 0.15, sustain: 0.1, release: 0.15 },
+        volume: -3
+      }).connect(this.scanGain)
+    ];
+
+    this.scanSynth = this.scanVoices[0];
+
     this._isInitialized = true;
     this._updateAudioParameters();
   }
@@ -254,6 +319,14 @@ export class HarmonicEngine {
     }
 
     this._isPlaying = true;
+
+    // Restore master volume smoothly
+    if (this.masterGain && this.masterGain.gain) {
+      try {
+        this.masterGain.gain.cancelScheduledValues(Tone.now());
+        this.masterGain.gain.rampTo(1.25, 0.05);
+      } catch {}
+    }
 
     // Start Voice 1 (Sub-Bass Drone)
     if (this.droneSynth && !this._droneActive) {
@@ -282,9 +355,11 @@ export class HarmonicEngine {
 
   /**
    * Stops playback of all voices and clears timers.
+   * Completely silences audio immediately.
    */
   stop() {
     this._isPlaying = false;
+    this.stopSonifier();
 
     if (this._fireTimer) {
       clearTimeout(this._fireTimer);
@@ -297,6 +372,11 @@ export class HarmonicEngine {
     }
 
     try {
+      // Immediate silence on master bus to prevent lingering drone or reverb
+      if (this.masterGain && this.masterGain.gain) {
+        this.masterGain.gain.cancelScheduledValues(Tone.now());
+        this.masterGain.gain.setValueAtTime(0, Tone.now());
+      }
       if (this.droneSynth && this._droneActive) {
         this.droneSynth.triggerRelease();
         this._droneActive = false;
@@ -320,6 +400,292 @@ export class HarmonicEngine {
       }
     } catch (err) {
       console.warn('HarmonicEngine: Error releasing chime synth:', err);
+    }
+  }
+
+  /**
+   * Starts continuous carrier audio for the EIC visual sonifier.
+   */
+  startSonifier() {
+    if (!this._isInitialized) return;
+    this._isSonifierActive = true;
+    try {
+      if (Tone.getContext().state !== 'running') {
+        Tone.start().catch(() => {});
+      }
+      // Ensure master is unmuted
+      if (this.masterGain && this.masterGain.gain) {
+        this.masterGain.gain.cancelScheduledValues(Tone.now());
+        this.masterGain.gain.rampTo(1.25, 0.05);
+      }
+      if (this.scanGain && this.scanGain.gain) {
+        this.scanGain.gain.cancelScheduledValues(Tone.now());
+        this.scanGain.gain.rampTo(1.2, 0.05);
+      }
+      if (this.scanCarrierGain && this.scanCarrierGain.gain) {
+        this.scanCarrierGain.gain.cancelScheduledValues(Tone.now());
+        this.scanCarrierGain.gain.rampTo(0.55, 0.05);
+      }
+      if (this.scanCarrierOsc && this.scanCarrierOsc.state !== 'started') {
+        try {
+          this.scanCarrierOsc.start();
+        } catch {}
+      }
+    } catch (err) {
+      console.warn('HarmonicEngine: Failed to start sonifier carrier:', err);
+    }
+  }
+
+  /**
+   * Pauses continuous carrier audio for the EIC visual sonifier.
+   * Completely cuts all sonification audio output immediately.
+   */
+  stopSonifier() {
+    this._isSonifierActive = false;
+    try {
+      if (this.scanCarrierGain && this.scanCarrierGain.gain) {
+        this.scanCarrierGain.gain.cancelScheduledValues(Tone.now());
+        this.scanCarrierGain.gain.setValueAtTime(0, Tone.now());
+      }
+      if (this.scanGain && this.scanGain.gain) {
+        this.scanGain.gain.cancelScheduledValues(Tone.now());
+        this.scanGain.gain.setValueAtTime(0, Tone.now());
+      }
+      if (this.scanVoices && this.scanVoices.length > 0) {
+        this.scanVoices.forEach(v => {
+          try { v.triggerRelease(); } catch {}
+        });
+      }
+    } catch (err) {
+      console.warn('HarmonicEngine: Failed to stop sonifier carrier:', err);
+    }
+  }
+
+  /**
+   * Sonifies a vertical pixel column scanned from an EIC visual frame.
+   * Modeled after NASA's Caldwell 73 benchmark:
+   * - Vertical Y coordinates map to Pentatonic notes (higher Y = higher pitch)
+   * - Luminance translates to velocity and gain
+   * - Red/Green/Blue color balance shifts timbre, filters, and thermal triggers
+   * @param {Object} columnData
+   */
+  sonifyPixelColumn(columnData = {}) {
+    if (!this._isInitialized) return;
+    // Strict pause guard: if paused, produce zero sound
+    if (!this._isSonifierActive) return;
+
+    try {
+      if (Tone.getContext().state !== 'running') {
+        Tone.start().catch(() => {});
+      }
+    } catch {}
+
+    // Ensure continuous carrier oscillator is active
+    if (this.scanCarrierOsc && this.scanCarrierOsc.state !== 'started') {
+      try {
+        this.scanCarrierOsc.start();
+      } catch {}
+    }
+
+    const { notes = [], velocities = [], luminosity = 0.5, colorShift = {} } = columnData;
+
+    // 1. Smoothly glide continuous carrier frequency & gain based on luminosity & scan coordinate
+    const safeLuma = Math.max(0.18, Math.min(1.0, luminosity || 0.5));
+    const baseFreq = 110 + safeLuma * 330; // 110 Hz (A2) to 440 Hz (A4)
+    const carrierVol = Math.max(0.28, Math.min(0.75, safeLuma * 0.8));
+
+    if (this.scanCarrierOsc && this.scanCarrierOsc.frequency) {
+      try {
+        this.scanCarrierOsc.frequency.rampTo(baseFreq, 0.08);
+      } catch {}
+    }
+
+    if (this.scanCarrierGain && this.scanCarrierGain.gain) {
+      try {
+        this.scanCarrierGain.gain.rampTo(carrierVol, 0.08);
+      } catch {}
+    }
+
+    // 2. Modulate low-pass filter cutoff based on spectral brightness and blue/cyan radiance
+    if (this.scanFilter && this.scanFilter.frequency) {
+      const { b = 100 } = colorShift || {};
+      const targetCutoff = Math.round(500 + safeLuma * 1600 + (b / 255) * 1200);
+      try {
+        this.scanFilter.frequency.rampTo(targetCutoff, 0.08);
+      } catch {}
+    }
+
+    // 3. Trigger fixed 3-voice chord accents on pentatonic notes
+    if (this.scanVoices && this.scanVoices.length > 0) {
+      const targetNotes = (notes && notes.length > 0)
+        ? notes.slice(0, 3)
+        : ['A3', 'E4'];
+
+      const safeVel = Math.max(0.35, Math.min(1.0, (velocities[0] || safeLuma) * 1.1));
+
+      targetNotes.forEach((note, idx) => {
+        const voice = this.scanVoices[idx];
+        if (voice) {
+          try {
+            voice.triggerAttackRelease(note, 0.08, undefined, safeVel);
+          } catch {}
+        }
+      });
+    }
+
+    // 4. Color Channels Special Acoustic Triggers (NASA CV Specs)
+    if (colorShift) {
+      const { r = 0, g = 0, b = 0 } = colorShift;
+
+      // Red Dominance (Thermal / Active Fire): triggers transient membrane thump
+      if (r > 150 && r > g * 1.25 && r > b * 1.25 && this.pulseSynth) {
+        try {
+          this.pulseSynth.triggerAttackRelease('D2', 0.08, undefined, 0.8);
+        } catch {}
+      }
+
+      // Blue Dominance (Ocean / Atmospheric vapor): sweeps resonant filter
+      if (b > 120 && this.windFilter) {
+        const targetFreq = Math.round(350 + (b / 255) * 2600);
+        try {
+          this.windFilter.frequency.rampTo(targetFreq, 0.12);
+        } catch {}
+      }
+
+      // Green Dominance (Canopy / Biosphere): triggers gentle canopy bell
+      if (g > 135 && g > r * 1.1 && this.chimeSynth && Math.random() < 0.35) {
+        try {
+          const chimeNote = PENTATONIC_SCALE[Math.floor(Math.random() * 4) + 4];
+          this.chimeSynth.triggerAttackRelease(chimeNote, '16n', undefined, 0.75);
+        } catch {}
+      }
+    }
+  }
+
+  /**
+   * Starts in-browser Web Audio stream recording using MediaRecorder.
+   */
+  startRecording() {
+    if (!this._isInitialized) {
+      throw new Error('HarmonicEngine must be initialized before recording.');
+    }
+
+    if (this._isRecording) {
+      return;
+    }
+
+    if (!this.mediaStreamDestination) {
+      try {
+        const rawCtx = Tone.getContext().rawContext;
+        if (rawCtx && typeof rawCtx.createMediaStreamDestination === 'function') {
+          this.mediaStreamDestination = rawCtx.createMediaStreamDestination();
+          if (this.limiter) {
+            this.limiter.connect(this.mediaStreamDestination);
+          }
+        }
+      } catch (err) {
+        console.warn('HarmonicEngine: Failed to create MediaStreamDestination:', err);
+      }
+    }
+
+    if (!this.mediaStreamDestination || !this.mediaStreamDestination.stream) {
+      throw new Error('MediaStream audio destination is not supported in this environment.');
+    }
+
+    this._recordedChunks = [];
+    const mimeTypes = [
+      'audio/webm;codecs=opus',
+      'audio/webm',
+      'audio/ogg;codecs=opus',
+      'audio/ogg',
+      'audio/mp4'
+    ];
+    let selectedMime = '';
+    for (const m of mimeTypes) {
+      if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) {
+        selectedMime = m;
+        break;
+      }
+    }
+
+    try {
+      this.mediaRecorder = selectedMime
+        ? new MediaRecorder(this.mediaStreamDestination.stream, { mimeType: selectedMime })
+        : new MediaRecorder(this.mediaStreamDestination.stream);
+
+      this.mediaRecorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          this._recordedChunks.push(event.data);
+        }
+      };
+
+      this.mediaRecorder.start(100);
+      this._isRecording = true;
+    } catch (err) {
+      console.error('HarmonicEngine: MediaRecorder start failed:', err);
+      throw err;
+    }
+  }
+
+  /**
+   * Stops recording and returns the final audio Blob.
+   * @returns {Promise<Blob|null>}
+   */
+  async stopRecording() {
+    return new Promise((resolve) => {
+      if (!this.mediaRecorder || !this._isRecording) {
+        this._isRecording = false;
+        resolve(null);
+        return;
+      }
+
+      this.mediaRecorder.onstop = () => {
+        this._isRecording = false;
+        const mimeType = (this.mediaRecorder && this.mediaRecorder.mimeType) || 'audio/webm';
+        const blob = new Blob(this._recordedChunks, { type: mimeType });
+        this._recordedChunks = [];
+        resolve(blob);
+      };
+
+      try {
+        this.mediaRecorder.stop();
+      } catch (err) {
+        console.warn('HarmonicEngine: MediaRecorder stop error:', err);
+        this._isRecording = false;
+        resolve(null);
+      }
+    });
+  }
+
+  /**
+   * Returns whether audio is currently recording.
+   * @returns {boolean}
+   */
+  isRecording() {
+    return Boolean(this._isRecording);
+  }
+
+  /**
+   * Downloads an audio Blob to the user's filesystem.
+   * @param {Blob} blob
+   * @param {string} [filename]
+   */
+  downloadRecording(blob, filename = 'TerraSonus-EIC-Sonification.webm') {
+    if (!blob) return;
+    try {
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.style.display = 'none';
+      anchor.href = url;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      setTimeout(() => {
+        document.body.removeChild(anchor);
+        URL.revokeObjectURL(url);
+      }, 1000);
+    } catch (err) {
+      console.error('HarmonicEngine: Download failed:', err);
     }
   }
 

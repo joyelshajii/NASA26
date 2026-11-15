@@ -521,10 +521,248 @@ export const climateEpochs = [
   }
 ];
 
+/**
+ * 10 Official NASA Earth Information Center (EIC) SVS Resource Datasets
+ * Complies with the NASA Space Apps Challenge Earth Information Jukebox specifications.
+ */
+export const eicVisualDatasets = [
+  {
+    id: 'svs-5313',
+    svsId: '5313',
+    title: 'Change in Night Lights (2012–2023)',
+    subtitle: 'NASA Earth Information Center / SVS 5313',
+    theme: 'ANTHROPOCENE',
+    category: 'Night Lights & Energy',
+    description: 'Tracks the decadal evolution of urban illumination across the globe. High contrast between dark terrain and brilliant city light provides ideal targets for mapping intensity to audio tempo and twinkling upper pentatonic chords.',
+    svsUrl: 'https://svs.gsfc.nasa.gov/5313/',
+    eicUrl: 'https://science.nasa.gov/earth/earth-information-center/',
+    scanDirection: 'horizontal',
+    sonificationProfile: {
+      scanMethod: 'Left-to-Right Luminosity Sweep (Caldwell 73 Style)',
+      pitchMapping: 'Vertical coordinate Y mapped to A Minor / C Pentatonic scale (top = high frequency)',
+      volumeMapping: 'Pixel luminance intensity (0-255) mapped directly to note velocity',
+      rhythmMapping: 'Metropolitan cluster density mapped to rapid percussive tempo (60-140 BPM)',
+      colorResponse: 'High gold/amber light triggers crystalline upper chimes (E5, G5, A5)'
+    },
+    audioDescription: 'Scanning high-contrast urban night lights across global terrain. Pinpoint cities trigger bright upper-register chimes against dark ocean silence.',
+    type: 'night-lights',
+    framesCount: 24,
+    tags: ['VIIRS Day-Night Band', 'SVS 5313', 'Urban Heat', 'Luminosity']
+  },
+  {
+    id: 'svs-3912',
+    svsId: '3912',
+    title: 'Global Sea Surface Currents & Temperature',
+    subtitle: 'NASA Scientific Visualization Studio / SVS 3912',
+    theme: 'HYDROSPHERE',
+    category: 'Ocean Dynamics',
+    description: 'Illustrates the fluid kinetic movement of ocean currents alongside thermal gradients. Converts continuous fluid motion and shifting temperature ribbons into evolving ambient soundscapes.',
+    svsUrl: 'https://svs.gsfc.nasa.gov/3912/#media_group_349716',
+    eicUrl: 'https://science.nasa.gov/earth/earth-information-center/',
+    scanDirection: 'horizontal',
+    sonificationProfile: {
+      scanMethod: 'Fluid Flow Vector Scan',
+      pitchMapping: 'Warm surface ribbons (red/orange) trigger warm fundamentals; deep cold currents trigger sub-bass resonance',
+      volumeMapping: 'Current velocity and flow density mapped to master presence and oceanic reverb',
+      rhythmMapping: 'Eddy vorticity creates oscillating acoustic chorus waves',
+      colorResponse: 'Cyan to red thermal transition drives resonant bandpass filter sweeps (350 Hz to 2400 Hz)'
+    },
+    audioDescription: 'Fluid ocean currents and thermal gradients. Swirling oceanic eddies drive sweeping resonant filters and oceanic sub-bass.',
+    type: 'ocean-currents',
+    framesCount: 24,
+    tags: ['ECCO-2 Model', 'SVS 3912', 'Thermal Gradients', 'Currents']
+  },
+  {
+    id: 'svs-5669',
+    svsId: '5669',
+    title: 'GEOS Aerosol Plumes: Smoke, Dust & Sea Salt',
+    subtitle: 'NASA Goddard Earth Observing System / SVS 5669',
+    theme: 'AEROSOLS',
+    category: 'Atmospheric Physics',
+    description: 'Monitors the transcontinental paths of smoke, mineral dust, and sea salt aerosols categorized by optical particle type. Multi-track acoustic layering where visual color bands trigger distinctive audio textures.',
+    svsUrl: 'https://svs.gsfc.nasa.gov/5669/',
+    eicUrl: 'https://science.nasa.gov/earth/earth-information-center/',
+    scanDirection: 'horizontal',
+    sonificationProfile: {
+      scanMethod: 'Multi-Track Aerosol Spectral Scan',
+      pitchMapping: 'Dust plumes (orange) sweep bandpass filters (400-3800 Hz); smoke (red) triggers percussive pulses; sea salt (cyan) triggers fluid sine layers',
+      volumeMapping: 'Aerosol Optical Depth (AOD) opacity mapped to acoustic density',
+      rhythmMapping: 'Atmospheric trade wind velocity sets arpeggiation speed',
+      colorResponse: 'Red/Orange mineral plumes trigger warm transient beats and resonant filters'
+    },
+    audioDescription: 'Layered atmospheric aerosol plumes. Red biomass smoke, golden Saharan dust, and oceanic sea spray mapped to distinct acoustic textures.',
+    type: 'aerosols',
+    framesCount: 24,
+    tags: ['GEOS FP', 'SVS 5669', 'Dust Plumes', 'Multi-Track']
+  },
+  {
+    id: 'svs-5533',
+    svsId: '5533',
+    title: 'Air Quality & Nitrogen Dioxide Model Runs',
+    subtitle: 'NASA SVS / SVS 5533',
+    theme: 'ATMOSPHERE',
+    category: 'Atmospheric Chemistry',
+    description: 'High-resolution atmospheric models showing nitrogen dioxide (NO2) and surface emissions. Converts localized color palettes and dense industrial plumes into dynamic acoustic warning profiles.',
+    svsUrl: 'https://svs.gsfc.nasa.gov/5533/',
+    eicUrl: 'https://science.nasa.gov/earth/earth-information-center/',
+    scanDirection: 'horizontal',
+    sonificationProfile: {
+      scanMethod: 'Plume Density & Contrast Scan',
+      pitchMapping: 'Clean tropospheric air resonates at baseline 55 Hz (A1); elevated NO2 concentrations trigger ascending tension frequencies',
+      volumeMapping: 'Trace gas parts-per-billion (ppb) mapped to note velocity',
+      rhythmMapping: 'Emission gradients drive percussive intervals',
+      colorResponse: 'Intense purple/yellow industrial hotspots trigger sharp metallic bell harmonics'
+    },
+    audioDescription: 'Atmospheric air quality models. Intense urban emission plumes introduce metallic overtone tension into the harmonic stream.',
+    type: 'air-quality',
+    framesCount: 24,
+    tags: ['TROPOMI', 'SVS 5533', 'Tropospheric NO2', 'Urban Emissions']
+  },
+  {
+    id: 'svs-5425',
+    svsId: '5425',
+    title: 'Perpetual Ocean 2: Western Boundary Currents',
+    subtitle: 'NASA SVS / SVS 5425',
+    theme: 'HYDROSPHERE',
+    category: 'Ocean Circulation',
+    description: 'High-contrast visual maps of major oceanic boundary currents including the Gulf Stream and Kuroshio. Computer vision tracks kinetic boundaries, aligning rapid current shifts with vibrant musical scales.',
+    svsUrl: 'https://svs.gsfc.nasa.gov/5425/',
+    eicUrl: 'https://science.nasa.gov/earth/earth-information-center/',
+    scanDirection: 'horizontal',
+    sonificationProfile: {
+      scanMethod: 'Current Boundary Edge Detection',
+      pitchMapping: 'Flow line spatial curvature mapped to pentatonic melodic sequences',
+      volumeMapping: 'Water transport volume (Sverdrups) mapped to sub-surface bass presence',
+      rhythmMapping: 'Kinetic flow velocity drives 16th-note arpeggiator momentum',
+      colorResponse: 'High-contrast blue/white filaments drive crisp multi-note chimes'
+    },
+    audioDescription: 'Western boundary ocean currents. High-speed flow vectors drive rapid melodic arpeggios and rhythmic momentum.',
+    type: 'perpetual-ocean',
+    framesCount: 24,
+    tags: ['Gulf Stream', 'SVS 5425', 'ECCO Circulation', 'High Contrast']
+  },
+  {
+    id: 'svs-5196',
+    svsId: '5196',
+    title: 'DYAMOND Global Carbon Dioxide Dispersion',
+    subtitle: 'NASA GSFC Global Modeling / SVS 5196',
+    theme: 'ATMOSPHERE',
+    category: 'Carbon Cycle',
+    description: 'Showcases global atmospheric CO2 plumes swirling across planetary hemispheres over time. Visual patterns of biosphere respiration and fossil fuel combustion drive interactive harmonic synthesis.',
+    svsUrl: 'https://svs.gsfc.nasa.gov/5196/',
+    eicUrl: 'https://science.nasa.gov/earth/earth-information-center/',
+    scanDirection: 'horizontal',
+    sonificationProfile: {
+      scanMethod: 'Hemispheric Plume Concentration Sweep',
+      pitchMapping: 'Global CO2 concentration (ppm) tightens additive harmonic intervals',
+      volumeMapping: 'Column-averaged carbon density mapped to master synth presence',
+      rhythmMapping: 'Synoptic weather front winds modulate arpeggiation rate',
+      colorResponse: 'Red/Magenta carbon concentrations introduce additive organ overtone layers'
+    },
+    audioDescription: 'Global atmospheric carbon dioxide distribution. Shifting CO2 plumes add progressive harmonic overtones to the baseline drone.',
+    type: 'carbon-dioxide',
+    framesCount: 24,
+    tags: ['GMAO DYAMOND', 'SVS 5196', 'CO2 Respiration', 'Additive Organ']
+  },
+  {
+    id: 'svs-5011',
+    svsId: '5011',
+    title: 'Lightning Events Detected from ISS (2017–2023)',
+    subtitle: 'NASA ISS Lightning Imaging Sensor / SVS 5011',
+    theme: 'ATMOSPHERE',
+    category: 'Extreme Weather',
+    description: 'Compilation of orbital optical lightning telemetry detected from the International Space Station. Features punctuated sonification where percussive hits and sudden audio triggers correspond to rapid optical flashes.',
+    svsUrl: 'https://svs.gsfc.nasa.gov/5011/',
+    eicUrl: 'https://science.nasa.gov/earth/earth-information-center/',
+    scanDirection: 'horizontal',
+    sonificationProfile: {
+      scanMethod: 'Optical Flash Peak Detector',
+      pitchMapping: 'Strike latitude determines pitch (tropical strikes = lower register, high-latitude strikes = high chimes)',
+      volumeMapping: 'Optical flash radiance mapped directly to impact transient volume',
+      rhythmMapping: 'Flash repetition rate generates spontaneous polyrhythms',
+      colorResponse: 'Brilliant white/electric cyan flashes trigger explosive punchy membrane thumps and crystal bell bursts'
+    },
+    audioDescription: 'Orbital lightning flashes detected from space. Rapid optical lightning events trigger punctuated percussive strikes and crystal bursts.',
+    type: 'lightning',
+    framesCount: 24,
+    tags: ['ISS LIS', 'SVS 5011', 'Optical Radiance', 'Punctuated Percussion']
+  },
+  {
+    id: 'svs-4960',
+    svsId: '4960',
+    title: '3D View of an Atmospheric River System',
+    subtitle: 'NASA GSFC Earth System Model / SVS 4960',
+    theme: 'HYDROSPHERE',
+    category: 'Precipitation & Water',
+    description: 'Follows the volumetric path of a dense atmospheric river carrying moisture over the Pacific. Extracts individual frames to map moisture density and geographic spread into an immersive musical landscape.',
+    svsUrl: 'https://svs.gsfc.nasa.gov/4960/',
+    eicUrl: 'https://science.nasa.gov/earth/earth-information-center/',
+    scanDirection: 'horizontal',
+    sonificationProfile: {
+      scanMethod: 'Volumetric Moisture Density Scan',
+      pitchMapping: 'Altitude of water vapor corridor mapped to pitch height',
+      volumeMapping: 'Total precipitable water vapor column mapped to ocean swell volume',
+      rhythmMapping: 'Jet stream advection velocity controls rhythmic breathing cycle',
+      colorResponse: 'Deep blue/cyan moisture channels drive cascading stereo chorus and sub-bass waves'
+    },
+    audioDescription: '3D atmospheric river moisture corridor. Plume thickness and moisture volume create swelling ocean wave acoustics.',
+    type: 'atmospheric-river',
+    framesCount: 24,
+    tags: ['Atmospheric River', 'SVS 4960', 'Precipitable Water', 'Ocean Swell']
+  },
+  {
+    id: 'svs-4950',
+    svsId: '4950',
+    title: 'GEDI Global Forest Canopy Height',
+    subtitle: 'NASA GEDI Spaceborne LiDAR / SVS 4950',
+    theme: 'BIOSPHERE',
+    category: 'Forest Ecology',
+    description: 'High-resolution maps of forest canopy elevation measured from the ISS. Maps color spectrums (representing varying tree canopy heights and biomass densities) to dynamic rhythm, frequency, and pentatonic pitch.',
+    svsUrl: 'https://svs.gsfc.nasa.gov/4950/',
+    eicUrl: 'https://science.nasa.gov/earth/earth-information-center/',
+    scanDirection: 'horizontal',
+    sonificationProfile: {
+      scanMethod: 'Canopy Height Elevation Ladder',
+      pitchMapping: 'Canopy height (0 to 60+ meters) mapped directly to ascending pentatonic harp notes (A3 to G5)',
+      volumeMapping: 'Biomass density mapped to chord richness and sustain',
+      rhythmMapping: 'Canopy structural heterogeneity drives rhythmic syncopation',
+      colorResponse: 'Deep green/emerald hues trigger sparkling polyphonic nature chimes'
+    },
+    audioDescription: 'GEDI spaceborne LiDAR forest canopy height. Taller rainforest canopies trigger higher-pitched pentatonic chimes.',
+    type: 'forest-height',
+    framesCount: 24,
+    tags: ['GEDI LiDAR', 'SVS 4950', 'Canopy Elevation', 'Pentatonic Harp']
+  },
+  {
+    id: 'svs-13786',
+    svsId: '13786',
+    title: 'Data Sonification: Caldwell 73 Benchmark',
+    subtitle: 'NASA SVS / Hubble & Chandra Benchmark / SVS 13786',
+    theme: 'METHODOLOGY',
+    category: 'Sonification Benchmark',
+    description: 'NASA’s gold standard benchmark demonstrating how visual imagery is converted into auditory experiences. A scan line sweeps across coordinates: luminosity and vertical Y position translate directly into volume and pitch.',
+    svsUrl: 'https://svs.gsfc.nasa.gov/13786/',
+    eicUrl: 'https://science.nasa.gov/earth/earth-information-center/',
+    scanDirection: 'horizontal',
+    sonificationProfile: {
+      scanMethod: 'Foundational Left-to-Right Coordinate Sweep',
+      pitchMapping: 'Vertical Y-coordinate maps linearly to pitch (top = high frequency, bottom = low frequency)',
+      volumeMapping: 'Optical luminosity (brightness) mapped to note volume',
+      rhythmMapping: 'Radial star cluster concentration creates dense acoustic clusters',
+      colorResponse: 'Starlight spectral hues modulate synthesizer timbre and filter cutoff'
+    },
+    audioDescription: 'NASA’s official sonification benchmark. A left-to-right scan line directly converts vertical coordinate position to pitch and brightness to volume.',
+    type: 'caldwell-73',
+    framesCount: 24,
+    tags: ['Caldwell 73', 'SVS 13786', 'Scan-Line Benchmark', 'Luminosity-to-Pitch']
+  }
+];
+
 export default {
   historicalTimeSeries,
   regionalHotspots,
   planetaryStories,
+  eicVisualDatasets,
   nasaCredits,
   climateMilestones,
   climateEpochs,

@@ -11,7 +11,8 @@ import {
   ChevronDown,
   Sun,
   Moon,
-  Disc
+  Disc,
+  Activity
 } from 'lucide-react';
 
 import EarthGlobe from './components/EarthGlobe.jsx';
@@ -22,11 +23,13 @@ import SoundGuideModal from './components/SoundGuideModal.jsx';
 import SoundLegendBar from './components/SoundLegendBar.jsx';
 import ClimateTimeline from './components/ClimateTimeline.jsx';
 import JukeboxModal from './components/JukeboxModal.jsx';
+import EicVisualSonifier from './components/EicVisualSonifier.jsx';
 
 import { harmonicEngine } from './audio/HarmonicEngine.js';
 import { 
   regionalHotspots, 
   planetaryStories, 
+  eicVisualDatasets,
   interpolateYearData 
 } from './data/nasaDatasets.js';
 
@@ -77,6 +80,7 @@ export default function App() {
   const [hoveredRegionId, setHoveredRegionId] = useState(null);
   const [regionSelectionTrigger, setRegionSelectionTrigger] = useState(0);
   const [activeStoryId, setActiveStoryId] = useState(null);
+  const [activeEicDatasetId, setActiveEicDatasetId] = useState('svs-5313');
 
   // Modals & Accessibility States
   const [showScienceModal, setShowScienceModal] = useState(false);
@@ -207,6 +211,21 @@ export default function App() {
     if (stage) {
       const navOffset = 72;
       const elementPosition = stage.getBoundingClientRect().top + window.pageYOffset;
+      const offsetPosition = Math.max(0, elementPosition - navOffset);
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  }, []);
+
+  // Scroll to the EIC Visual Sonifier stage
+  const scrollToVisualSonifier = useCallback(() => {
+    const el = document.getElementById('visual-sonifier');
+    if (el) {
+      const navOffset = 72;
+      const elementPosition = el.getBoundingClientRect().top + window.pageYOffset;
       const offsetPosition = Math.max(0, elementPosition - navOffset);
 
       window.scrollTo({
@@ -496,17 +515,6 @@ export default function App() {
               NASA Open Data
             </button>
             <a 
-              id="nav-resources-link"
-              href="https://science.nasa.gov/earth/earth-information-center/" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className={`text-xs xl:text-sm font-medium transition-colors whitespace-nowrap ${
-                isLight ? 'text-slate-600 hover:text-slate-900' : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              Earth Info Center
-            </a>
-            <a 
               id="nav-timeline-link"
               href="#timeline-section" 
               className={`text-xs xl:text-sm font-medium transition-colors whitespace-nowrap ${
@@ -515,6 +523,14 @@ export default function App() {
             >
               Time Machine
             </a>
+            <button 
+              id="nav-visual-sonifier-link"
+              onClick={scrollToVisualSonifier}
+              className={`text-xs xl:text-sm font-semibold transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1.5 text-cyan-400 hover:text-cyan-300`}
+            >
+              <Activity className="w-3.5 h-3.5" />
+              <span>Visual Sonifier</span>
+            </button>
           </div>
 
           {/* Right Action & Utility Cluster */}
@@ -667,18 +683,6 @@ export default function App() {
                 </span>
               </button>
               <a 
-                href="https://science.nasa.gov/earth/earth-information-center/" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                onClick={() => setMobileMenuOpen(false)}
-                className={`flex items-center justify-between p-2.5 rounded-xl text-left text-sm font-medium transition-colors ${
-                  isLight ? 'hover:bg-slate-100 text-slate-700 hover:text-slate-900' : 'hover:bg-white/5 text-zinc-300 hover:text-white'
-                }`}
-              >
-                <span>Earth Info Center</span>
-                <ChevronRight className="w-4 h-4 text-zinc-400" />
-              </a>
-              <a 
                 href="#timeline-section" 
                 onClick={() => setMobileMenuOpen(false)}
                 className={`flex items-center justify-between p-2.5 rounded-xl text-left text-sm font-medium transition-colors ${
@@ -688,6 +692,18 @@ export default function App() {
                 <span>Time Machine</span>
                 <ChevronRight className="w-4 h-4 text-zinc-400" />
               </a>
+              <button 
+                onClick={() => { scrollToVisualSonifier(); setMobileMenuOpen(false); }}
+                className={`flex items-center justify-between p-2.5 rounded-xl text-left text-sm font-semibold transition-colors cursor-pointer text-cyan-400 hover:text-cyan-300 ${
+                  isLight ? 'hover:bg-slate-100' : 'hover:bg-white/5'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-cyan-400" />
+                  <span>Visual Sonifier</span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-cyan-400" />
+              </button>
               <button 
                 onClick={() => { toggleTheme(); setMobileMenuOpen(false); }} 
                 className={`flex items-center justify-between p-2.5 rounded-xl text-left text-sm font-medium transition-colors cursor-pointer ${
@@ -1423,7 +1439,7 @@ export default function App() {
         </section>
 
         {/* Climate Time Machine & Sonification Grid Section */}
-        <section id="timeline-section" className={`py-20 sm:py-24 px-6 relative border-t transition-colors ${
+        <section id="timeline-section" className={`pt-16 pb-8 sm:pt-20 sm:pb-10 px-4 sm:px-6 relative border-t transition-colors ${
           isLight ? 'bg-slate-100/70 border-slate-200' : 'bg-black border-white/5'
         }`}>
           <div className="max-w-7xl mx-auto">
@@ -1612,6 +1628,53 @@ export default function App() {
                 subtitle="Real-time Tone.js FFT Analysis & Waveform Oscilloscope"
               />
             </div>
+          </div>
+        </section>
+
+        {/* Dedicated EIC Visual Frame Sonifier & CRT Monitor Section */}
+        <section id="visual-sonifier" className="pt-2 pb-16 sm:pt-4 sm:pb-20 px-4 sm:px-6 relative z-10 scroll-mt-20 transition-colors">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-6 sm:mb-8 max-w-3xl mx-auto">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#ef233c]/10 border border-[#ef233c]/30 text-[#ef233c] text-xs font-mono font-bold mb-3 shadow-[0_0_15px_rgba(239,35,60,0.2)]">
+                <Activity className="w-3.5 h-3.5 text-[#ef233c]" />
+                <span>EARTH INFORMATION JUKEMODAL &bull; SVS DATASET SONIFICATION</span>
+              </div>
+              <h2 className={`text-3xl sm:text-4xl font-extrabold font-manrope mb-3 tracking-tight ${
+                isLight ? 'text-slate-900' : 'text-white'
+              }`}>
+                Visual Frame Sonifier & CRT Monitor
+              </h2>
+              <p className={`text-sm sm:text-base max-w-xl mx-auto leading-relaxed ${
+                isLight ? 'text-slate-600' : 'text-zinc-400'
+              }`}>
+                Real-time computer vision frame scanner inspired by NASA's Caldwell 73 benchmark. Converts pixel coordinate, luminosity, and multi-spectral satellite imagery into live harmonic sound and authentic scientific telemetry.
+              </p>
+            </div>
+
+            {/* Live Interactive EicVisualSonifier Engine */}
+            <EicVisualSonifier
+              datasets={eicVisualDatasets}
+              activeDatasetId={activeEicDatasetId}
+              onSelectDataset={(datasetId) => {
+                setActiveEicDatasetId(datasetId);
+                const ds = eicVisualDatasets.find(d => d.id === datasetId);
+                if (ds) {
+                  const msg = `Selected NASA dataset: ${ds.title}. ${ds.audioDescription || ''}`;
+                  setScreenReaderAnnouncement(msg);
+                  speakText(msg);
+                }
+                const el = document.getElementById('visual-sonifier');
+                if (el) {
+                  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+              }}
+              isPlaying={isPlaying}
+              togglePlay={togglePlay}
+              harmonicEngine={harmonicEngine}
+              theme={theme}
+              isAccessibilityMode={isAccessibilityMode}
+              speakText={speakText}
+            />
           </div>
         </section>
 
